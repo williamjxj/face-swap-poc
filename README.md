@@ -1,4 +1,6 @@
-# Image Generator POC
+# Face Swap POC
+
+https://www.seaart.ai/zhCN/ai-tools/ai-face-swap
 
 https://shop.ultimatech.hk/
 
@@ -60,7 +62,7 @@ sudo npm install -g pm2
 ```bash
 npm install
 npm run build
-pm2 start "npm run start" --name image-generator
+pm2 start "npm run start" --name face-swap-app
 ```
 
 ### 4. Configure Nginx (Optional)

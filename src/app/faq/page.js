@@ -1,17 +1,13 @@
 'use client'
-import Header from '../../components/Header'
-import Footer from '../../components/Footer'
 
 export default function FAQ() {
   return (
-    <div className="min-h-screen flex flex-col bg-white">
-      <Header />
       <main className="flex-grow container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold mb-6">Frequently Asked Questions</h1>
         
         <div className="space-y-6">
           <div className="border-b pb-4">
-            <h2 className="text-xl font-semibold mb-2">How does the image generator work?</h2>
+            <h2 className="text-xl font-semibold mb-2">How does the Face Swap work?</h2>
             <p className="text-gray-600">
               Our AI uses advanced machine learning models to generate images based on your text prompts. Simply describe what you want, and our system will create it.
             </p>
@@ -46,7 +42,5 @@ export default function FAQ() {
           </div>
         </div>
       </main>
-      <Footer />
-    </div>
   )
 }

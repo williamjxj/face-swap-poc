@@ -12,7 +12,7 @@ export default function Header() {
           <path d="M16 24L12 20H20L16 24Z" fill="white"/>
         </svg>
         <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">
-          AI Image Generator
+          Face Swap Generator
         </h1>
       </div>
       <div className="flex items-center gap-4">

@@ -1,4 +1,4 @@
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Inter } from "next/font/google";
 import "./globals.css";
 import Header from '../components/Header'
 import Footer from '../components/Footer'
@@ -15,10 +15,12 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const inter = Inter({ subsets: ["latin"] })
+
 export const metadata = {
-  title: "Image Generator Dashboard",
-  description: "Image Generator App, AI Image Generator, Checkout Payment, CMS",
-};
+  title: "SeaArt.AI - AI Face Swap",
+  description: "AI Face Swap Tool, Checkout Payment, CMS",
+}
 
 export default async function RootLayout({ children }) {
   const session = await getServerSession(authOptions);
@@ -32,7 +34,7 @@ export default async function RootLayout({ children }) {
         className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-screen`}
       >
         {!isAuthPage && !isHomePage && session && <Header />}
-        <main className="flex-grow px-4 py-8 mx-auto max-w-7xl w-full">
+        <main className={inter.className}>
           {children}
         </main>
         {!isHomePage && <Footer />}

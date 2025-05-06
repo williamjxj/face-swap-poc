@@ -7,7 +7,7 @@ export default async function Home() {
   const session = await getServerSession(authOptions)
   
   if (session) {
-    redirect('/generate')
+    redirect('/face-swap')
   }
 
   return (
@@ -22,7 +22,7 @@ export default async function Home() {
           priority
         />
         <div className="flex flex-col items-center gap-4">
-          <h1 className="text-2xl font-bold">Welcome to Image Generator</h1>
+          <h1 className="text-2xl font-bold">Welcome to Face Swap App</h1>
           <a
             href="/auth/signin"
             className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto"

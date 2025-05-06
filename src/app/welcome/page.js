@@ -20,14 +20,14 @@ export default function WelcomePage() {
   return (
     <div className="max-w-2xl mx-auto text-center py-16 px-4 sm:py-20 sm:px-6 lg:px-8">
       <h1 className="text-3xl font-extrabold text-gray-900 sm:text-4xl">
-        Welcome to Image Generator
+        Welcome to Face Swap Generator
       </h1>
       <p className="mt-4 text-lg leading-6 text-gray-600">
         You have successfully logged in. Click below to start generating images.
       </p>
       <div className="mt-10">
         <button
-          onClick={() => router.push('/generate')}
+          onClick={() => router.push('/face-swap')}
           className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
         >
           Go to Dashboard

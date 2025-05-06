@@ -21,7 +21,7 @@ export default function Navigator() {
   }
 
   const navItems = [
-    { href: '/generate', icon: <FaMagic size={16} />, label: 'Generate' },
+    { href: '/face-swap', icon: <FaMagic size={16} />, label: 'Face Swap' },
     { href: '/gallery', icon: <FaImages size={16} />, label: 'Gallery' },
     { href: '/profile', icon: <FaUser size={16} />, label: 'Profile' }
   ]

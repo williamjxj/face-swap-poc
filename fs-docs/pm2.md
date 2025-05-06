@@ -33,10 +33,10 @@ npm run build
 ### ▶️ 3. Start the app with PM2
 
 ```bash
-pm2 start npm --name "image-generator-app" -- run start
+pm2 start npm --name "face-swap-app" -- run start
 ```
 
-- `--name "image-generator-app"` sets a friendly name for the process.
+- `--name "face-swap-app"` sets a friendly name for the process.
 - `run start` executes the `start` script from your `package.json`.
 
 ---
@@ -54,7 +54,7 @@ This shows running processes, their uptime, CPU/memory usage, etc.
 ### 🧾 5. View logs
 
 ```bash
-pm2 logs image-generator-app
+pm2 logs face-swap-app
 ```
 
 Or see all logs:
@@ -86,19 +86,19 @@ pm2 save
 - Restart:
 
 ```bash
-pm2 restart image-generator-app
+pm2 restart face-swap-app
 ```
 
 - Stop:
 
 ```bash
-pm2 stop image-generator-app
+pm2 stop face-swap-app
 ```
 
 - Delete:
 
 ```bash
-pm2 delete image-generator-app
+pm2 delete face-swap-app
 ```
 
 ---
