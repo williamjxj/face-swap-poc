@@ -2,7 +2,7 @@
 
 export default function Footer() {
     return (
-        <footer className="bg-gray-200 bottom-0 w-full h-8">
+        <footer className="bottom-0 w-full h-8">
             <div className="container mx-auto px-4 h-full flex items-center justify-between">
                 <div className="text-sm text-gray-600">
                     <span>&copy; {new Date().getFullYear()} Face Swap App. All rights reserved.</span>

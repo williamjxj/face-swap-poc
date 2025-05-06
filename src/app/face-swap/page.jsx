@@ -7,12 +7,94 @@ import { useState } from "react"
 export default function FaceSwapPage() {
   const [selectedTab, setSelectedTab] = useState('video')
   const videoSources = [
-    '/videos/1.mp4',
-    '/videos/2.mp4',
-    '/videos/3.mp4',
-    '/videos/4.mp4',
-    '/videos/5.mp4'
+    {
+      src: '/videos/1.mp4',
+      duration: '0:05',
+      author: 'demo'
+    },
+    {
+      src: '/videos/2.mp4',
+      duration: '0:05',
+      author: 'demo'
+    },
+    {
+      src: '/videos/3.mp4',
+      duration: '0:15',
+      author: 'demo'
+    },
+    {
+      src: '/videos/4.mp4',
+      duration: '0:15',
+      author: 'demo'
+    },
+    {
+      src: '/videos/5.mp4',
+      duration: '0:15',
+      author: 'demo'
+    }
   ]
+
+  const renderTabContent = () => {
+    switch (selectedTab) {
+      case 'video':
+        return (
+          <div className="p-6 grid grid-cols-2 gap-4 overflow-y-auto">
+            <div className="aspect-video bg-[#2a2d34] rounded-lg flex flex-col items-center justify-center cursor-pointer hover:bg-[#3a3d44] transition-colors">
+              <Plus className="w-8 h-8 text-gray-400 mb-2" />
+              <span className="text-sm text-gray-400">Upload Video</span>
+            </div>
+            
+            {videoSources.map((video, index) => (
+              <div key={index} className="item-box cursor-pointer">
+                <div className="duration">{video.duration}</div>
+                <video
+                  src={video.src}
+                  className="material"
+                  muted
+                  loop
+                  onMouseOver={(e) => e.target.play()}
+                  onMouseOut={(e) => e.target.pause()}
+                />
+                <div className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center">
+                  <button className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-full text-sm">
+                    Use Template
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        );
+      case 'image':
+        return (
+          <div className="p-6 grid grid-cols-2 gap-4 overflow-y-auto">
+            <div className="aspect-square bg-[#2a2d34] rounded-lg flex flex-col items-center justify-center cursor-pointer hover:bg-[#3a3d44] transition-colors">
+              <Plus className="w-8 h-8 text-gray-400 mb-2" />
+              <span className="text-sm text-gray-400">Upload Image</span>
+            </div>
+          </div>
+        );
+      case 'gif':
+        return (
+          <div className="p-6 grid grid-cols-2 gap-4 overflow-y-auto">
+            <div className="aspect-square bg-[#2a2d34] rounded-lg flex flex-col items-center justify-center cursor-pointer hover:bg-[#3a3d44] transition-colors">
+              <Plus className="w-8 h-8 text-gray-400 mb-2" />
+              <span className="text-sm text-gray-400">Upload GIF</span>
+            </div>
+          </div>
+        );
+      case 'multi-face':
+        return (
+          <div className="p-6 grid grid-cols-2 gap-4 overflow-y-auto">
+            <div className="aspect-square bg-[#2a2d34] rounded-lg flex flex-col items-center justify-center cursor-pointer hover:bg-[#3a3d44] transition-colors">
+              <Plus className="w-8 h-8 text-gray-400 mb-2" />
+              <span className="text-sm text-gray-400">Multi-face Swap</span>
+            </div>
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
 
   return (
     <div className="flex flex-col min-h-screen bg-[#0e1117] text-white">
@@ -35,32 +117,7 @@ export default function FaceSwapPage() {
             ))}
           </div>
           
-          <div className="p-6 grid grid-cols-2 gap-4 overflow-y-auto">
-            <div className="aspect-video bg-[#2a2d34] rounded-lg flex flex-col items-center justify-center cursor-pointer hover:bg-[#3a3d44] transition-colors">
-              <Plus className="w-8 h-8 text-gray-400 mb-2" />
-              <span className="text-sm text-gray-400">Upload Video</span>
-            </div>
-            
-            {videoSources.map((video, index) => (
-              <div key={index} className="aspect-video bg-[#2a2d34] rounded-lg overflow-hidden group relative">
-                <video
-                  src={video}
-                  width={116}
-                  height={56}
-                  className="w-full h-full object-cover"
-                  muted
-                  loop
-                  onMouseOver={(e) => e.target.play()}
-                  onMouseOut={(e) => e.target.pause()}
-                />
-                <div className="absolute inset-0 bg-black bg-opacity-40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                  <button className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-full text-sm">
-                    Use Template
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
+          {renderTabContent()}
         </div>
 
         {/* Main content area */}
@@ -137,7 +194,7 @@ export default function FaceSwapPage() {
             {/* Source face */}
             <div>
               <p className="text-sm text-gray-400 mb-3">Source Face</p>
-              <div className="aspect-square w-full bg-[#2a2d34] rounded-lg flex items-center justify-center cursor-pointer hover:bg-[#3a3d44] transition-colors">
+              <div className="aspect-square w-full rounded-full bg-[#2a2d34] flex items-center justify-center cursor-pointer hover:bg-[#3a3d44] transition-colors">
                 <Plus className="w-8 h-8 text-gray-400" />
               </div>
             </div>
@@ -145,7 +202,7 @@ export default function FaceSwapPage() {
             {/* Target face */}
             <div>
               <p className="text-sm text-gray-400 mb-3">Target Face</p>
-              <div className="aspect-square w-full bg-[#2a2d34] rounded-lg flex items-center justify-center cursor-pointer hover:bg-[#3a3d44] transition-colors">
+              <div className="aspect-square w-full rounded-full bg-[#2a2d34] flex items-center justify-center cursor-pointer hover:bg-[#3a3d44] transition-colors">
                 <Plus className="w-8 h-8 text-gray-400" />
               </div>
             </div>
