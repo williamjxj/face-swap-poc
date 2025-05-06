@@ -1,218 +1,158 @@
+'use client'
+
 import Image from "next/image"
-import { Info, Plus, Menu } from "lucide-react"
+import { Info, Plus, Menu, ArrowLeftRight } from "lucide-react"
+import { useState } from "react"
 
 export default function FaceSwapPage() {
+  const [selectedTab, setSelectedTab] = useState('video')
+  const videoSources = [
+    '/videos/1.mp4',
+    '/videos/2.mp4',
+    '/videos/3.mp4',
+    '/videos/4.mp4',
+    '/videos/5.mp4'
+  ]
+
   return (
     <div className="flex flex-col min-h-screen bg-[#0e1117] text-white">
-      {/* Header */}
-      <header className="flex items-center justify-between px-4 md:px-6 py-3 border-b border-gray-800">
-        <div className="flex items-center">
-          <div className="mr-4 md:mr-8">
-            {/* Logo - replace with your actual logo */}
-            <Image src="/placeholder.svg?height=32&width=120" alt="SEAART.AI" width={120} height={32} className="h-8" />
+      <div className="flex-1 flex">
+        {/* Left sidebar */}
+        <div className="hidden md:flex flex-col w-[300px] border-r border-gray-800 bg-[#1a1d24]">
+          <div className="flex border-b border-gray-800">
+            {['video', 'image', 'gif', 'multi-face'].map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setSelectedTab(tab)}
+                className={`px-6 py-4 text-sm font-medium capitalize ${
+                  selectedTab === tab
+                    ? 'text-blue-500 border-b-2 border-blue-500'
+                    : 'text-gray-400 hover:text-gray-200'
+                }`}
+              >
+                {tab}
+              </button>
+            ))}
           </div>
-          <nav className="hidden md:flex space-x-6">
-            <div className="flex items-center space-x-1 cursor-pointer">
-              <span>Explore</span>
-              <span className="text-xs">▼</span>
+          
+          <div className="p-6 grid grid-cols-2 gap-4 overflow-y-auto">
+            <div className="aspect-video bg-[#2a2d34] rounded-lg flex flex-col items-center justify-center cursor-pointer hover:bg-[#3a3d44] transition-colors">
+              <Plus className="w-8 h-8 text-gray-400 mb-2" />
+              <span className="text-sm text-gray-400">Upload Video</span>
             </div>
-            <div className="flex items-center space-x-1 cursor-pointer">
-              <span>Quick AI</span>
-              <span className="text-xs">▼</span>
-            </div>
-            <div className="cursor-pointer">Training</div>
-          </nav>
-        </div>
-        {/* Mobile menu button - using standard button instead of shadcn Button */}
-        <button className="md:hidden p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-800">
-          <Menu className="h-6 w-6" />
-        </button>
-      </header>
-
-      {/* Main content */}
-      <div className="flex flex-col md:flex-row flex-1">
-        {/* Left sidebar - hidden on mobile, shown on md and up */}
-        <div className="hidden md:block md:w-[250px] lg:w-[300px] border-r border-gray-800">
-          <div className="flex border-b border-gray-800 overflow-x-auto">
-            <button className="px-4 md:px-6 py-3 text-sm border-b-2 border-blue-500 whitespace-nowrap">Video</button>
-            <button className="px-4 md:px-6 py-3 text-sm whitespace-nowrap">Image</button>
-            <button className="px-4 md:px-6 py-3 text-sm whitespace-nowrap">Gif</button>
-            <button className="px-4 md:px-6 py-3 text-sm whitespace-nowrap">Multi-Face</button>
+            
+            {videoSources.map((video, index) => (
+              <div key={index} className="aspect-video bg-[#2a2d34] rounded-lg overflow-hidden group relative">
+                <video
+                  src={video}
+                  width={116}
+                  height={56}
+                  className="w-full h-full object-cover"
+                  muted
+                  loop
+                  onMouseOver={(e) => e.target.play()}
+                  onMouseOut={(e) => e.target.pause()}
+                />
+                <div className="absolute inset-0 bg-black bg-opacity-40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                  <button className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-full text-sm">
+                    Use Template
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
-          <div className="p-4 grid grid-cols-2 gap-4">
-            {/* Template thumbnails */}
-            <div className="w-full aspect-square bg-[#1a1d24] rounded flex flex-col items-center justify-center cursor-pointer">
-              <Plus className="w-6 h-6 text-gray-400 mb-2" />
-              <span className="text-xs text-gray-400">Custom Template</span>
-              <Info className="w-4 h-4 text-gray-500 mt-1" />
-            </div>
-
-            {/* Placeholder template thumbnails */}
-            <div className="w-full aspect-square rounded overflow-hidden">
-              <Image
-                src="/placeholder.svg?height=150&width=150&text=Template+1"
-                alt="Template 1"
-                width={150}
-                height={150}
-                className="w-full h-full object-cover"
-              />
-            </div>
-            <div className="w-full aspect-square rounded overflow-hidden">
-              <Image
-                src="/placeholder.svg?height=150&width=150&text=Template+2"
-                alt="Template 2"
-                width={150}
-                height={150}
-                className="w-full h-full object-cover"
-              />
-            </div>
-            <div className="w-full aspect-square rounded overflow-hidden">
-              <Image
-                src="/placeholder.svg?height=150&width=150&text=Template+3"
-                alt="Template 3"
-                width={150}
-                height={150}
-                className="w-full h-full object-cover"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Mobile tabs - visible only on small screens */}
-        <div className="md:hidden flex border-b border-gray-800 overflow-x-auto">
-          <button className="px-4 py-3 text-sm border-b-2 border-blue-500 whitespace-nowrap">Video</button>
-          <button className="px-4 py-3 text-sm whitespace-nowrap">Image</button>
-          <button className="px-4 py-3 text-sm whitespace-nowrap">Gif</button>
-          <button className="px-4 py-3 text-sm whitespace-nowrap">Multi-Face</button>
         </div>
 
         {/* Main content area */}
-        <div className="flex-1 flex flex-col items-center pt-6 md:pt-10 pb-6 px-4">
-          <div className="mb-2">
-            <Image
-              src="/placeholder.svg?height=64&width=64&text=AI"
-              alt="Face swap icon"
-              width={64}
-              height={64}
-              className="h-12 w-12 md:h-16 md:w-16"
-            />
-          </div>
-          <h1 className="text-xl md:text-2xl font-bold mb-1">AI Face Swap</h1>
-          <div className="flex items-center text-xs md:text-sm text-gray-400 mb-6 md:mb-8">
-            <span>Supports video face swapping</span>
-            <Info className="w-4 h-4 ml-1" />
-          </div>
-
-          {/* Upload area */}
-          <div className="w-full max-w-[720px] h-[250px] md:h-[350px] lg:h-[450px] border border-dashed border-gray-600 rounded-md flex flex-col items-center justify-center bg-[#1a1d24]">
-            <div className="text-center text-gray-400 text-sm md:text-base px-4">
-              <p className="mb-1">Step 1: Select template for preview</p>
-              <p>Step 2: Add face on the right, then proceed</p>
+        <div className="flex-1 flex flex-col bg-[#1a1d24] p-6">
+          <div className="max-w-4xl mx-auto w-full">
+            {/* Mobile tabs */}
+            <div className="md:hidden flex overflow-x-auto mb-6 bg-[#2a2d34] rounded-lg">
+              {['video', 'image', 'gif', 'multi-face'].map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setSelectedTab(tab)}
+                  className={`px-4 py-3 text-sm font-medium whitespace-nowrap capitalize ${
+                    selectedTab === tab
+                      ? 'text-blue-500 border-b-2 border-blue-500'
+                      : 'text-gray-400'
+                  }`}
+                >
+                  {tab}
+                </button>
+              ))}
             </div>
-          </div>
 
-          {/* Mobile face selection - only visible on small screens */}
-          <div className="md:hidden mt-6 w-full">
-            <p className="text-sm mb-3">Select Face</p>
-            <div className="flex space-x-4">
-              <div className="w-12 h-12 bg-gray-700 rounded-full flex items-center justify-center">
-                <Plus className="w-6 h-6 text-gray-400" />
-              </div>
-              <div className="w-12 h-12 rounded-full overflow-hidden">
-                <Image
-                  src="/placeholder.svg?height=48&width=48&text=Face"
-                  alt="Face 1"
-                  width={48}
-                  height={48}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <div className="w-12 h-12 rounded-full overflow-hidden">
-                <Image
-                  src="/placeholder.svg?height=48&width=48&text=Face"
-                  alt="Face 2"
-                  width={48}
-                  height={48}
-                  className="w-full h-full object-cover"
-                />
+            {/* Upload area */}
+            <div className="aspect-video bg-[#2a2d34] rounded-lg border-2 border-dashed border-gray-600 flex flex-col items-center justify-center p-6">
+              <div className="text-center space-y-4">
+                <div className="w-16 h-16 mx-auto bg-gray-700 rounded-full flex items-center justify-center">
+                  <ArrowLeftRight className="w-8 h-8 text-blue-500" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-medium mb-2">AI Face Swap</h3>
+                  <p className="text-sm text-gray-400">Drag and drop or click to upload your video/image</p>
+                </div>
+                <button className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-full text-sm transition-colors">
+                  Upload File
+                </button>
               </div>
             </div>
-          </div>
 
-          {/* Create button */}
-          <div className="mt-auto w-full max-w-[720px]">
-            <button className="w-full py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-md transition">
-              Create
-            </button>
+            {/* Instructions */}
+            <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="bg-[#2a2d34] p-6 rounded-lg">
+                <div className="w-10 h-10 bg-blue-500 bg-opacity-20 rounded-full flex items-center justify-center mb-3">
+                  <span className="text-blue-500 font-medium">1</span>
+                </div>
+                <h4 className="font-medium mb-2">Upload Source</h4>
+                <p className="text-sm text-gray-400">Upload your video or image that you want to modify</p>
+              </div>
+              <div className="bg-[#2a2d34] p-6 rounded-lg">
+                <div className="w-10 h-10 bg-blue-500 bg-opacity-20 rounded-full flex items-center justify-center mb-3">
+                  <span className="text-blue-500 font-medium">2</span>
+                </div>
+                <h4 className="font-medium mb-2">Select Faces</h4>
+                <p className="text-sm text-gray-400">Choose the faces you want to swap in your content</p>
+              </div>
+              <div className="bg-[#2a2d34] p-6 rounded-lg">
+                <div className="w-10 h-10 bg-blue-500 bg-opacity-20 rounded-full flex items-center justify-center mb-3">
+                  <span className="text-blue-500 font-medium">3</span>
+                </div>
+                <h4 className="font-medium mb-2">Generate</h4>
+                <p className="text-sm text-gray-400">Click generate and wait for your face-swapped content</p>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Right sidebar - hidden on mobile, shown on md and up */}
-        <div className="hidden md:block md:w-[200px] lg:w-[250px] border-l border-gray-800 p-4">
-          <div className="flex justify-between items-center mb-4">
-            <button className="px-4 py-1 bg-blue-500 rounded-full text-sm">Swap</button>
-            <button className="text-sm text-gray-400">History</button>
+        {/* Right sidebar */}
+        <div className="hidden lg:flex flex-col w-[280px] border-l border-gray-800 bg-[#1a1d24] p-6">
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="font-medium">Face Selection</h3>
+            <button className="text-sm text-blue-500 hover:text-blue-400">History</button>
           </div>
 
-          <div className="mb-6">
-            <p className="text-sm mb-3">Process</p>
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-full overflow-hidden">
-                <Image
-                  src="/placeholder.svg?height=48&width=48&text=Source"
-                  alt="Source face"
-                  width={48}
-                  height={48}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <div className="h-[2px] flex-1 bg-gray-700 mx-2"></div>
-              <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-full overflow-hidden">
-                <Image
-                  src="/placeholder.svg?height=48&width=48&text=Target"
-                  alt="Target face"
-                  width={48}
-                  height={48}
-                  className="w-full h-full object-cover"
-                />
+          <div className="space-y-6">
+            {/* Source face */}
+            <div>
+              <p className="text-sm text-gray-400 mb-3">Source Face</p>
+              <div className="aspect-square w-full bg-[#2a2d34] rounded-lg flex items-center justify-center cursor-pointer hover:bg-[#3a3d44] transition-colors">
+                <Plus className="w-8 h-8 text-gray-400" />
               </div>
             </div>
-          </div>
 
-          <div>
-            <p className="text-sm mb-3">Select Face</p>
-            <div className="grid grid-cols-2 gap-2">
-              <div className="w-full aspect-square rounded-full flex items-center justify-center bg-gray-700">
-                <Plus className="w-6 h-6 text-gray-400" />
-              </div>
-              <div className="w-full aspect-square rounded-full overflow-hidden">
-                <Image
-                  src="/placeholder.svg?height=48&width=48&text=Face"
-                  alt="Face 1"
-                  width={48}
-                  height={48}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <div className="w-full aspect-square rounded-full overflow-hidden">
-                <Image
-                  src="/placeholder.svg?height=48&width=48&text=Face"
-                  alt="Face 2"
-                  width={48}
-                  height={48}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <div className="w-full aspect-square rounded-full overflow-hidden">
-                <Image
-                  src="/placeholder.svg?height=48&width=48&text=Face"
-                  alt="Face 3"
-                  width={48}
-                  height={48}
-                  className="w-full h-full object-cover"
-                />
+            {/* Target face */}
+            <div>
+              <p className="text-sm text-gray-400 mb-3">Target Face</p>
+              <div className="aspect-square w-full bg-[#2a2d34] rounded-lg flex items-center justify-center cursor-pointer hover:bg-[#3a3d44] transition-colors">
+                <Plus className="w-8 h-8 text-gray-400" />
               </div>
             </div>
+
+            <button disabled className="w-full bg-blue-500/50 text-white/50 py-3 rounded-lg cursor-not-allowed">
+              Select Faces to Start
+            </button>
           </div>
         </div>
       </div>

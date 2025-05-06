@@ -22,7 +22,7 @@ export const metadata = {
   description: "AI Face Swap Tool, Checkout Payment, CMS",
 }
 
-export default async function RootLayout({ children }) {
+export async function RootLayout2({ children }) {
   const session = await getServerSession(authOptions);
   const segment = children.props.childProp?.segment;
   const isAuthPage = segment === 'auth';
@@ -43,7 +43,7 @@ export default async function RootLayout({ children }) {
   );
 }
 
-export function RootLayout1({ children }) {
+export default async function RootLayout({ children }) {
 
   return (
     <html lang="en">
