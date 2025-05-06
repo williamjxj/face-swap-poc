@@ -1,0 +1,9 @@
+{
+  "compilerOptions": {
+    "baseUrl": "./src",  // 修改基础路径
+    "paths": {
+      "@/*": ["./*"]     // 简化路径映射
+    }
+  },
+  "exclude": ["node_modules"]
+}
