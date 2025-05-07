@@ -19,10 +19,44 @@ const POLLING_INTERVAL = 5000; // 5 seconds
 
 export async function POST(request) {
   try {
-    // Parse multipart form data from the request
-    const formData = await request.formData();
-    const sourceFile = formData.get('source');
-    const targetFile = formData.get('target');
+    let sourceFile, targetFile;
+    const contentType = request.headers.get('content-type');
+
+    if (contentType?.includes('application/json')) {
+      // Handle JSON request with file paths
+      const { source, target } = await request.json();
+      
+      // Read files from public directory
+      const publicDir = path.join(process.cwd(), 'public');
+      const sourcePath = path.join(publicDir, source);
+      const targetPath = path.join(publicDir, target);
+
+      // Validate file existence
+      if (!fs.existsSync(sourcePath) || !fs.existsSync(targetPath)) {
+        return NextResponse.json({
+          status: 'error',
+          message: 'Source or target file not found'
+        }, { status: 404 });
+      }
+
+      // Create file-like objects from the files
+      sourceFile = {
+        name: path.basename(source),
+        type: source.endsWith('.png') ? 'image/png' : 'image/jpeg',
+        arrayBuffer: async () => fs.promises.readFile(sourcePath)
+      };
+
+      targetFile = {
+        name: path.basename(target),
+        type: 'video/mp4',
+        arrayBuffer: async () => fs.promises.readFile(targetPath)
+      };
+    } else {
+      // Handle multipart form data
+      const formData = await request.formData();
+      sourceFile = formData.get('source');
+      targetFile = formData.get('target');
+    }
 
     // Validate inputs
     if (!sourceFile || !targetFile) {

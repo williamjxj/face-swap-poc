@@ -6,6 +6,10 @@ import { useState, useEffect } from "react"
 
 export default function FaceSwapPage() {
   const [selectedTab, setSelectedTab] = useState('video')
+  // Store just the paths as strings for form data
+  const [targetPath, setTargetPath] = useState(null)
+  const [sourcePath, setSourcePath] = useState(null)
+  // Keep preview states separate for UI
   const [selectedTarget, setSelectedTarget] = useState(null)
   const [selectedSource, setSelectedSource] = useState(null)
   const [processing, setProcessing] = useState(false)
@@ -125,9 +129,10 @@ export default function FaceSwapPage() {
 
   const handleTargetSelect = (target) => {
     setSelectedTarget(target)
+    setTargetPath(target.videoPath)
   }
 
-  const handleSourceFaceUpload = (e) => {
+  const handleSourceUpload = (e) => {
     const file = e.target.files?.[0];
     if (file) {
       const objectUrl = URL.createObjectURL(file);
@@ -136,28 +141,20 @@ export default function FaceSwapPage() {
         preview: objectUrl,
         name: file.name
       });
+      setSourcePath(file.name);
     }
   };
 
-  // Cleanup function to revoke object URLs when component unmounts or source face changes
-  useEffect(() => {
-    return () => {
-      if (selectedSource?.preview && typeof selectedSource.preview === 'string' && !selectedSource.preview.startsWith('/')) {
-        URL.revokeObjectURL(selectedSource.preview);
-      }
-    };
-  }, [selectedSource]);
-
-  const handleImageSourceSelect = (image) => {
+  const handleSourceSelect = (image) => {
     setSelectedSource({
       preview: image.imagePath,
       name: image.imagePath
     });
+    setSourcePath(image.imagePath);
   };
 
-
-  const handleFaceSwap = async () => {
-    if (!selectedSource || !selectedTarget) {
+  const handleSubmit = async () => {
+    if (!sourcePath || !targetPath) {
       return
     }
 
@@ -166,54 +163,27 @@ export default function FaceSwapPage() {
     setResult(null)
 
     try {
-      const formData = new FormData()
-      formData.append('source', selectedSource.name)
-      formData.append('target', selectedTarget.videoPath)
-
-      // Create task
-      const createRes = await fetch('/api/face-fusion', {
+      // Submit form data
+      const response = await fetch('/api/face-swap', {
         method: 'POST',
-        body: formData,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          source: sourcePath,
+          target: targetPath
+        })
       })
 
-      if (!createRes.ok) {
-        const error = await createRes.text()
-        throw new Error(`Create task failed: ${error}`)
+      if (!response.ok) {
+        const error = await response.text()
+        throw new Error(`Face swap failed: ${error}`)
       }
 
-      const { output_path } = await createRes.json()
-
-      // Poll task status
-      let attempts = 0
-      const maxAttempts = 20
-      let resultFile = null
-
-      while (attempts < maxAttempts && !resultFile) {
-        await new Promise(resolve => setTimeout(resolve, 5000))
-        
-        const queryRes = await fetch('/api/face-fusion/status/' + output_path)
-        setProgress(Math.min(100, (attempts / maxAttempts) * 100))
-
-        if (queryRes.ok) {
-          const data = await queryRes.json()
-          if (data.status === 'completed') {
-            resultFile = data.file
-            setResult(data)
-            break
-          }
-        } else if ([400, 404, 500].includes(queryRes.status)) {
-          const error = await queryRes.json()
-          throw new Error(`API Error: ${error.message}`)
-        }
-
-        attempts++
-      }
-
-      if (!resultFile) {
-        throw new Error('Processing timeout - task not completed within allowed time')
-      }
+      const result = await response.json()
+      setResult(result)
     } catch (error) {
-      console.error('Face fusion error:', error)
+      console.error('Face swap error:', error)
       setError(error.message)
     } finally {
       setProcessing(false)
@@ -230,7 +200,7 @@ export default function FaceSwapPage() {
             <div 
               key={video.id}
               className={`cursor-pointer border-2 ${selectedTarget?.id === video.id ? 'border-blue-500' : 'border-transparent'}`}
-              onClick={() => setSelectedTarget(video)}
+              onClick={handleTargetSelect.bind(null, video)}
             >
               <Image
                 src={video.thumbnail}
@@ -307,7 +277,7 @@ export default function FaceSwapPage() {
                 type="file"
                 className="hidden"
                 accept="image/*"
-                onChange={handleSourceFaceUpload}
+                onChange={handleSourceUpload}
               />
               <Plus className="w-6 h-6 text-gray-400" />
             </label>
@@ -319,7 +289,7 @@ export default function FaceSwapPage() {
                 className={`w-20 h-20 rounded-full overflow-hidden cursor-pointer border-2 ${
                   selectedSource?.name === image.imagePath ? 'border-blue-500' : 'border-transparent'
                 }`}
-                onClick={() => handleImageSourceSelect(image)}
+                onClick={() => handleSourceSelect(image)}
               >
                 <Image 
                   src={image.imagePath}
@@ -335,7 +305,7 @@ export default function FaceSwapPage() {
 
         {/* Generate Button */}
         <button
-          onClick={handleFaceSwap}
+          onClick={handleSubmit}
           disabled={!selectedSource || !selectedTarget || processing}
           className={`mt-4 py-2 px-4 rounded ${
             selectedSource && selectedTarget && !processing
@@ -343,7 +313,7 @@ export default function FaceSwapPage() {
               : 'bg-blue-500/50 text-white/50 cursor-not-allowed'
           }`}
         >
-          {processing ? 'Processing...' : 'Start Face Swap'}
+          {processing ? 'Processing...' : 'Generate'}
         </button>
 
         {processing && (
