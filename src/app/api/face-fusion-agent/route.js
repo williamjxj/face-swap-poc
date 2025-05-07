@@ -1,5 +1,3 @@
-// app/api/face-fusion/route.js
-
 import fs from 'fs';
 import path from 'path';
 import { pipeline } from 'stream';

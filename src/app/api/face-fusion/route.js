@@ -1,4 +1,3 @@
-// app/api/face-fusion/route.js
 import { NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
@@ -11,6 +10,13 @@ export const config = {
   }
 };
 
+const CREATE_API = process.env.MODAL_CREATE_API;
+const QUERY_API = process.env.MODAL_QUERY_API;
+
+if (!CREATE_API || !QUERY_API) {
+  throw new Error('API endpoints are not defined in environment variables');
+}
+
 export async function POST(request) {
   try {
     // Handle both initial task creation and status polling
@@ -18,7 +24,7 @@ export async function POST(request) {
       // This is a status polling request
       const { output_path } = await request.json();
       
-      const queryRes = await axios.post(process.env.MODAL_QUERY_API, 
+      const queryRes = await axios.post(CREATE_API, 
         { output_path }, 
         {
           responseType: 'arraybuffer',
@@ -76,7 +82,7 @@ export async function POST(request) {
     });
 
     const createRes = await axios.post(
-      process.env.MODAL_CREATE_API,
+      QUERY_API,
       apiForm,
       { headers: apiForm.getHeaders() }
     );
