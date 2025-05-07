@@ -6,6 +6,10 @@ import { useState } from "react"
 
 export default function FaceSwapPage() {
   const [selectedTab, setSelectedTab] = useState('video')
+  const [selectedTemplate, setSelectedTemplate] = useState(null)
+  const [sourceFace, setSourceFace] = useState(null)
+  const [targetFace, setTargetFace] = useState(null)
+
   const videoSources = [
     {
       src: '/videos/1.mp4',
@@ -45,7 +49,11 @@ export default function FaceSwapPage() {
             </div>
             
             {videoSources.map((video, index) => (
-              <div key={index} className="item-box cursor-pointer">
+              <div 
+                key={index} 
+                className={`item-box cursor-pointer ${selectedTemplate?.src === video.src ? 'ring-2 ring-blue-500' : ''}`}
+                onClick={() => handleTemplateSelect(video)}
+              >
                 <div className="duration">{video.duration}</div>
                 <video
                   src={video.src}
@@ -95,6 +103,46 @@ export default function FaceSwapPage() {
         return null;
     }
   };
+
+  const handleTemplateSelect = (template) => {
+    setSelectedTemplate(template)
+  }
+
+  const handleSourceFaceUpload = (e) => {
+    const file = e.target.files[0]
+    if (file) {
+      setSourceFace(file)
+    }
+  }
+
+  const handleTargetFaceUpload = (e) => {
+    const file = e.target.files[0]
+    if (file) {
+      setTargetFace(file)
+    }
+  }
+
+  const handleFaceSwap = async () => {
+    if (!sourceFace || !targetFace || !selectedTemplate) {
+      return
+    }
+
+    const formData = new FormData()
+    formData.append('source', sourceFace)
+    formData.append('target', targetFace)
+    formData.append('template', selectedTemplate.src)
+
+    try {
+      const response = await fetch('/api/face-swap', {
+        method: 'POST',
+        body: formData,
+      })
+      const data = await response.json()
+      // Handle response...
+    } catch (error) {
+      console.error('Face swap error:', error)
+    }
+  }
 
   return (
     <div className="flex flex-col min-h-screen bg-[#0e1117] text-white">
@@ -194,21 +242,57 @@ export default function FaceSwapPage() {
             {/* Source face */}
             <div>
               <p className="text-sm text-gray-400 mb-3">Source Face</p>
-              <div className="aspect-square w-full rounded-full bg-[#2a2d34] flex items-center justify-center cursor-pointer hover:bg-[#3a3d44] transition-colors">
-                <Plus className="w-8 h-8 text-gray-400" />
-              </div>
+              <label className="aspect-square w-full rounded-full bg-[#2a2d34] flex items-center justify-center cursor-pointer hover:bg-[#3a3d44] transition-colors">
+                {sourceFace ? (
+                  <img 
+                    src={URL.createObjectURL(sourceFace)} 
+                    alt="Source face" 
+                    className="w-full h-full object-cover rounded-full"
+                  />
+                ) : (
+                  <Plus className="w-8 h-8 text-gray-400" />
+                )}
+                <input 
+                  type="file" 
+                  className="hidden" 
+                  accept="image/*"
+                  onChange={handleSourceFaceUpload}
+                />
+              </label>
             </div>
 
             {/* Target face */}
             <div>
               <p className="text-sm text-gray-400 mb-3">Target Face</p>
-              <div className="aspect-square w-full rounded-full bg-[#2a2d34] flex items-center justify-center cursor-pointer hover:bg-[#3a3d44] transition-colors">
-                <Plus className="w-8 h-8 text-gray-400" />
-              </div>
+              <label className="aspect-square w-full rounded-full bg-[#2a2d34] flex items-center justify-center cursor-pointer hover:bg-[#3a3d44] transition-colors">
+                {targetFace ? (
+                  <img 
+                    src={URL.createObjectURL(targetFace)} 
+                    alt="Target face" 
+                    className="w-full h-full object-cover rounded-full"
+                  />
+                ) : (
+                  <Plus className="w-8 h-8 text-gray-400" />
+                )}
+                <input 
+                  type="file" 
+                  className="hidden" 
+                  accept="image/*"
+                  onChange={handleTargetFaceUpload}
+                />
+              </label>
             </div>
 
-            <button disabled className="w-full bg-blue-500/50 text-white/50 py-3 rounded-lg cursor-not-allowed">
-              Select Faces to Start
+            <button 
+              onClick={handleFaceSwap}
+              disabled={!sourceFace || !targetFace || !selectedTemplate}
+              className={`w-full py-3 rounded-lg ${
+                sourceFace && targetFace && selectedTemplate
+                  ? 'bg-blue-500 hover:bg-blue-600 text-white cursor-pointer'
+                  : 'bg-blue-500/50 text-white/50 cursor-not-allowed'
+              }`}
+            >
+              {sourceFace && targetFace && selectedTemplate ? 'Start Face Swap' : 'Select Faces to Start'}
             </button>
           </div>
         </div>
