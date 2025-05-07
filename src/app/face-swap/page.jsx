@@ -7,8 +7,7 @@ import { useState, useEffect } from "react"
 export default function FaceSwapPage() {
   const [selectedTab, setSelectedTab] = useState('video')
   const [selectedTarget, setSelectedTarget] = useState(null)
-  const [sourceFace, setSourceFace] = useState(null)
-  const [replacementFace, setReplacementFace] = useState(null)
+  const [selectedSource, setSelectedSource] = useState(null)
   const [processing, setProcessing] = useState(false)
   const [progress, setProgress] = useState(0)
   const [error, setError] = useState(null)
@@ -71,12 +70,12 @@ export default function FaceSwapPage() {
             {videoTargets.map((video, index) => (
               <div 
                 key={index} 
-                className={`item-box cursor-pointer ${selectedTarget?.src === video.src ? 'ring-2 ring-blue-500' : ''}`}
+                className={`item-box cursor-pointer ${selectedTarget?.id === video.id ? 'ring-2 ring-blue-500' : ''}`}
                 onClick={() => handleTargetSelect(video)}
               >
                 <div className="duration">{video.duration}</div>
                 <video
-                  src={video.src}
+                  src={video.videoPath}
                   className="material"
                   muted
                   loop
@@ -132,7 +131,7 @@ export default function FaceSwapPage() {
     const file = e.target.files?.[0];
     if (file) {
       const objectUrl = URL.createObjectURL(file);
-      setSourceFace({
+      setSelectedSource({
         file: file,
         preview: objectUrl,
         name: file.name
@@ -143,28 +142,22 @@ export default function FaceSwapPage() {
   // Cleanup function to revoke object URLs when component unmounts or source face changes
   useEffect(() => {
     return () => {
-      if (sourceFace?.preview && typeof sourceFace.preview === 'string' && !sourceFace.preview.startsWith('/')) {
-        URL.revokeObjectURL(sourceFace.preview);
+      if (selectedSource?.preview && typeof selectedSource.preview === 'string' && !selectedSource.preview.startsWith('/')) {
+        URL.revokeObjectURL(selectedSource.preview);
       }
     };
-  }, [sourceFace]);
+  }, [selectedSource]);
 
   const handleImageSourceSelect = (image) => {
-    setSourceFace({
+    setSelectedSource({
       preview: image.imagePath,
       name: image.imagePath
     });
   };
 
-  const handleReplacementFaceUpload = (e) => {
-    const file = e.target.files[0]
-    if (file) {
-      setReplacementFace(file)
-    }
-  }
 
   const handleFaceSwap = async () => {
-    if (!sourceFace || !replacementFace || !selectedTarget) {
+    if (!selectedSource || !selectedTarget) {
       return
     }
 
@@ -173,12 +166,9 @@ export default function FaceSwapPage() {
     setResult(null)
 
     try {
-      // Combine source and replacement into one image (simplified example)
-      const combinedFace = sourceFace // In real app, would merge faces
-
       const formData = new FormData()
-      formData.append('source', combinedFace)
-      formData.append('target', selectedTarget.src)
+      formData.append('source', selectedSource.name)
+      formData.append('target', selectedTarget.videoPath)
 
       // Create task
       const createRes = await fetch('/api/face-fusion', {
@@ -290,9 +280,9 @@ export default function FaceSwapPage() {
               )}
             </div>
             <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-gray-600">
-              {sourceFace ? (
+              {selectedSource ? (
                 <Image 
-                  src={sourceFace.preview || sourceFace.name}  // Use preview URL for uploaded files or image path for predefined sources
+                  src={selectedSource.preview || selectedSource.name}  // Use preview URL for uploaded files or image path for predefined sources
                   alt="Source face"
                   width={96}
                   height={96}
@@ -327,7 +317,7 @@ export default function FaceSwapPage() {
               <div 
                 key={image.id}
                 className={`w-20 h-20 rounded-full overflow-hidden cursor-pointer border-2 ${
-                  sourceFace?.name === image.imagePath ? 'border-blue-500' : 'border-transparent'
+                  selectedSource?.name === image.imagePath ? 'border-blue-500' : 'border-transparent'
                 }`}
                 onClick={() => handleImageSourceSelect(image)}
               >
@@ -346,9 +336,9 @@ export default function FaceSwapPage() {
         {/* Generate Button */}
         <button
           onClick={handleFaceSwap}
-          disabled={!sourceFace || !selectedTarget || processing}
+          disabled={!selectedSource || !selectedTarget || processing}
           className={`mt-4 py-2 px-4 rounded ${
-            sourceFace && selectedTarget && !processing
+            selectedSource && selectedTarget && !processing
               ? 'bg-blue-500 hover:bg-blue-600 text-white cursor-pointer'
               : 'bg-blue-500/50 text-white/50 cursor-not-allowed'
           }`}
