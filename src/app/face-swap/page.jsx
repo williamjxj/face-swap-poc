@@ -6,11 +6,11 @@ import { useState } from "react"
 
 export default function FaceSwapPage() {
   const [selectedTab, setSelectedTab] = useState('video')
-  const [selectedTemplate, setSelectedTemplate] = useState(null)
+  const [selectedTarget, setSelectedTarget] = useState(null)
   const [sourceFace, setSourceFace] = useState(null)
-  const [targetFace, setTargetFace] = useState(null)
+  const [replacementFace, setReplacementFace] = useState(null)
 
-  const videoSources = [
+  const videoTargets = [
     {
       src: '/videos/1.mp4',
       duration: '0:05',
@@ -48,11 +48,11 @@ export default function FaceSwapPage() {
               <span className="text-sm text-gray-400">Upload Video</span>
             </div>
             
-            {videoSources.map((video, index) => (
+            {videoTargets.map((video, index) => (
               <div 
                 key={index} 
-                className={`item-box cursor-pointer ${selectedTemplate?.src === video.src ? 'ring-2 ring-blue-500' : ''}`}
-                onClick={() => handleTemplateSelect(video)}
+                className={`item-box cursor-pointer ${selectedTarget?.src === video.src ? 'ring-2 ring-blue-500' : ''}`}
+                onClick={() => handleTargetSelect(video)}
               >
                 <div className="duration">{video.duration}</div>
                 <video
@@ -65,7 +65,7 @@ export default function FaceSwapPage() {
                 />
                 <div className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center">
                   <button className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-full text-sm">
-                    Use Template
+                    Use Video
                   </button>
                 </div>
               </div>
@@ -104,8 +104,8 @@ export default function FaceSwapPage() {
     }
   };
 
-  const handleTemplateSelect = (template) => {
-    setSelectedTemplate(template)
+  const handleTargetSelect = (target) => {
+    setSelectedTarget(target)
   }
 
   const handleSourceFaceUpload = (e) => {
@@ -115,22 +115,22 @@ export default function FaceSwapPage() {
     }
   }
 
-  const handleTargetFaceUpload = (e) => {
+  const handleReplacementFaceUpload = (e) => {
     const file = e.target.files[0]
     if (file) {
-      setTargetFace(file)
+      setReplacementFace(file)
     }
   }
 
   const handleFaceSwap = async () => {
-    if (!sourceFace || !targetFace || !selectedTemplate) {
+    if (!sourceFace || !replacementFace || !selectedTarget) {
       return
     }
 
     const formData = new FormData()
     formData.append('source', sourceFace)
-    formData.append('target', targetFace)
-    formData.append('template', selectedTemplate.src)
+    formData.append('replacement', replacementFace)
+    formData.append('target', selectedTarget.src)
 
     try {
       const response = await fetch('/api/face-swap', {
@@ -261,14 +261,14 @@ export default function FaceSwapPage() {
               </label>
             </div>
 
-            {/* Target face */}
+            {/* Replacement face */}
             <div>
-              <p className="text-sm text-gray-400 mb-3">Target Face</p>
+              <p className="text-sm text-gray-400 mb-3">Replacement Face</p>
               <label className="aspect-square w-full rounded-full bg-[#2a2d34] flex items-center justify-center cursor-pointer hover:bg-[#3a3d44] transition-colors">
-                {targetFace ? (
+                {replacementFace ? (
                   <img 
-                    src={URL.createObjectURL(targetFace)} 
-                    alt="Target face" 
+                    src={URL.createObjectURL(replacementFace)} 
+                    alt="Replacement face" 
                     className="w-full h-full object-cover rounded-full"
                   />
                 ) : (
@@ -278,21 +278,21 @@ export default function FaceSwapPage() {
                   type="file" 
                   className="hidden" 
                   accept="image/*"
-                  onChange={handleTargetFaceUpload}
+                  onChange={handleReplacementFaceUpload}
                 />
               </label>
             </div>
 
             <button 
               onClick={handleFaceSwap}
-              disabled={!sourceFace || !targetFace || !selectedTemplate}
+              disabled={!sourceFace || !replacementFace || !selectedTarget}
               className={`w-full py-3 rounded-lg ${
-                sourceFace && targetFace && selectedTemplate
+                sourceFace && replacementFace && selectedTarget
                   ? 'bg-blue-500 hover:bg-blue-600 text-white cursor-pointer'
                   : 'bg-blue-500/50 text-white/50 cursor-not-allowed'
               }`}
             >
-              {sourceFace && targetFace && selectedTemplate ? 'Start Face Swap' : 'Select Faces to Start'}
+              {sourceFace && replacementFace && selectedTarget ? 'Start Face Swap' : 'Select Faces to Start'}
             </button>
           </div>
         </div>
