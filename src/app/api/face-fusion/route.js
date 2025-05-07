@@ -3,87 +3,89 @@ import { NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
 import FormData from 'form-data';
+import axios from 'axios';
 
-export const runtime = 'nodejs'; // Required for filesystem access
+export const config = {
+  api: {
+    bodyParser: false
+  }
+};
 
-export async function POST() {
+export async function POST(request) {
   try {
-    // Step 1: Create Fusion Task
-    const assetsDir = path.join(process.cwd(), 'src', 'assets');
-    const sourcePath = path.join(assetsDir, 'image.png');
-    const targetPath = path.join(assetsDir, 'video.mp4');
-
-    // Prepare form data
-    const form = new FormData();
-    form.append('source', fs.createReadStream(sourcePath), { filename: 'image.png' });
-    form.append('target', fs.createReadStream(targetPath), { filename: 'video.mp4' });
-
-    // Create task request
-    const createRes = await fetch(process.env.MODAL_CREATE_API, {
-      method: 'POST',
-      body: form,
-      headers: form.getHeaders(),
-    });
-
-    if (!createRes.ok) {
-      const error = await createRes.text();
-      throw new Error(`Create task failed: ${error}`);
-    }
-
-    const { output_path } = await createRes.json();
-
-    // Step 2: Poll Task Status
-    let resultBuffer;
-    let attempts = 0;
-    const maxAttempts = 20; // 20 * 5s = 100s timeout
-
-    while (attempts < maxAttempts) {
-      await new Promise(resolve => setTimeout(resolve, 5000));
+    // Handle both initial task creation and status polling
+    if (request.headers.get('content-type')?.includes('application/json')) {
+      // This is a status polling request
+      const { output_path } = await request.json();
       
-      const queryRes = await fetch(process.env.MODAL_QUERY_API, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ output_path }),
-      });
+      const queryRes = await axios.post(process.env.MODAL_QUERY_API, 
+        { output_path }, 
+        {
+          responseType: 'arraybuffer',
+          validateStatus: () => true,
+          headers: { 'Content-Type': 'application/json' }
+        }
+      );
 
-      // Handle response
       if (queryRes.status === 200) {
-        const arrayBuffer = await queryRes.arrayBuffer();
-        resultBuffer = Buffer.from(arrayBuffer);
-        break;
+        const contentType = queryRes.headers['content-type'];
+        const ext = contentType.includes('mp4') ? 'mp4' : contentType.split('/')[1];
+        const filename = `result_${Date.now()}.${ext}`;
+        const savePath = path.join(process.cwd(), 'public', 'outputs', filename);
+
+        // Ensure directory exists
+        fs.mkdirSync(path.dirname(savePath), { recursive: true });
+        fs.writeFileSync(savePath, queryRes.data);
+
+        return NextResponse.json({
+          status: 'success',
+          message: 'Face fusion completed',
+          file: `/outputs/${filename}`
+        });
       }
 
       if ([400, 404, 500].includes(queryRes.status)) {
-        const error = await queryRes.json();
-        throw new Error(`API Error: ${error.message}`);
+        const error = Buffer.from(queryRes.data).toString();
+        return NextResponse.json({ error }, { status: queryRes.status });
       }
 
-      attempts++;
+      return NextResponse.json({ status: 'processing' });
     }
 
-    if (!resultBuffer) {
-      throw new Error('Processing timeout - task not completed within allowed time');
+    // This is an initial task creation request
+    const formData = await request.formData();
+    const source = formData.get('source');
+    const target = formData.get('target');
+
+    if (!source || !target) {
+      return NextResponse.json(
+        { error: 'Source and target files are required' },
+        { status: 400 }
+      );
     }
 
-    // Save result
-    const contentType = queryRes.headers.get('content-type');
-    const extension = contentType.includes('video') ? 'mp4' : 'png';
-    const filename = `result-${Date.now()}.${extension}`;
-    const outputPath = path.join(assetsDir, filename);
-
-    fs.writeFileSync(outputPath, resultBuffer);
-
-    return NextResponse.json({
-      success: true,
-      message: 'Face fusion completed',
-      file: filename,
-      path: outputPath.replace(process.cwd(), '')
+    // Create form data for the API
+    const apiForm = new FormData();
+    apiForm.append('source', Buffer.from(await source.arrayBuffer()), {
+      filename: source.name,
+      contentType: source.type
+    });
+    apiForm.append('target', Buffer.from(await target.arrayBuffer()), {
+      filename: target.name,
+      contentType: target.type
     });
 
+    const createRes = await axios.post(
+      process.env.MODAL_CREATE_API,
+      apiForm,
+      { headers: apiForm.getHeaders() }
+    );
+
+    return NextResponse.json(createRes.data);
   } catch (error) {
     console.error('Face fusion error:', error);
     return NextResponse.json(
-      { success: false, error: error.message },
+      { error: error.message },
       { status: 500 }
     );
   }

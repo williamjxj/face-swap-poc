@@ -2,42 +2,62 @@
 
 import Image from "next/image"
 import { Info, Plus, Menu, ArrowLeftRight } from "lucide-react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 
 export default function FaceSwapPage() {
   const [selectedTab, setSelectedTab] = useState('video')
   const [selectedTarget, setSelectedTarget] = useState(null)
   const [sourceFace, setSourceFace] = useState(null)
   const [replacementFace, setReplacementFace] = useState(null)
+  const [processing, setProcessing] = useState(false)
+  const [progress, setProgress] = useState(0)
+  const [error, setError] = useState(null)
+  const [result, setResult] = useState(null)
 
   const videoTargets = [
-    {
-      src: '/videos/1.mp4',
+    { 
+      id: 1, 
+      videoPath: '/videos/1.mp4', 
+      thumbnail: '/thumbnails/1_thumbnail.webp',
       duration: '0:05',
       author: 'demo'
     },
-    {
-      src: '/videos/2.mp4',
+    { 
+      id: 2, 
+      videoPath: '/videos/2.mp4', 
+      thumbnail: '/thumbnails/2_thumbnail.webp',
       duration: '0:05',
       author: 'demo'
     },
-    {
-      src: '/videos/3.mp4',
+    { 
+      id: 3, 
+      videoPath: '/videos/3.mp4', 
+      thumbnail: '/thumbnails/3_thumbnail.webp',
+      duration: '0:15',
+      author: 'demo'
+     },
+    { 
+      id: 4, 
+      videoPath: '/videos/4.mp4', 
+      thumbnail: '/thumbnails/4_thumbnail.webp',
       duration: '0:15',
       author: 'demo'
     },
-    {
-      src: '/videos/4.mp4',
-      duration: '0:15',
-      author: 'demo'
-    },
-    {
-      src: '/videos/5.mp4',
+    { 
+      id: 5, 
+      videoPath: '/videos/5.mp4', 
+      thumbnail: '/thumbnails/5_thumbnail.webp',
       duration: '0:15',
       author: 'demo'
     }
   ]
 
+  const ImageSources = [
+    { id: 1, imagePath: '/sources/1.png' },
+    { id: 2, imagePath: '/sources/2.png' }
+  ];
+  
+ 
   const renderTabContent = () => {
     switch (selectedTab) {
       case 'video':
@@ -109,11 +129,32 @@ export default function FaceSwapPage() {
   }
 
   const handleSourceFaceUpload = (e) => {
-    const file = e.target.files[0]
+    const file = e.target.files?.[0];
     if (file) {
-      setSourceFace(file)
+      const objectUrl = URL.createObjectURL(file);
+      setSourceFace({
+        file: file,
+        preview: objectUrl,
+        name: file.name
+      });
     }
-  }
+  };
+
+  // Cleanup function to revoke object URLs when component unmounts or source face changes
+  useEffect(() => {
+    return () => {
+      if (sourceFace?.preview && typeof sourceFace.preview === 'string' && !sourceFace.preview.startsWith('/')) {
+        URL.revokeObjectURL(sourceFace.preview);
+      }
+    };
+  }, [sourceFace]);
+
+  const handleImageSourceSelect = (image) => {
+    setSourceFace({
+      preview: image.imagePath,
+      name: image.imagePath
+    });
+  };
 
   const handleReplacementFaceUpload = (e) => {
     const file = e.target.files[0]
@@ -127,175 +168,214 @@ export default function FaceSwapPage() {
       return
     }
 
-    const formData = new FormData()
-    formData.append('source', sourceFace)
-    formData.append('replacement', replacementFace)
-    formData.append('target', selectedTarget.src)
+    setProcessing(true)
+    setError(null)
+    setResult(null)
 
     try {
-      const response = await fetch('/api/face-swap', {
+      // Combine source and replacement into one image (simplified example)
+      const combinedFace = sourceFace // In real app, would merge faces
+
+      const formData = new FormData()
+      formData.append('source', combinedFace)
+      formData.append('target', selectedTarget.src)
+
+      // Create task
+      const createRes = await fetch('/api/face-fusion', {
         method: 'POST',
         body: formData,
       })
-      const data = await response.json()
-      // Handle response...
+
+      if (!createRes.ok) {
+        const error = await createRes.text()
+        throw new Error(`Create task failed: ${error}`)
+      }
+
+      const { output_path } = await createRes.json()
+
+      // Poll task status
+      let attempts = 0
+      const maxAttempts = 20
+      let resultFile = null
+
+      while (attempts < maxAttempts && !resultFile) {
+        await new Promise(resolve => setTimeout(resolve, 5000))
+        
+        const queryRes = await fetch('/api/face-fusion/status/' + output_path)
+        setProgress(Math.min(100, (attempts / maxAttempts) * 100))
+
+        if (queryRes.ok) {
+          const data = await queryRes.json()
+          if (data.status === 'completed') {
+            resultFile = data.file
+            setResult(data)
+            break
+          }
+        } else if ([400, 404, 500].includes(queryRes.status)) {
+          const error = await queryRes.json()
+          throw new Error(`API Error: ${error.message}`)
+        }
+
+        attempts++
+      }
+
+      if (!resultFile) {
+        throw new Error('Processing timeout - task not completed within allowed time')
+      }
     } catch (error) {
-      console.error('Face swap error:', error)
+      console.error('Face fusion error:', error)
+      setError(error.message)
+    } finally {
+      setProcessing(false)
     }
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#0e1117] text-white">
-      <div className="flex-1 flex">
-        {/* Left sidebar */}
-        <div className="hidden md:flex flex-col w-[300px] border-r border-gray-800 bg-[#1a1d24]">
-          <div className="flex border-b border-gray-800">
-            {['video', 'image', 'gif', 'multi-face'].map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setSelectedTab(tab)}
-                className={`px-6 py-4 text-sm font-medium capitalize ${
-                  selectedTab === tab
-                    ? 'text-blue-500 border-b-2 border-blue-500'
-                    : 'text-gray-400 hover:text-gray-200'
+    <div className="flex h-screen p-4 gap-4 bg-[#0e1117] text-white">
+      {/* Left side - Video Templates */}
+      <div className="w-1/4 bg-[#1a1d24] p-4 rounded-lg">
+        <h2 className="text-lg font-bold mb-4">Video Templates</h2>
+        <div className="grid grid-cols-2 gap-2">
+          {videoTargets.map((video) => (
+            <div 
+              key={video.id}
+              className={`cursor-pointer border-2 ${selectedTarget?.id === video.id ? 'border-blue-500' : 'border-transparent'}`}
+              onClick={() => setSelectedTarget(video)}
+            >
+              <Image
+                src={video.thumbnail}
+                alt={`Video ${video.id}`}
+                width={116}
+                height={176}
+                className="w-full h-auto target-dimensions"
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Middle - Video Preview */}
+      <div className="flex-1 bg-[#1a1d24] flex items-center justify-center rounded-lg relative">
+        {selectedTarget ? (
+          <div className="relative w-full h-full flex items-center justify-center">
+            <video
+              src={selectedTarget.videoPath}
+              controls
+              className="max-w-full max-h-full object-contain rounded-lg"
+              style={{ maxHeight: "70vh" }}
+            />
+          </div>
+        ) : (
+          <div className="text-center p-6 bg-[#2a2d34] rounded-lg">
+            <p className="text-gray-400 mb-4">Select a video template to preview</p>
+          </div>
+        )}
+      </div>
+
+      {/* Right side - Face Selection */}
+      <div className="w-1/4 bg-[#1a1d24] p-4 rounded-lg flex flex-col">
+        {/* Face Swap Preview Section */}
+        <div className="mb-6">
+          <h2 className="text-lg font-bold mb-4">Face Selection</h2>
+          <div className="flex gap-4 justify-center">
+            <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-gray-600">
+              {selectedTarget && (
+                <Image
+                  src={selectedTarget.thumbnail}
+                  alt="Target"
+                  width={96}
+                  height={96}
+                  className="w-full h-full object-cover"
+                />
+              )}
+            </div>
+            <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-gray-600">
+              {sourceFace ? (
+                <Image 
+                  src={sourceFace.preview || sourceFace.name}  // Use preview URL for uploaded files or image path for predefined sources
+                  alt="Source face"
+                  width={96}
+                  height={96}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full bg-[#2a2d34] flex items-center justify-center">
+                  <Plus className="w-8 h-8 text-gray-400" />
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Source Images Section */}
+        <div className="flex-grow">
+          <h2 className="text-lg font-bold mb-4">Source Images</h2>
+          <div className="grid grid-cols-3 gap-2">
+            {/* Upload button */}
+            <label className="w-20 h-20 rounded-full border-2 border-dashed border-gray-600 flex items-center justify-center cursor-pointer hover:bg-[#2a2d34]">
+              <input
+                type="file"
+                className="hidden"
+                accept="image/*"
+                onChange={handleSourceFaceUpload}
+              />
+              <Plus className="w-6 h-6 text-gray-400" />
+            </label>
+            
+            {/* Source images */}
+            {ImageSources.map((image) => (
+              <div 
+                key={image.id}
+                className={`w-20 h-20 rounded-full overflow-hidden cursor-pointer border-2 ${
+                  sourceFace?.name === image.imagePath ? 'border-blue-500' : 'border-transparent'
                 }`}
+                onClick={() => handleImageSourceSelect(image)}
               >
-                {tab}
-              </button>
+                <Image 
+                  src={image.imagePath}
+                  alt={`Source ${image.id}`}
+                  width={80}
+                  height={80}
+                  className="w-full h-full object-cover"
+                />
+              </div>
             ))}
           </div>
-          
-          {renderTabContent()}
         </div>
 
-        {/* Main content area */}
-        <div className="flex-1 flex flex-col bg-[#1a1d24] p-6">
-          <div className="max-w-4xl mx-auto w-full">
-            {/* Mobile tabs */}
-            <div className="md:hidden flex overflow-x-auto mb-6 bg-[#2a2d34] rounded-lg">
-              {['video', 'image', 'gif', 'multi-face'].map((tab) => (
-                <button
-                  key={tab}
-                  onClick={() => setSelectedTab(tab)}
-                  className={`px-4 py-3 text-sm font-medium whitespace-nowrap capitalize ${
-                    selectedTab === tab
-                      ? 'text-blue-500 border-b-2 border-blue-500'
-                      : 'text-gray-400'
-                  }`}
-                >
-                  {tab}
-                </button>
-              ))}
-            </div>
+        {/* Generate Button */}
+        <button
+          onClick={handleFaceSwap}
+          disabled={!sourceFace || !selectedTarget || processing}
+          className={`mt-4 py-2 px-4 rounded ${
+            sourceFace && selectedTarget && !processing
+              ? 'bg-blue-500 hover:bg-blue-600 text-white cursor-pointer'
+              : 'bg-blue-500/50 text-white/50 cursor-not-allowed'
+          }`}
+        >
+          {processing ? 'Processing...' : 'Start Face Swap'}
+        </button>
 
-            {/* Upload area */}
-            <div className="aspect-video bg-[#2a2d34] rounded-lg border-2 border-dashed border-gray-600 flex flex-col items-center justify-center p-6">
-              <div className="text-center space-y-4">
-                <div className="w-16 h-16 mx-auto bg-gray-700 rounded-full flex items-center justify-center">
-                  <ArrowLeftRight className="w-8 h-8 text-blue-500" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-medium mb-2">AI Face Swap</h3>
-                  <p className="text-sm text-gray-400">Drag and drop or click to upload your video/image</p>
-                </div>
-                <button className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-full text-sm transition-colors">
-                  Upload File
-                </button>
-              </div>
-            </div>
-
-            {/* Instructions */}
-            <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="bg-[#2a2d34] p-6 rounded-lg">
-                <div className="w-10 h-10 bg-blue-500 bg-opacity-20 rounded-full flex items-center justify-center mb-3">
-                  <span className="text-blue-500 font-medium">1</span>
-                </div>
-                <h4 className="font-medium mb-2">Upload Source</h4>
-                <p className="text-sm text-gray-400">Upload your video or image that you want to modify</p>
-              </div>
-              <div className="bg-[#2a2d34] p-6 rounded-lg">
-                <div className="w-10 h-10 bg-blue-500 bg-opacity-20 rounded-full flex items-center justify-center mb-3">
-                  <span className="text-blue-500 font-medium">2</span>
-                </div>
-                <h4 className="font-medium mb-2">Select Faces</h4>
-                <p className="text-sm text-gray-400">Choose the faces you want to swap in your content</p>
-              </div>
-              <div className="bg-[#2a2d34] p-6 rounded-lg">
-                <div className="w-10 h-10 bg-blue-500 bg-opacity-20 rounded-full flex items-center justify-center mb-3">
-                  <span className="text-blue-500 font-medium">3</span>
-                </div>
-                <h4 className="font-medium mb-2">Generate</h4>
-                <p className="text-sm text-gray-400">Click generate and wait for your face-swapped content</p>
-              </div>
-            </div>
+        {processing && (
+          <div className="w-full bg-gray-700 rounded-full h-2.5 mt-4">
+            <div 
+              className="bg-blue-500 h-2.5 rounded-full" 
+              style={{ width: `${progress}%` }}
+            ></div>
           </div>
-        </div>
+        )}
 
-        {/* Right sidebar */}
-        <div className="hidden lg:flex flex-col w-[280px] border-l border-gray-800 bg-[#1a1d24] p-6">
-          <div className="flex justify-between items-center mb-6">
-            <h3 className="font-medium">Face Selection</h3>
-            <button className="text-sm text-blue-500 hover:text-blue-400">History</button>
+        {error && (
+          <div className="p-3 bg-red-500/10 text-red-500 text-sm rounded-lg mt-4">
+            Error: {error}
           </div>
+        )}
 
-          <div className="space-y-6">
-            {/* Source face */}
-            <div>
-              <p className="text-sm text-gray-400 mb-3">Source Face</p>
-              <label className="aspect-square w-full rounded-full bg-[#2a2d34] flex items-center justify-center cursor-pointer hover:bg-[#3a3d44] transition-colors">
-                {sourceFace ? (
-                  <img 
-                    src={URL.createObjectURL(sourceFace)} 
-                    alt="Source face" 
-                    className="w-full h-full object-cover rounded-full"
-                  />
-                ) : (
-                  <Plus className="w-8 h-8 text-gray-400" />
-                )}
-                <input 
-                  type="file" 
-                  className="hidden" 
-                  accept="image/*"
-                  onChange={handleSourceFaceUpload}
-                />
-              </label>
-            </div>
-
-            {/* Replacement face */}
-            <div>
-              <p className="text-sm text-gray-400 mb-3">Replacement Face</p>
-              <label className="aspect-square w-full rounded-full bg-[#2a2d34] flex items-center justify-center cursor-pointer hover:bg-[#3a3d44] transition-colors">
-                {replacementFace ? (
-                  <img 
-                    src={URL.createObjectURL(replacementFace)} 
-                    alt="Replacement face" 
-                    className="w-full h-full object-cover rounded-full"
-                  />
-                ) : (
-                  <Plus className="w-8 h-8 text-gray-400" />
-                )}
-                <input 
-                  type="file" 
-                  className="hidden" 
-                  accept="image/*"
-                  onChange={handleReplacementFaceUpload}
-                />
-              </label>
-            </div>
-
-            <button 
-              onClick={handleFaceSwap}
-              disabled={!sourceFace || !replacementFace || !selectedTarget}
-              className={`w-full py-3 rounded-lg ${
-                sourceFace && replacementFace && selectedTarget
-                  ? 'bg-blue-500 hover:bg-blue-600 text-white cursor-pointer'
-                  : 'bg-blue-500/50 text-white/50 cursor-not-allowed'
-              }`}
-            >
-              {sourceFace && replacementFace && selectedTarget ? 'Start Face Swap' : 'Select Faces to Start'}
-            </button>
+        {result && (
+          <div className="p-3 bg-green-500/10 text-green-500 text-sm rounded-lg mt-4">
+            Success! Result saved as {result.file}
           </div>
-        </div>
+        )}
       </div>
     </div>
   )
