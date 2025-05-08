@@ -172,3 +172,7 @@ The application uses NextAuth.js with the following providers:
 点击 Checkout 发起支付流程
 3. 测试支付：卡号输入 4242 4242 4242 4242，Expiry date 输入任意未来的 MM/YY，cvc 输入任意三位数字
 4. 完成支付后跳转回 Success page，可以下载图片
+
+### CSS
+
+`bg-gradient-to-r from-blue-400 to-purple-500 rounded-full shadow-lg`

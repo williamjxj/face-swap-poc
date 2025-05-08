@@ -4,7 +4,7 @@ import Image from "next/image"
 import { Info, Plus, Menu, ArrowLeftRight, X } from "lucide-react"
 import { useState, useEffect } from "react"
 import VideoModal from "../../components/VideoModal"
-import PhotoGuidelinesModal from "../../components/PhotoGuidelinesModal"
+import GuidelineModal from "../../components/GuidelineModal"
 import styles from './page.module.css'
 
 export default function FaceSwapPage() {
@@ -369,7 +369,7 @@ export default function FaceSwapPage() {
       {/* Middle - Video Preview */}
       <div className="flex-1 bg-[#1a1d24] flex flex-col items-center rounded-lg relative p-6 pt-2 pb-2">
         <div className="flex flex-col items-center justify-center space-y-0">
-          <div className="w-20 h-20 relative">
+          <div className="w-16 h-16 relative">
             <Image
               src={'/face.webp'}
               alt="Face Changing"
@@ -425,6 +425,12 @@ export default function FaceSwapPage() {
               }`}
             >
               Face Swap
+              <span className="text-gray-400 ml-0">
+                <Info 
+                className="inline-block ml-1 w-4 h-4 text-gray-400 cursor-pointer hover:text-gray-300" 
+                onClick={() => setIsModalOpen(true)} 
+              />
+              </span>
             </button>
             <button
               onClick={() => setRightSideTab('history')}
@@ -596,7 +602,7 @@ export default function FaceSwapPage() {
       )}
 
       {isModalOpen && (
-        <PhotoGuidelinesModal 
+        <GuidelineModal 
           isOpen={isModalOpen} 
           onClose={() => setIsModalOpen(false)} 
         />
