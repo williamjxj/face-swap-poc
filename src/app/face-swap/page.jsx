@@ -365,19 +365,43 @@ export default function FaceSwapPage() {
       </div>
 
       {/* Middle - Video Preview */}
-      <div className="flex-1 bg-[#1a1d24] flex items-center justify-center rounded-lg relative">
+      <div className="flex-1 bg-[#1a1d24] flex flex-col items-center rounded-lg relative p-6">
+        <div className="flex flex-col items-center justify-center space-y-4 mb-8">
+          <div className="w-20 h-20 relative">
+            <Image
+              src={'/face.webp'}
+              alt="Face Changing"
+              fill
+              className="object-contain"
+              priority
+            />
+          </div>
+          <h2 className="text-2xl font-semibold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+            AI Face Swap
+          </h2>
+          <div className="text-gray-400 text-center">
+            <span className="text-sm">Support video for face swapping</span>
+          </div>
+        </div>
+
         {selectedTarget ? (
-          <div className="relative w-full h-full flex items-center justify-center">
+          <div className="w-full h-full flex items-center justify-center bg-[#2b2c32] rounded-xl p-4">
             <video
               src={selectedTarget.videoPath}
               controls
-              className="max-w-full max-h-full object-contain rounded-lg"
-              style={{ maxHeight: "70vh" }}
+              className="max-w-full max-h-full object-contain rounded-lg shadow-lg"
+              style={{ maxHeight: "65vh" }}
             />
           </div>
         ) : (
-          <div className="text-center p-6 bg-[#2a2d34] rounded-lg">
-            <p className="text-gray-400 mb-4">Select a video template to preview</p>
+          <div className="flex items-center justify-center h-full w-full">
+            <div className="text-center p-12 bg-[#2b2c32] rounded-xl w-[90%] max-w-[600px] space-y-6">
+              <div className="flex flex-col items-center space-y-4">
+                <ArrowLeftRight className="w-12 h-12 text-blue-500 mb-2" />
+                <p className="text-xl text-gray-300 font-medium">Step 1: Select a template to preview</p>
+                <p className="text-xl text-gray-300 font-medium">Step 2: Add a face from the right panel, then generate</p>
+              </div>
+            </div>
           </div>
         )}
       </div>
