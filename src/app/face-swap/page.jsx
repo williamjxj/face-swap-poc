@@ -4,6 +4,7 @@ import Image from "next/image"
 import { Info, Plus, Menu, ArrowLeftRight } from "lucide-react"
 import { useState, useEffect } from "react"
 import VideoModal from "../../components/VideoModal"
+import styles from './face-swap.module.css'
 
 export default function FaceSwapPage() {
   const [selectedTab, setSelectedTab] = useState('video')
@@ -141,16 +142,36 @@ export default function FaceSwapPage() {
     setTargetPath(target.videoPath)
   }
 
-  const handleSourceUpload = (e) => {
+  const handleSourceUpload = async (e) => {
     const file = e.target.files?.[0];
     if (file) {
-      const objectUrl = URL.createObjectURL(file);
-      setSelectedSource({
-        file: file,
-        preview: objectUrl,
-        name: file.name
-      });
-      setSourcePath(file.name);
+      try {
+        // Create form data
+        const formData = new FormData();
+        formData.append('file', file);
+
+        // Upload file to server
+        const response = await fetch('/api/upload-source', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!response.ok) {
+          throw new Error('Upload failed');
+        }
+
+        const data = await response.json();
+        const sourcePath = `/sources/${data.filename}`;
+        
+        setSelectedSource({
+          preview: sourcePath,
+          name: sourcePath
+        });
+        setSourcePath(sourcePath);
+      } catch (error) {
+        console.error('Error uploading file:', error);
+        setError('Failed to upload image');
+      }
     }
   };
 
@@ -340,7 +361,7 @@ export default function FaceSwapPage() {
               {/* Face Swap Content */}
               <div className="mb-6">
                 <h2 className="text-lg font-bold mb-4">Face Selection</h2>
-                <div className="flex gap-4 justify-center">
+                <div className="flex gap-4 justify-center relative">
                   <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-gray-600">
                     {selectedTarget && (
                       <Image
@@ -352,10 +373,11 @@ export default function FaceSwapPage() {
                       />
                     )}
                   </div>
+                  <div className={styles.connecting_line}></div>
                   <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-gray-600">
                     {selectedSource ? (
                       <Image 
-                        src={selectedSource.preview || selectedSource.name}  // Use preview URL for uploaded files or image path for predefined sources
+                        src={selectedSource.preview}
                         alt="Source face"
                         width={96}
                         height={96}

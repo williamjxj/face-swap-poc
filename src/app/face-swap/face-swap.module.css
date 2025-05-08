@@ -1,0 +1,11 @@
+.connecting_line::after {
+  background: linear-gradient(90deg, rgba(226, 233, 247, 0), #dce5f7);
+  content: "";
+  height: 2px;
+  left: 50%;
+  position: absolute;
+  right: 50%;
+  transform: translate(-50%, -50%);
+  width: 24px;
+  top: 50%;
+}

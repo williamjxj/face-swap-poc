@@ -42,3 +42,4 @@ yarn-error.log*
 next-env.d.ts
 src/assets1
 public/outputs1
+.vscode/

@@ -56,9 +56,9 @@ export default function VideoModal({ video, onClose, onDownload, onDelete }) {
       >
         <button
           onClick={onClose}
-          className="absolute top-2 right-2 p-1 hover:bg-gray-700 rounded-full"
+          className="absolute top-2 right-2 p-2 hover:bg-gray-700/80 rounded-full cursor-pointer transition-all duration-200 hover:scale-110 flex items-center justify-center"
         >
-          <X className="w-5 h-5" />
+          <X className="w-6 h-6 pointer-events-none" />
         </button>
         
         <video
@@ -71,21 +71,21 @@ export default function VideoModal({ video, onClose, onDownload, onDelete }) {
         <div className="flex justify-end gap-2">
           <button
             onClick={handleCheckout}
-            className="flex items-center gap-2 px-3 py-2 bg-green-500 hover:bg-green-600 rounded-md"
+            className="flex items-center gap-2 px-3 py-2 bg-green-500 hover:bg-green-600 rounded-md cursor-pointer"
           >
             <CreditCard className="w-4 h-4" />
             Checkout
           </button>
           <button
             onClick={onDownload}
-            className="flex items-center gap-2 px-3 py-2 bg-blue-500 hover:bg-blue-600 rounded-md"
+            className="flex items-center gap-2 px-3 py-2 bg-blue-500 hover:bg-blue-600 rounded-md cursor-pointer"
           >
             <Download className="w-4 h-4" />
             Download
           </button>
           <button
             onClick={onDelete}
-            className="flex items-center gap-2 px-3 py-2 bg-red-500 hover:bg-red-600 rounded-md"
+            className="flex items-center gap-2 px-3 py-2 bg-red-500 hover:bg-red-600 rounded-md cursor-pointer"
           >
             <Trash2 className="w-4 h-4" />
             Delete
