@@ -32,7 +32,7 @@ export default function Navigator() {
         pathname === item.href ? (
           <span 
             key={item.href}
-            className="text-black bg-gray-100 rounded-md p-2 flex items-center gap-2 cursor-default"
+            className="bg-blue-500 text-white rounded-lg p-2 flex items-center gap-2 cursor-default"
           >
             {item.icon} {item.label}
           </span>
@@ -40,7 +40,7 @@ export default function Navigator() {
           <Link 
             key={item.href}
             href={item.href} 
-            className="text-gray-600 hover:text-black hover:bg-gray-100 rounded-md p-2 flex items-center gap-2"
+            className="text-gray-400 hover:bg-[#2a2d34] rounded-lg p-2 flex items-center gap-2"
           >
             {item.icon} {item.label}
           </Link>
@@ -50,7 +50,7 @@ export default function Navigator() {
       <button 
         onClick={handleLogout}
         disabled={isLoggingOut}
-        className="text-gray-600 hover:text-black disabled:opacity-50 cursor-pointer flex items-center gap-1"
+        className="text-gray-400 hover:text-white hover:bg-[#2a2d34] disabled:opacity-50 cursor-pointer flex items-center gap-2 rounded-lg p-2"
       >
         {isLoggingOut ? 'Logging out...' : (
           <>
