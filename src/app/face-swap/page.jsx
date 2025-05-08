@@ -1,7 +1,7 @@
 'use client'
 
 import Image from "next/image"
-import { Info, Plus, Menu, ArrowLeftRight } from "lucide-react"
+import { Info, Plus, Menu, ArrowLeftRight, X } from "lucide-react"
 import { useState, useEffect } from "react"
 import VideoModal from "../../components/VideoModal"
 import styles from './page.module.css'
@@ -105,11 +105,14 @@ export default function FaceSwapPage() {
         const data = await response.json()
 
         if (data.files) {
-          const sources = data.files.map(file => ({
-            id: file.id,
-            name: file.name,
-            imagePath: file.imagePath,
-          }))
+          const sources = data.files
+            .map(file => ({
+              id: file.id,
+              name: file.name,
+              imagePath: file.imagePath,
+              createdAt: file.createdAt || 0
+            }))
+            .sort((a, b) => b.createdAt - a.createdAt) // Sort by creation time descending
           setImageSources(sources)
         }
       } catch (error) {
@@ -194,11 +197,9 @@ export default function FaceSwapPage() {
     const file = e.target.files?.[0];
     if (file) {
       try {
-        // Create form data
         const formData = new FormData();
         formData.append('file', file);
 
-        // Upload file to server
         const response = await fetch('/api/upload-source', {
           method: 'POST',
           body: formData,
@@ -211,11 +212,23 @@ export default function FaceSwapPage() {
         const data = await response.json();
         const sourcePath = `/sources/${data.filename}`;
         
-        setSelectedSource({
+        // Update both selected source and source path
+        const newSource = {
           preview: sourcePath,
-          name: sourcePath
-        });
+          name: data.filename
+        };
+        setSelectedSource(newSource);
         setSourcePath(sourcePath);
+
+        // Add the new image to the beginning of imageSources
+        const newImage = {
+          id: Date.now(), // Use timestamp as temporary id
+          name: data.filename,
+          imagePath: sourcePath,
+          createdAt: Date.now()
+        };
+        
+        setImageSources(prev => [newImage, ...prev]);
       } catch (error) {
         console.error('Error uploading file:', error);
         setError('Failed to upload image');
@@ -299,6 +312,28 @@ export default function FaceSwapPage() {
     }
   }
 
+  const handleSourceDelete = async (image, e) => {
+    e.stopPropagation() // Prevent triggering image selection
+    try {
+      const response = await fetch('/api/delete-source', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ filename: image.name })
+      })
+
+      if (response.ok) {
+        // Remove from imageSources array
+        setImageSources(sources => sources.filter(src => src.name !== image.name))
+        // Clear selection if deleted image was selected
+        if (selectedSource?.name === image.name) {
+          setSelectedSource(null)
+          setSourcePath(null)
+        }
+      }
+    } catch (error) {
+      console.error('Error deleting source image:', error)
+    }
+  }
 
   return (
     <div className="flex h-screen p-4 gap-4 bg-[#0e1117] text-white">
@@ -432,18 +467,28 @@ export default function FaceSwapPage() {
                   {imageSources.map((image) => (
                     <div 
                       key={image.id}
-                      className={`w-20 h-20 rounded-full overflow-hidden cursor-pointer border-2 ${
-                        selectedSource?.name === image.name ? 'border-blue-500' : 'border-transparent'
-                      }`}
-                      onClick={() => handleSourceSelect(image)}
+                      className="relative"
                     >
-                      <Image 
-                        src={image.imagePath}
-                        alt={`Source ${image.id}`}
-                        width={80}
-                        height={80}
-                        className="w-full h-full object-cover"
-                      />
+                      <div
+                        className={`w-20 h-20 rounded-full overflow-hidden cursor-pointer border-2 ${
+                          selectedSource?.name === image.name ? 'border-blue-500' : 'border-transparent'
+                        }`}
+                        onClick={() => handleSourceSelect(image)}
+                      >
+                        <Image 
+                          src={image.imagePath}
+                          alt={`Source ${image.id}`}
+                          width={80}
+                          height={80}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <button
+                        onClick={(e) => handleSourceDelete(image, e)}
+                        className="absolute -top-1 -right-1 w-5 h-5 bg-gray-600 rounded-full flex items-center justify-center hover:bg-gray-700 transition-colors"
+                      >
+                        <X className="w-3 h-3 text-white" />
+                      </button>
                     </div>
                   ))}
                 </div>
