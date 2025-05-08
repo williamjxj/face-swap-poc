@@ -1,5 +1,5 @@
 'use client'
-import { X, Download, Trash2 } from 'lucide-react'
+import { X, Download, Trash2, CreditCard } from 'lucide-react'
 import { useCallback } from 'react'
 
 export default function VideoModal({ video, onClose, onDownload, onDelete }) {
@@ -12,6 +12,31 @@ export default function VideoModal({ video, onClose, onDownload, onDelete }) {
   const handleModalClick = useCallback((e) => {
     e.stopPropagation()
   }, [])
+
+  
+  const handleCheckout = async () => {
+    try {
+      const response = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ videoId: video.name })
+      })
+      
+      if (!response.ok) {
+        throw new Error('Checkout failed')
+      }
+      
+      const data = await response.json()
+      // Redirect to checkout URL if provided
+      if (data.url) {
+        window.location.href = data.url
+      }
+    } catch (error) {
+      console.error('Checkout error:', error)
+    }
+  }
 
   return (
     <div 
@@ -37,6 +62,13 @@ export default function VideoModal({ video, onClose, onDownload, onDelete }) {
         />
         
         <div className="flex justify-end gap-2">
+          <button
+            onClick={handleCheckout}
+            className="flex items-center gap-2 px-3 py-2 bg-green-500 hover:bg-green-600 rounded-md"
+          >
+            <CreditCard className="w-4 h-4" />
+            Checkout
+          </button>
           <button
             onClick={onDownload}
             className="flex items-center gap-2 px-3 py-2 bg-blue-500 hover:bg-blue-600 rounded-md"

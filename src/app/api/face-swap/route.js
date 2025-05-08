@@ -72,7 +72,7 @@ export async function POST(request) {
     console.log('Fusion task created successfully, output path:', outputPath);
     
     // Step 2: Poll QUERY_API to check task status
-    const result = await pollTaskStatus(outputPath);
+    const result = await pollTaskStatus(outputPath, sourceFile.name);
     
     // Step 3: Return the result
     return result;
@@ -133,7 +133,7 @@ async function createFusionTask(sourceFile, targetFile) {
 /**
  * Poll the task status until it completes or fails
  */
-async function pollTaskStatus(outputPath) {
+async function pollTaskStatus(outputPath, sourceFileName) {
   let retryCount = 0;
   
   while (retryCount < MAX_RETRIES) {
@@ -182,7 +182,8 @@ async function pollTaskStatus(outputPath) {
         if (response.status === 200) {
           // Determine the file extension from content-type
           const fileExtension = getFileExtensionFromContentType(response.headers.get('content-type'));
-          const fileName = `result_${Date.now()}${fileExtension}`;
+          const name = sourceFileName.split('.')[0];
+          const fileName = `${name}_${Date.now()}${fileExtension}`;
           const filePath = path.join(process.cwd(), 'public', 'outputs', fileName);
           
           // Ensure the output directory exists

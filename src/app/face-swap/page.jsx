@@ -82,8 +82,16 @@ export default function FaceSwapPage() {
                 <div 
                   key={video.id}
                   className={`cursor-pointer border-2 relative ${selectedTarget?.id === video.id ? 'border-blue-500' : 'border-transparent'}`}
+                  style={{
+                    background: '#2b2c32',
+                    "border-radius": '12px',
+                    cursor: 'pointer',
+                  }}
                   onClick={handleTargetSelect.bind(null, video)}
                 >
+                  <div className="absolute top-2 left-2 bg-black/60 px-2 py-0.5 rounded-full text-xs text-white z-10">
+                    {video.duration}
+                  </div>
                   <Image
                     src={video.thumbnail}
                     alt={`Video ${video.id}`}
@@ -183,6 +191,7 @@ export default function FaceSwapPage() {
 
       const result = await response.json()
       setResult(result)
+      setRightSideTab('history') // Switch to history tab after successful generation
     } catch (error) {
       console.error('Face swap error:', error)
       setError(error.message)
@@ -444,6 +453,10 @@ export default function FaceSwapPage() {
                     <video
                       src={video.url}
                       className="w-full rounded-lg mb-2"
+                      autoPlay
+                      loop
+                      muted
+                      style={{ "border-radius": "8px", objectFit: "cover" }}
                     />
                     <div className="text-sm text-gray-400">
                       Generated: {new Date(video.createdAt).toLocaleString()}
