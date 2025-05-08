@@ -4,7 +4,7 @@ import Image from "next/image"
 import { Info, Plus, Menu, ArrowLeftRight } from "lucide-react"
 import { useState, useEffect } from "react"
 import VideoModal from "../../components/VideoModal"
-import styles from './face-swap.module.css'
+import styles from './page.module.css'
 
 export default function FaceSwapPage() {
   const [selectedTab, setSelectedTab] = useState('video')
@@ -21,6 +21,7 @@ export default function FaceSwapPage() {
   const [result, setResult] = useState(null)
   const [selectedVideo, setSelectedVideo] = useState(null)
   const [generatedVideos, setGeneratedVideos] = useState([])
+  const [imageSources, setImageSources] = useState([])
 
   const videoTargets = [
     { 
@@ -60,18 +61,65 @@ export default function FaceSwapPage() {
     }
   ]
 
-  const ImageSources = [
-    { id: 1, imagePath: '/sources/1.png' },
-    { id: 2, imagePath: '/sources/2.png' },
-    { id: 3, imagePath: '/sources/3.png' },
-  ];
-  
   const tabOptions = [
     { id: 'video', label: 'Video' },
     { id: 'image', label: 'Image' },
     { id: 'gif', label: 'GIF' },
     { id: 'multi-face', label: 'Multi-face' }
   ]
+
+
+  // Load generated videos when component mounts
+  useEffect(() => {
+    const loadGeneratedVideos = async () => {
+      try {
+        // List files in the outputs directory
+        const response = await fetch('/api/list-outputs')
+        const data = await response.json()
+        
+        if (data.files) {
+          // Sort by creation time descending
+          const sortedVideos = data.files
+            .map(file => ({
+              url: `/outputs/${file.name}`,
+              name: file.name,
+              createdAt: file.createdAt
+            }))
+            .sort((a, b) => b.createdAt - a.createdAt)
+            
+          setGeneratedVideos(sortedVideos)
+        }
+      } catch (error) {
+        console.error('Error loading generated videos:', error)
+      }
+    }
+
+    loadGeneratedVideos()
+  }, [result]) // Reload when new video is generated
+
+   // Load image sources from API
+   useEffect(() => {
+    const loadImageSources = async () => {
+      try {
+        const response = await fetch('/api/list-sources')
+        const data = await response.json()
+
+        if (data.files) {
+          const sources = data.files.map(file => ({
+            id: file.id,
+            name: file.name,
+            imagePath: file.imagePath,
+          }))
+          setImageSources(sources)
+        }
+      } catch (error) {
+        console.error('Error loading image sources:', error)
+      }
+    }
+
+    loadImageSources()
+  }, [])
+
 
   const renderTabContent = () => {
     switch (selectedTab) {
@@ -178,7 +226,7 @@ export default function FaceSwapPage() {
   const handleSourceSelect = (image) => {
     setSelectedSource({
       preview: image.imagePath,
-      name: image.imagePath
+      name: image.name
     });
     setSourcePath(image.imagePath);
   };
@@ -210,8 +258,8 @@ export default function FaceSwapPage() {
         throw new Error(`Face swap failed: ${error}`)
       }
 
-      const result = await response.json()
-      setResult(result)
+      const generatedVideo = await response.json()
+      setResult(generatedVideo)
       setRightSideTab('history') // Switch to history tab after successful generation
     } catch (error) {
       console.error('Face swap error:', error)
@@ -220,34 +268,6 @@ export default function FaceSwapPage() {
       setProcessing(false)
     }
   }
-
-  // Load generated videos when component mounts
-  useEffect(() => {
-    const loadGeneratedVideos = async () => {
-      try {
-        // List files in the outputs directory
-        const response = await fetch('/api/list-outputs')
-        const data = await response.json()
-        
-        if (data.files) {
-          // Sort by creation time descending
-          const sortedVideos = data.files
-            .map(file => ({
-              url: `/outputs/${file.name}`,
-              name: file.name,
-              createdAt: file.createdAt
-            }))
-            .sort((a, b) => b.createdAt - a.createdAt)
-            
-          setGeneratedVideos(sortedVideos)
-        }
-      } catch (error) {
-        console.error('Error loading generated videos:', error)
-      }
-    }
-
-    loadGeneratedVideos()
-  }, [result]) // Reload when new video is generated
 
   const handleVideoClick = (video) => {
     setSelectedVideo(video)
@@ -278,6 +298,7 @@ export default function FaceSwapPage() {
       console.error('Error deleting video:', error)
     }
   }
+
 
   return (
     <div className="flex h-screen p-4 gap-4 bg-[#0e1117] text-white">
@@ -408,11 +429,11 @@ export default function FaceSwapPage() {
                   </label>
                   
                   {/* Source images */}
-                  {ImageSources.map((image) => (
+                  {imageSources.map((image) => (
                     <div 
                       key={image.id}
                       className={`w-20 h-20 rounded-full overflow-hidden cursor-pointer border-2 ${
-                        selectedSource?.name === image.imagePath ? 'border-blue-500' : 'border-transparent'
+                        selectedSource?.name === image.name ? 'border-blue-500' : 'border-transparent'
                       }`}
                       onClick={() => handleSourceSelect(image)}
                     >
@@ -481,7 +502,7 @@ export default function FaceSwapPage() {
                       style={{ "border-radius": "8px", objectFit: "cover" }}
                     />
                     <div className="text-sm text-gray-400">
-                      Generated: {new Date(video.createdAt).toLocaleString()}
+                      {video.name}: {new Date(video.createdAt).toLocaleString()}
                     </div>
                   </div>
                 ))}
