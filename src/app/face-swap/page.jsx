@@ -4,6 +4,7 @@ import Image from "next/image"
 import { Info, Plus, Menu, ArrowLeftRight, X } from "lucide-react"
 import { useState, useEffect } from "react"
 import VideoModal from "../../components/VideoModal"
+import PhotoGuidelinesModal from "../../components/PhotoGuidelinesModal"
 import styles from './page.module.css'
 
 export default function FaceSwapPage() {
@@ -20,6 +21,7 @@ export default function FaceSwapPage() {
   const [error, setError] = useState(null)
   const [result, setResult] = useState(null)
   const [selectedVideo, setSelectedVideo] = useState(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
   const [generatedVideos, setGeneratedVideos] = useState([])
   const [imageSources, setImageSources] = useState([])
 
@@ -590,6 +592,13 @@ export default function FaceSwapPage() {
           onClose={() => setSelectedVideo(null)}
           onDownload={() => handleDownload(selectedVideo)}
           onDelete={() => handleDelete(selectedVideo)}
+        />
+      )}
+
+      {isModalOpen && (
+        <PhotoGuidelinesModal 
+          isOpen={isModalOpen} 
+          onClose={() => setIsModalOpen(false)} 
         />
       )}
     </div>
