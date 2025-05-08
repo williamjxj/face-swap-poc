@@ -68,6 +68,8 @@ export async function POST(request) {
 
     // Step 1: Call CREATE_API to initiate face fusion task
     const outputPath = await createFusionTask(sourceFile, targetFile);
+
+    console.log('Fusion task created successfully, output path:', outputPath);
     
     // Step 2: Poll QUERY_API to check task status
     const result = await pollTaskStatus(outputPath);
@@ -156,12 +158,18 @@ async function pollTaskStatus(outputPath) {
         console.log('Status response:', data);
         
         // Check for specific status codes
-        if (response.status === 202) {
+        if (response.status === 202 || (response.status === 200 && data.status === 'processing')) {
           // Task is still processing, wait and retry
           console.log('Task is still processing, waiting for next poll...');
+          retryCount++;
+          await new Promise(resolve => setTimeout(resolve, POLLING_INTERVAL));
+          continue;
         } else if ([400, 404, 500].includes(response.status)) {
           // Task failed with a known error
           return NextResponse.json(data, { status: response.status });
+        } else if (response.status === 200 && data.status !== 'processing') {
+          // Task completed successfully with JSON response
+          return NextResponse.json(data);
         } else {
           // Unknown error
           return NextResponse.json({
