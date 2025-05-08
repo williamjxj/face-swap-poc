@@ -336,7 +336,7 @@ export default function FaceSwapPage() {
   }
 
   return (
-    <div className="flex h-screen p-4 gap-4 bg-[#0e1117] text-white">
+    <div className="flex h-screen gap-4 bg-[#0e1117] text-white">
       {/* Left side - Video Templates */}
       <div className="w-1/4 bg-[#1a1d24] rounded-lg flex flex-col">
         {/* Tab Navigation */}
@@ -365,8 +365,8 @@ export default function FaceSwapPage() {
       </div>
 
       {/* Middle - Video Preview */}
-      <div className="flex-1 bg-[#1a1d24] flex flex-col items-center rounded-lg relative p-6">
-        <div className="flex flex-col items-center justify-center space-y-4 mb-8">
+      <div className="flex-1 bg-[#1a1d24] flex flex-col items-center rounded-lg relative p-6 pt-2 pb-2">
+        <div className="flex flex-col items-center justify-center space-y-0">
           <div className="w-20 h-20 relative">
             <Image
               src={'/face.webp'}
@@ -379,23 +379,26 @@ export default function FaceSwapPage() {
           <h2 className="text-2xl font-semibold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
             AI Face Swap
           </h2>
-          <div className="text-gray-400 text-center">
+          <div className="text-gray-400 text-center mb-0">
             <span className="text-sm">Support video for face swapping</span>
           </div>
         </div>
 
         {selectedTarget ? (
-          <div className="w-full h-full flex items-center justify-center bg-[#2b2c32] rounded-xl p-4">
+          <div 
+            className="w-[calc(100%-160px)] min-h-[280px] h-[612px] max-h-[calc(100%-268px)] flex items-center justify-center bg-[#2a2832] rounded-[20px] border-2 border-dashed border-white/70 relative mt-[18px]"
+          >
             <video
               src={selectedTarget.videoPath}
               controls
               className="max-w-full max-h-full object-contain rounded-lg shadow-lg"
-              style={{ maxHeight: "65vh" }}
             />
           </div>
         ) : (
-          <div className="flex items-center justify-center h-full w-full">
-            <div className="text-center p-12 bg-[#2b2c32] rounded-xl w-[90%] max-w-[600px] space-y-6">
+          <div 
+            className="w-[calc(100%-160px)] min-h-[280px] h-[612px] max-h-[calc(100%-268px)] flex items-center justify-center bg-[#2a2832] rounded-[20px] border-2 border-dashed border-white/70 relative mt-[18px]"
+          >
+            <div className="text-center p-12 space-y-6">
               <div className="flex flex-col items-center space-y-4">
                 <ArrowLeftRight className="w-12 h-12 text-blue-500 mb-2" />
                 <p className="text-xl text-gray-300 font-medium">Step 1: Select a template to preview</p>

@@ -3,7 +3,7 @@ import Navigator from './Navigator'
 
 export default function Header() {
   return (
-    <header className="flex justify-between items-center pb-6 border-b ml-8 mr-8 mt-4">
+    <header className="flex justify-between items-center pb-2 ml-8 mr-8 mt-2">
       <div className="flex items-center gap-3">
         <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
           <rect width="32" height="32" rx="8" fill="#3B82F6"/>
