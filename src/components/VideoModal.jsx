@@ -1,6 +1,6 @@
 'use client'
 import { X, Download, Trash2, CreditCard } from 'lucide-react'
-import { useCallback } from 'react'
+import { useCallback, useState } from 'react'
 
 export default function VideoModal({ video, onClose, onDownload, onDelete }) {
   const handleBackdropClick = useCallback((e) => {
@@ -12,7 +12,6 @@ export default function VideoModal({ video, onClose, onDownload, onDelete }) {
   const handleModalClick = useCallback((e) => {
     e.stopPropagation()
   }, [])
-
   
   const handleCheckout = async () => {
     try {
@@ -21,7 +20,10 @@ export default function VideoModal({ video, onClose, onDownload, onDelete }) {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ videoId: video.name })
+        body: JSON.stringify({
+          imageId: video.name,
+          imageUrl: `http://localhost:3000${video.url}`,
+        })
       })
       
       if (!response.ok) {
@@ -29,9 +31,14 @@ export default function VideoModal({ video, onClose, onDownload, onDelete }) {
       }
       
       const data = await response.json()
+
+      console.log('Checkout response:', data)
       // Redirect to checkout URL if provided
       if (data.url) {
         window.location.href = data.url
+      }
+      else if (data.checkoutUrl) {
+        window.location.href = data.checkoutUrl
       }
     } catch (error) {
       console.error('Checkout error:', error)

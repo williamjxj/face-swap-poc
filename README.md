@@ -84,20 +84,6 @@ server {
 
 ## File Layout
 
-```
-├── src/
-│   ├── app/               # Next.js app router
-│   │   ├── api/           # API routes
-│   │   │   ├── auth/      # Authentication endpoints
-│   │   │   ├── checkout/  # Payment processing
-│   │   │   └── generate/  # Image generation
-│   │   ├── auth/          # Authentication pages
-│   │   └── [pages]/       # Application pages
-│   ├── components/        # React components
-│   └── services/          # Business logic/services
-├── public/                # Static assets
-└── .env.example           # Environment template
-```
 
 ## Project Structure
 
@@ -115,7 +101,7 @@ server {
    - JWT session established
    - Session persisted via cookies
 
-2. **Image Generation**
+2. **FaceFusion Video Generation**
    - User provides prompt and style
    - Request sent to image generation API
    - Generated image URL returned
@@ -179,3 +165,10 @@ The application uses NextAuth.js with the following providers:
 ### Development
 - Use `npm run lint` to check code quality
 - Enable Turbopack for faster dev server (`npm run dev --turbo`)
+
+
+### Checkout
+
+点击 Checkout 发起支付流程
+3. 测试支付：卡号输入 4242 4242 4242 4242，Expiry date 输入任意未来的 MM/YY，cvc 输入任意三位数字
+4. 完成支付后跳转回 Success page，可以下载图片
