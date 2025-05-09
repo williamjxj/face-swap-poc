@@ -1,18 +1,5 @@
 ## REST APIs
 
-```text
-  $ modal deploy facefusion_agent.py
-
-✓ Created objects.
-  ├─ 🔨 Created mount /Users/jinpeng/python/modal/facefusion/facefusion_agent.py
-  ├─ 🔨 Created function FaceFusionAgent.*
-  ├─ 🔨 Created web endpoint for FaceFusionAgent.download_file => https://aceswap--facefusion-agent-facefusionagent-download-file.modal.run
-  ├─ 🔨 Created web endpoint for FaceFusionAgent.index => https://aceswap--facefusion-agent-facefusionagent-index.modal.run
-✓ App deployed in 3.397s! 🎉
-```
-
-View Deployment: https://modal.com/apps/aceswap/main/deployed/facefusion-agent
-
 ```bash
 curl --location 'https://aceswap--facefusion-agent-facefusionagent-index.modal.run' \
 --form 'source=@"./src/assets/image.png"' \
@@ -24,3 +11,29 @@ curl --location 'https://aceswap--facefusion-agent-facefusionagent-download-file
 --header 'Content-Type: application/json' \
 --data '{"output_path":"/tmp/tmpd0oou2uw/bc7ee887663b4f8d9c9de2967f1988e1.mp4"}'
 ```
+
+## Features
+
+- add watermark
+
+## Database
+
+## Payment - Stripe
+
+```text
+2. 预览会显示在右侧，点击 Checkout 发起支付流程
+3. 测试支付：卡号输入 4242 4242 4242 4242，Expiry date 输入任意未来的 MM/YY，cvc 输入任意三位数字
+4. 完成支付后跳转回 Success page，可以下载图片
+
+【页面】：
+- 首页，generate 页面，登录/注册，个人账户管理，付款成功，付款失败，已购买（方便重新下载）
+- 其他网站基础页面 Privacy policies, terms and conditions, about us, FAQ, contact us
+【功能】可以根据业务需要调整）
+- 用户的注册与登录，仅登录用户
+- 预览图片水印（目前 demo 里没有加上）：支持后端返回预览时自动添加水印，用户付款完成后提供无水印的下载链接
+- 图片存储在 AWS s3 上，支持  signed URL，可以短时间内过期，避免滥用下载链接
+- generate 页面可以根据您 API 参数提供更多设置选项
+- 可支持订阅模式。如用户支付月费，在每月享受一定量的生成和下载额度
+```
+
+## Payment - crypotal

@@ -138,7 +138,7 @@ export default function FaceSwapPage() {
                   className={`cursor-pointer border-2 relative ${selectedTarget?.id === video.id ? 'border-blue-500' : 'border-transparent'}`}
                   style={{
                     background: '#2b2c32',
-                    "border-radius": '12px',
+                    "borderRadius": '12px',
                     cursor: 'pointer',
                   }}
                   onClick={handleTargetSelect.bind(null, video)}
@@ -579,7 +579,7 @@ export default function FaceSwapPage() {
                       autoPlay
                       loop
                       muted
-                      style={{ "border-radius": "8px", objectFit: "cover" }}
+                      style={{ "borderRadius": "8px", objectFit: "cover" }}
                     />
                     <div className="text-sm text-gray-400">
                       {video.name}: {new Date(video.createdAt).toLocaleString()}

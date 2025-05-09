@@ -1,51 +1,103 @@
-Requirements Specification for Face-Swap AI Application
+# Next.js Video Management System Database Schema
 
-## Overview
-Implement face-swapping functionality in two identical React components using the Face Fusion API.
+## Core Tables
 
-## Component Locations
-- `src/app/face-fusion/page.jsx`
-- `src/app/face-swap/page.jsx`
+### templates
+```sql
+CREATE TABLE templates (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name VARCHAR(255) NOT NULL,
+    type ENUM('video', 'image', 'gif', 'multi-face') NOT NULL,
+    file_path VARCHAR(500) NOT NULL,
+    thumbnail_path VARCHAR(500),
+    file_size BIGINT NOT NULL,
+    duration INTEGER,
+    mime_type VARCHAR(50),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    author_id UUID REFERENCES users(id),
+    usage_count INTEGER DEFAULT 0,
+    last_used_at TIMESTAMP WITH TIME ZONE,
+    is_active BOOLEAN DEFAULT true
+);
+```
 
-## Form Requirements
-1. Component Structure
-   - Implement as a form component
-   - Include two input fields for file paths
-   - Add submit functionality
+### face_sources
+```sql
+CREATE TABLE face_sources (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name VARCHAR(255) NOT NULL,
+    file_path VARCHAR(500) NOT NULL,
+    file_size BIGINT NOT NULL,
+    mime_type VARCHAR(50) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    author_id UUID REFERENCES users(id),
+    usage_count INTEGER DEFAULT 0,
+    last_used_at TIMESTAMP WITH TIME ZONE,
+    is_active BOOLEAN DEFAULT true
+);
+```
 
-2. Form Fields
-   - `source`: String input for source image path
-     - Format: Full path to PNG image
-     - Example: `/public/source/1.png`
-   
-   - `target`: String input for target video path
-     - Format: Full path to MP4 video
-     - Example: `/public/videos/1.mp4`
+### generated_media
+```sql
+CREATE TABLE generated_media (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name VARCHAR(255) NOT NULL,
+    type ENUM('video', 'image') NOT NULL,
+    temp_path VARCHAR(500),
+    file_path VARCHAR(500) NOT NULL,
+    thumbnail_path VARCHAR(500) NOT NULL,
+    file_size BIGINT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    author_id UUID REFERENCES users(id),
+    is_purchased BOOLEAN DEFAULT false,
+    play_count INTEGER DEFAULT 0,
+    download_count INTEGER DEFAULT 0,
+    is_active BOOLEAN DEFAULT true,
+    template_id UUID REFERENCES templates(id),
+    face_source_id UUID REFERENCES face_sources(id)
+);
+```
 
-## API Integration
-1. Endpoint: `POST /api/face-swap`
-2. Request Body:
-   ```json
-   {
-     "source": "string",
-     "target": "string"
-   }
-   ```
+### users
+```sql
+CREATE TABLE users (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    email VARCHAR(255) UNIQUE NOT NULL,
+    last_login TIMESTAMP WITH TIME ZONE,
+    last_logout TIMESTAMP WITH TIME ZONE
+);
+```
 
-## File Path Requirements
-1. Source Image:
-   - Location: `/public/source/`
-   - Format: PNG files only
-   - Must be a valid file path
+### guidelines
+```sql
+CREATE TABLE guidelines (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    title VARCHAR(255) NOT NULL,
+    thumbnail_path VARCHAR(500) NOT NULL,
+    description TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    is_active BOOLEAN DEFAULT true
+);
+```
 
-2. Target Video:
-   - Location: `/public/videos/`
-   - Format: MP4 files only
-   - Must be a valid file path
+```sql
+CREATE TABLE face_swaps (
+    id SERIAL PRIMARY KEY,
+    face_source_id INTEGER REFERENCES face_sources(id) ON DELETE SET NULL,
+    template_id INTEGER REFERENCES templates(id) ON DELETE SET NULL,
+    generated_media_id INTEGER REFERENCES generated_media(id) ON DELETE SET NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+```
 
-## Validation
-1. Ensure both fields are populated before submission
-2. Verify file paths exist
-3. Validate file formats (PNG for source, MP4 for target)
+## Notes
 
-Reference: `fs-docs/Face Fusion API.pdf` for detailed API specifications
+- All tables include soft delete capability via `is_active`
+- Use UUID for all IDs to ensure uniqueness across potential distributed systems
+- Implement proper indexing based on query patterns
+- Consider implementing event tracking table for detailed usage analytics
+- Implement proper file path validation and sanitization
+- Ensure proper backup strategy for both database and file storage
+- Implement migration strategy for future cloud storage transition
