@@ -1,0 +1,97 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id         String    @id @default(uuid())
+  email      String    @unique
+  lastLogin  DateTime? @map("last_login")
+  lastLogout DateTime? @map("last_logout")
+  templates       Template[]
+  faceSources     FaceSource[]
+  generatedMedia  GeneratedMedia[]
+}
+
+model Template {
+  id            String    @id @default(uuid())
+  name          String
+  type          String    // ENUM('video', 'image', 'gif', 'multi-face')
+  filePath      String    @map("file_path")
+  thumbnailPath String?   @map("thumbnail_path")
+  fileSize      BigInt    @map("file_size")
+  duration      Int?
+  mimeType      String?   @map("mime_type")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  authorId      String?   @map("author_id")
+  usageCount    Int       @default(0) @map("usage_count")
+  lastUsedAt    DateTime? @map("last_used_at")
+  isActive      Boolean   @default(true) @map("is_active")
+  author        User?     @relation(fields: [authorId], references: [id])
+  generatedMedia GeneratedMedia[]
+  faceSwaps     FaceSwap[]
+}
+
+model FaceSource {
+  id          String    @id @default(uuid())
+  name        String
+  filePath    String    @map("file_path")
+  fileSize    BigInt    @map("file_size")
+  mimeType    String    @map("mime_type")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  authorId    String?   @map("author_id")
+  usageCount  Int       @default(0) @map("usage_count")
+  lastUsedAt  DateTime? @map("last_used_at")
+  isActive    Boolean   @default(true) @map("is_active")
+  author      User?     @relation(fields: [authorId], references: [id])
+  generatedMedia GeneratedMedia[]
+  faceSwaps   FaceSwap[]
+}
+
+model GeneratedMedia {
+  id            String    @id @default(uuid())
+  name          String
+  type          String    // ENUM('video', 'image')
+  tempPath      String?   @map("temp_path")
+  filePath      String    @map("file_path")
+  thumbnailPath String    @map("thumbnail_path")
+  fileSize      BigInt    @map("file_size")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  authorId      String?   @map("author_id")
+  isPurchased   Boolean   @default(false) @map("is_purchased")
+  playCount     Int       @default(0) @map("play_count")
+  downloadCount Int       @default(0) @map("download_count")
+  isActive      Boolean   @default(true) @map("is_active")
+  templateId    String?   @map("template_id")
+  faceSourceId  String?   @map("face_source_id")
+  author        User?     @relation(fields: [authorId], references: [id])
+  template      Template? @relation(fields: [templateId], references: [id])
+  faceSource    FaceSource? @relation(fields: [faceSourceId], references: [id])
+  faceSwaps     FaceSwap[]
+}
+
+model Guideline {
+  id            String   @id @default(uuid())
+  title         String
+  thumbnailPath String   @map("thumbnail_path")
+  description   String?
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+  isActive      Boolean  @default(true) @map("is_active")
+}
+
+model FaceSwap {
+  id               Int       @id @default(autoincrement())
+  faceSourceId     String?   @map("face_source_id")
+  templateId       String?   @map("template_id")
+  generatedMediaId String?   @map("generated_media_id")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  faceSource       FaceSource? @relation(fields: [faceSourceId], references: [id])
+  template         Template? @relation(fields: [templateId], references: [id])
+  generatedMedia   GeneratedMedia? @relation(fields: [generatedMediaId], references: [id])
+}
