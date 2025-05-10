@@ -75,15 +75,6 @@ model GeneratedMedia {
   faceSwaps     FaceSwap[]
 }
 
-model Guideline {
-  id            String   @id @default(uuid())
-  title         String
-  thumbnailPath String   @map("thumbnail_path")
-  description   String?
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
-  isActive      Boolean  @default(true) @map("is_active")
-}
 
 model FaceSwap {
   id               Int       @id @default(autoincrement())
@@ -94,4 +85,17 @@ model FaceSwap {
   faceSource       FaceSource? @relation(fields: [faceSourceId], references: [id])
   template         Template? @relation(fields: [templateId], references: [id])
   generatedMedia   GeneratedMedia? @relation(fields: [generatedMediaId], references: [id])
+}
+
+model Guideline {
+  id            String   @id @default(uuid())
+  filename      String
+  width         Int
+  height        Int
+  fileType      String   @map("file_type")
+  fileSize      BigInt   @map("file_size")
+  filePath      String    @map("file_path")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+  isAllowed     Boolean  @default(true) @map("is_allowed")
 }

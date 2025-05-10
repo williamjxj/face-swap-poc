@@ -1,4 +1,12 @@
-create a shell script:
+### 🥬 DB Type: TEXT vs. VARCHAR
+
+### 🥒 
+
+### 🌶  
+
+### 🌽 
+
+### 🥕 create a shell script:
 
 - insert data into Template table, the data is the files collection from storage/template-thumbnails and storage/template-videos
 - each media file should have a record.

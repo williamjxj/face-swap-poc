@@ -1,9 +1,33 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import { X } from "lucide-react"
 import Image from "next/image"
 
-export default function PhotoGuidelinesModal({ isOpen, onClose }) {
+export default function FaceFusionGuidelinesModal({ isOpen, onClose }) {
+  const [guidelines, setGuidelines] = useState({ allowed: [], notAllowed: [] });
+
+  useEffect(() => {
+    const fetchGuidelines = async () => {
+      try {
+        const response = await fetch('/api/guidelines');
+        const data = await response.json();
+        
+        // Split guidelines into allowed and not allowed
+        const allowed = data.filter(g => g.isAllowed);
+        const notAllowed = data.filter(g => !g.isAllowed);
+        
+        setGuidelines({ allowed, notAllowed });
+      } catch (error) {
+        console.error('Error fetching guidelines:', error);
+      }
+    };
+
+    if (isOpen) {
+      fetchGuidelines();
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   return (
@@ -48,11 +72,11 @@ export default function PhotoGuidelinesModal({ isOpen, onClose }) {
               </div>
 
               <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                {[...Array(4)].map((_, i) => (
-                  <div key={i} className="overflow-hidden rounded-lg bg-gray-100">
+                {guidelines.allowed.map((guideline, i) => (
+                  <div key={guideline.id} className="overflow-hidden rounded-lg bg-gray-100">
                     <Image
-                      src={`/guidelines/s${i + 1}.png`}
-                      alt={`Correct example ${i + 1}`}
+                      src={guideline.filePath}
+                      alt={guideline.filename}
                       width={200}
                       height={200}
                       className="w-full h-auto object-cover"
@@ -80,11 +104,11 @@ export default function PhotoGuidelinesModal({ isOpen, onClose }) {
               </div>
 
               <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                {[...Array(4)].map((_, i) => (
-                  <div key={i} className="overflow-hidden rounded-lg bg-gray-100">
+                {guidelines.notAllowed.map((guideline, i) => (
+                  <div key={guideline.id} className="overflow-hidden rounded-lg bg-gray-100">
                     <Image
-                      src={`/guidelines/f${i + 1}.png`}
-                      alt={`Incorrect example ${i + 1}`}
+                      src={guideline.filePath}
+                      alt={guideline.filename}
                       width={200}
                       height={200}
                       className="w-full h-auto object-cover"
