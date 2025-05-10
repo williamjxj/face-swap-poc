@@ -82,7 +82,7 @@ npx prisma generate
 
 Create a file `lib/prisma.ts`:
 
-```typescript
+```js
 import { PrismaClient } from '@prisma/client'
 
 let prisma: PrismaClient
@@ -103,7 +103,7 @@ export default prisma
 
 Create a file `pages/api/users/index.ts`:
 
-```typescript
+```js
 import { NextApiRequest, NextApiResponse } from 'next'
 import prisma from '../../../lib/prisma'
 import { hash } from 'bcrypt'
@@ -153,7 +153,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
 Create a file `pages/api/posts/index.ts`:
 
-```typescript
+```js
 import { NextApiRequest, NextApiResponse } from 'next'
 import prisma from '../../../lib/prisma'
 
@@ -201,7 +201,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
 Create a file `pages/api/posts/[id].ts`:
 
-```typescript
+```js
 import { NextApiRequest, NextApiResponse } from 'next'
 import prisma from '../../../lib/prisma'
 
@@ -365,7 +365,7 @@ export default function Post({ post }) {
 
 Create a file `lib/auth.ts`:
 
-```typescript
+```js
 import { compare } from 'bcrypt'
 import prisma from './prisma'
 
@@ -403,7 +403,7 @@ npm install --save-dev @types/bcrypt
 
 Create a file `prisma/seed.ts`:
 
-```typescript
+```js
 import { PrismaClient } from '@prisma/client'
 import { hash } from 'bcrypt'
 

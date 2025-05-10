@@ -36,11 +36,5 @@ yarn-error.log*
 
 # vercel
 .vercel
-
-# typescript
-*.tsbuildinfo
-next-env.d.ts
-src/assets1
-public/outputs1
 .vscode/
 storage/

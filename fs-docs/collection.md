@@ -36,4 +36,4 @@ curl --location 'https://aceswap--facefusion-agent-facefusionagent-download-file
 - 可支持订阅模式。如用户支付月费，在每月享受一定量的生成和下载额度
 ```
 
-## Payment - crypotal
+## Payment - Crypto, Coinbase

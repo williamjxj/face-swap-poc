@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
-    "baseUrl": "./src",  // 修改基础路径
+    "baseUrl": "./src",
     "paths": {
-      "@/*": ["./*"]     // 简化路径映射
+      "@/*": ["./*"]
     }
   },
   "exclude": ["node_modules"]

@@ -134,16 +134,6 @@ The application uses NextAuth.js with the following providers:
 
 ## Third Party APIs
 
-### Image Generation API
-- Endpoint: `NEXT_PUBLIC_IMAGE_API_URL`
-- Required parameters:
-  - `prompt`: Text description for image
-  - `style`: Visual style preference
-- Returns:
-  - `url`: Generated image URL
-  - `id`: Unique image ID
-  - `purchased`: Purchase status
-
 ### Payment Processing API
 - Endpoint: `NEXT_PUBLIC_CHECKOUT_API_URL`
 - Required parameters:
