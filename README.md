@@ -181,3 +181,12 @@ The application uses NextAuth.js with the following providers:
 ### CSS
 
 `bg-gradient-to-r from-blue-400 to-purple-500 rounded-full shadow-lg`
+
+
+### PostgreSQL@17
+
+```bash
+$ PGPASSWORD=William1! psql -h localhost -p 5432 -U postgres -d facefusion -c "\l"
+
+$ PGPASSWORD=William1! psql -h 127.0.0.1 -p 5432 -U postgres -d facefusion -c "\conninfo"
+```
