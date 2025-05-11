@@ -7,7 +7,7 @@ export async function GET() {
     const faceSwaps = await prisma.faceSwap.findMany({
       include: {
         faceSource: true,
-        template: true,
+        targetTemplate: true,
         generatedMedia: true
       },
       orderBy: {
@@ -32,7 +32,7 @@ export async function POST(request) {
       },
       include: {
         faceSource: true,
-        template: true,
+        targetTemplate: true,
         generatedMedia: true
       }
     });

@@ -9,7 +9,7 @@ export async function GET(request, { params }) {
       where: { id },
       include: {
         author: true,
-        template: true,
+        targetTemplate: true,
         faceSource: true,
         faceSwaps: true
       }

@@ -2,13 +2,16 @@
 
 ### 🥒 
 
+can you please create a javascript function video2thumbnail which has same implementation of @video2thumbnail.sh ?
+when user upload a video, the function
+
 ### 🌶  
 
 ### 🌽 
 
 ### 🥕 create a shell script:
 
-- insert data into Template table, the data is the files collection from storage/template-thumbnails and storage/template-videos
+- insert data into TargetTemplate table, the data is the files collection from storage/template-thumbnails and storage/template-videos
 - each media file should have a record.
 - thumbnail_path: file in template-thumbnails
 - file_path: file in template-videos

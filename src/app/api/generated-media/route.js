@@ -8,7 +8,7 @@ export async function GET() {
       where: { isActive: true },
       include: {
         author: true,
-        template: true,
+        targetTemplate: true,
         faceSource: true
       }
     });

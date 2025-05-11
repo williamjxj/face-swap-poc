@@ -9,7 +9,7 @@ export async function GET(request, { params }) {
       where: { id: parseInt(id) },
       include: {
         faceSource: true,
-        template: true,
+        targetTemplate: true,
         generatedMedia: true
       }
     });
@@ -39,7 +39,7 @@ export async function PUT(request, { params }) {
       },
       include: {
         faceSource: true,
-        template: true,
+        targetTemplate: true,
         generatedMedia: true
       }
     });

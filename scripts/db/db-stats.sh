@@ -20,7 +20,7 @@ echo "======================================"
 
 # Query each table
 execute_query "User"
-execute_query "Template"
+execute_query "TargetTemplate"
 execute_query "FaceSource"
 execute_query "GeneratedMedia"
 execute_query "Guideline"
