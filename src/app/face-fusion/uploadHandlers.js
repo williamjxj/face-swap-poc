@@ -10,25 +10,39 @@ export const handleTargetUpload = async (file, setError, setVideoTargets, handle
       const formData = new FormData();
       formData.append('file', file);
 
+      console.log('Uploading file:', {
+        name: file.name,
+        type: file.type,
+        size: file.size
+      });
+
       const response = await fetch('/api/upload-template', {
         method: 'POST',
         body: formData,
       });
 
       if (!response.ok) {
-        throw new Error('Upload failed');
+        const errorData = await response.text();
+        console.error('Upload failed with status:', response.status, 'Error:', errorData);
+        throw new Error(`Upload failed: ${errorData}`);
       }
 
       const data = await response.json();
+      console.log('Upload response:', data);
       
-      // Create a new template object
+      // Create a new template object matching the database schema
       const newTemplate = {
         id: data.id,
-        videoPath: data.filePath,
-        thumbnail: data.thumbnailPath,
+        filename: data.filename,
+        type: 'video',
+        filePath: data.filePath,
+        thumbnailPath: data.thumbnailPath,
         duration: data.duration,
-        author: 'custom'
+        fileSize: data.fileSize,
+        mimeType: data.mimeType
       };
+
+      console.log('Created template object:', newTemplate);
 
       // Add to the beginning of videoTargets
       setVideoTargets(prev => [newTemplate, ...prev]);
@@ -37,7 +51,7 @@ export const handleTargetUpload = async (file, setError, setVideoTargets, handle
       handleTargetSelect(newTemplate);
     } catch (error) {
       console.error('Error uploading template:', error);
-      setError('Failed to upload template');
+      setError(error.message || 'Failed to upload template');
     }
   }
 };

@@ -2,6 +2,7 @@
 
 import Image from "next/image"
 import { Info, Plus, Menu, ArrowLeftRight, X } from "lucide-react"
+import FaceSelection from "./FaceSelection"
 import { useState, useEffect } from "react"
 import VideoModal from "../../components/VideoModal"
 import GuidelineModal from "../../components/GuidelineModal"
@@ -9,7 +10,6 @@ import styles from './page.module.css'
 import TabContent from "./TabContent"
 import TemplateList from './TemplateList'
 import VideoPlayer from './VideoPlayer'
-import { formatDuration } from '../../utils/formatUtils'
 import { handleTargetUpload, handleImageUpload, handleGifUpload, handleMultiFaceUpload } from "./uploadHandlers"
 
 export default function FaceFusion() {
@@ -272,7 +272,63 @@ export default function FaceFusion() {
 
   const handleTargetUploadWrapper = async (e) => {
     const file = e.target.files?.[0];
-    await handleTargetUpload(file, setError, videoTargets, handleTargetSelect);
+    if (file) {
+      try {
+        // Check file size (500MB limit)
+        if (file.size > 500 * 1024 * 1024) {
+          setError('File size exceeds 500MB limit');
+          return;
+        }
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        console.log('Uploading file:', {
+          name: file.name,
+          type: file.type,
+          size: file.size
+        });
+
+        const response = await fetch('/api/upload-template', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!response.ok) {
+          const errorData = await response.text();
+          console.error('Upload failed with status:', response.status, 'Error:', errorData);
+          throw new Error(`Upload failed: ${errorData}`);
+        }
+
+        const data = await response.json();
+        console.log('Upload response:', data);
+        
+        // Create a new template object matching the database schema
+        const newTemplate = {
+          id: data.id,
+          filename: data.filename,
+          type: 'video',
+          filePath: data.filePath,
+          thumbnailPath: data.thumbnailPath,
+          duration: data.duration,
+          fileSize: BigInt(data.fileSize), // Convert string back to BigInt
+          mimeType: data.mimeType
+        };
+
+        console.log('Created template object:', newTemplate);
+
+        // Update both templates and videoTargets
+        setTemplates(prev => [newTemplate, ...prev]);
+        setVideoTargets(prev => [newTemplate, ...prev]);
+        
+        // Select the new template
+        setSelectedTemplate(newTemplate);
+        setSelectedFace(0); // Reset face selection
+      } catch (error) {
+        console.error('Error uploading template:', error);
+        setError(error.message || 'Failed to upload template');
+      }
+    }
   };
 
   const handleImageUploadWrapper = async (e) => {
@@ -293,6 +349,32 @@ export default function FaceFusion() {
   const handleTemplateSelect = (template) => {
     setSelectedTemplate(template);
     setSelectedFace(0); // Reset face selection when template changes
+  };
+
+  const handleDeleteTemplate = async (id, e) => {
+    e.stopPropagation(); // Prevent triggering the select handler
+    try {
+      const response = await fetch(`/api/delete-template?id=${id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete template');
+      }
+
+      // Remove from both templates and videoTargets
+      setTemplates(prev => prev.filter(template => template.id !== id));
+      setVideoTargets(prev => prev.filter(template => template.id !== id));
+      
+      // If the deleted template was selected, clear the selection
+      if (selectedTemplate?.id === id) {
+        setSelectedTemplate(null);
+        setSelectedFace(null);
+      }
+    } catch (error) {
+      console.error('Error deleting template:', error);
+      setError('Failed to delete template');
+    }
   };
 
   if (loading) {
@@ -324,38 +406,17 @@ export default function FaceFusion() {
         
         {/* Tab Content */}
         <div className="flex-1 overflow-y-auto">
-          <div className="p-2">
-            <h2 className="text-xl font-semibold mb-3 text-white">Templates</h2>
-            <div className="grid grid-cols-3 gap-2">
-              {templates.map((template) => (
-                <div
-                  key={template.id}
-                  className={`cursor-pointer rounded-lg overflow-hidden transition-all duration-200 ${
-                    selectedTemplate?.id === template.id 
-                      ? 'ring-2 ring-blue-500 scale-[1.02]' 
-                      : 'hover:scale-[1.02] hover:ring-1 hover:ring-gray-400'
-                  }`}
-                  onClick={() => handleTemplateSelect(template)}
-                >
-                  <div className="relative group">
-                    <img
-                      src={template.thumbnailPath}
-                      alt={template.name}
-                      className="w-[116px] h-[176px] object-cover rounded-lg"
-                    />
-                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2">
-                      <div className="text-white text-xs font-medium">
-                        {formatDuration(template.duration)}
-                      </div>
-                    </div>
-                    {selectedTemplate?.id === template.id && (
-                      <div className="absolute inset-0 bg-blue-500/10 pointer-events-none" />
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+          <TabContent
+            selectedTab={selectedTab}
+            templates={templates}
+            onSelectTemplate={handleTemplateSelect}
+            selectedTemplate={selectedTemplate}
+            onTargetUpload={handleTargetUploadWrapper}
+            onImageUpload={handleImageUploadWrapper}
+            onGifUpload={handleGifUploadWrapper}
+            onMultiFaceUpload={handleMultiFaceUploadWrapper}
+            onDeleteTemplate={handleDeleteTemplate}
+          />
         </div>
       </div>
 
@@ -445,85 +506,16 @@ export default function FaceFusion() {
         <div className="flex-1 overflow-y-auto">
           {rightSideTab === 'face-swap' ? (
             <div className="p-4">
-              {/* Face Swap Content */}
-              <div className="mb-6">
-                <h2 className="text-lg font-bold mb-4 text-white">Face Selection</h2>
-                <div className="flex gap-4 justify-center relative">
-                  <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-gray-600">
-                    {selectedTemplate && (
-                      <Image
-                        src={selectedTemplate.thumbnailPath}
-                        alt="Target"
-                        width={96}
-                        height={96}
-                        className="w-full h-full object-cover"
-                      />
-                    )}
-                  </div>
-                  <div className={styles.connecting_line}></div>
-                  <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-gray-600">
-                    {selectedSource ? (
-                      <Image 
-                        src={selectedSource.preview}
-                        alt="Source face"
-                        width={96}
-                        height={96}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-[#2a2d34] flex items-center justify-center">
-                        <Plus className="w-8 h-8 text-gray-400" />
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Source Images Section */}
-              <div className="flex-grow">
-                <h2 className="text-lg font-bold mb-4 text-white">Source Images</h2>
-                <div className="grid grid-cols-3 gap-2">
-                  {/* Upload button */}
-                  <label className="w-20 h-20 rounded-full border-2 border-dashed border-gray-600 flex items-center justify-center cursor-pointer hover:bg-[#2a2d34]">
-                    <input
-                      type="file"
-                      className="hidden"
-                      accept="image/*"
-                      onChange={handleSourceUpload}
-                    />
-                    <Plus className="w-6 h-6 text-gray-400" />
-                  </label>
-                  
-                  {/* Source images */}
-                  {imageSources.map((image) => (
-                    <div 
-                      key={image.id}
-                      className="relative"
-                    >
-                      <div
-                        className={`w-20 h-20 rounded-full overflow-hidden cursor-pointer border-2 ${
-                          selectedSource?.name === image.name ? 'border-blue-500' : 'border-transparent'
-                        }`}
-                        onClick={() => handleSourceSelect(image)}
-                      >
-                        <Image 
-                          src={image.imagePath}
-                          alt={`Source ${image.id}`}
-                          width={80}
-                          height={80}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                      <button
-                        onClick={(e) => handleSourceDelete(image, e)}
-                        className="absolute -top-1 -right-1 w-5 h-5 bg-gray-600 rounded-full flex items-center justify-center hover:bg-gray-700 transition-colors"
-                      >
-                        <X className="w-3 h-3 text-white" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
+              <FaceSelection
+                selectedTemplate={selectedTemplate}
+                selectedFace={selectedFace}
+                onFaceSelect={setSelectedFace}
+                imageSources={imageSources}
+                selectedSource={selectedSource}
+                onSourceSelect={handleSourceSelect}
+                onSourceUpload={handleSourceUpload}
+                onSourceDelete={handleSourceDelete}
+              />
 
               {/* Generate Button */}
               <button

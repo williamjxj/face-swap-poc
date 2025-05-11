@@ -1,7 +1,9 @@
 import Image from 'next/image';
 import { Plus, X } from 'lucide-react';
+import styles from './page.module.css';
 
-export default function FaceSelection({ 
+export default function FaceSelection({
+  selectedTemplate,
   selectedFace, 
   onFaceSelect, 
   imageSources, 
@@ -16,6 +18,22 @@ export default function FaceSelection({
       <div className="mb-6">
         <h2 className="text-lg font-bold mb-4 text-white">Face Selection</h2>
         <div className="flex gap-4 justify-center relative">
+          <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-gray-600">
+            {selectedTemplate ? (
+              <Image
+                src={selectedTemplate.thumbnailPath}
+                alt="Template thumbnail"
+                width={96}
+                height={96}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full bg-[#2a2d34] flex items-center justify-center">
+                <Plus className="w-8 h-8 text-gray-400" />
+              </div>
+            )}
+          </div>
+          <div className={styles.connecting_line}></div>
           <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-gray-600">
             {selectedSource ? (
               <Image
@@ -83,4 +101,4 @@ export default function FaceSelection({
       </div>
     </div>
   );
-} 
+}
