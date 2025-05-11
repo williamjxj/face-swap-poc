@@ -1,16 +1,37 @@
 import { NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
+import db from '../../../lib/db';
+import { serializeBigInt } from '../../../utils/serializeBigInt';
 
 // GET all templates
 export async function GET() {
   try {
-    const templates = await prisma.template.findMany({
-      where: { isActive: true },
-      include: { author: true }
+    if (!db) {
+      throw new Error('Database client is not initialized');
+    }
+
+    console.log('Fetching templates...');
+    const templates = await db.targetTemplate.findMany({
+      where: {
+        isActive: true,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
     });
-    return NextResponse.json(templates);
+
+    console.log(`Found ${templates.length} templates`);
+    // Serialize BigInt fields before returning
+    const serializedTemplates = serializeBigInt(templates);
+    return NextResponse.json({ templates: serializedTemplates });
   } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error('Error fetching templates:', error);
+    return NextResponse.json(
+      { 
+        error: error.message || 'Failed to fetch templates',
+        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      },
+      { status: 500 }
+    );
   }
 }
 
@@ -18,7 +39,7 @@ export async function GET() {
 export async function POST(request) {
   try {
     const data = await request.json();
-    const template = await prisma.template.create({
+    const template = await db.targetTemplate.create({
       data: {
         name: data.name,
         type: data.type,

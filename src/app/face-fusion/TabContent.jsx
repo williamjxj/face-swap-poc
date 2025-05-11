@@ -36,7 +36,7 @@ export default function TabContent({
               {video.duration}
             </div>
             <Image
-              src={video.thumbnail}
+              src={video.thumbnailPath}
               alt={`Video ${video.id}`}
               width={116}
               height={176}

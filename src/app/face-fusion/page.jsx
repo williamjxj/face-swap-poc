@@ -6,7 +6,7 @@ import { useState, useEffect } from "react"
 import VideoModal from "../../components/VideoModal"
 import GuidelineModal from "../../components/GuidelineModal"
 import styles from './page.module.css'
-import TabContent from "../../components/TabContent"
+import TabContent from "./TabContent"
 import { handleTargetUpload, handleImageUpload, handleGifUpload, handleMultiFaceUpload } from "../../utils/uploadHandlers"
 
 export default function FaceSwapPage() {
@@ -26,44 +26,7 @@ export default function FaceSwapPage() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [generatedVideos, setGeneratedVideos] = useState([])
   const [imageSources, setImageSources] = useState([])
-
-  const videoTargets = [
-    { 
-      id: 1, 
-      videoPath: '/videos/1.mp4', 
-      thumbnail: '/thumbnails/1_thumbnail.webp',
-      duration: '0:05',
-      author: 'demo'
-    },
-    { 
-      id: 2, 
-      videoPath: '/videos/2.mp4', 
-      thumbnail: '/thumbnails/2_thumbnail.webp',
-      duration: '0:05',
-      author: 'demo'
-    },
-    { 
-      id: 3, 
-      videoPath: '/videos/3.mp4', 
-      thumbnail: '/thumbnails/3_thumbnail.webp',
-      duration: '0:15',
-      author: 'demo'
-     },
-    { 
-      id: 4, 
-      videoPath: '/videos/4.mp4', 
-      thumbnail: '/thumbnails/4_thumbnail.webp',
-      duration: '0:15',
-      author: 'demo'
-    },
-    { 
-      id: 5, 
-      videoPath: '/videos/5.mp4', 
-      thumbnail: '/thumbnails/5_thumbnail.webp',
-      duration: '0:15',
-      author: 'demo'
-    }
-  ]
+  const [videoTargets, setVideoTargets] = useState([])
 
   const tabOptions = [
     { id: 'video', label: 'Video' },
@@ -72,6 +35,24 @@ export default function FaceSwapPage() {
     { id: 'multi-face', label: 'Multi-face' }
   ]
 
+  // Load templates from database
+  useEffect(() => {
+    const loadTemplates = async () => {
+      try {
+        const response = await fetch('/api/templates');
+        if (!response.ok) {
+          throw new Error('Failed to load templates');
+        }
+        const data = await response.json();
+        setVideoTargets(data.templates);
+      } catch (error) {
+        console.error('Error loading templates:', error);
+        setError('Failed to load templates');
+      }
+    };
+
+    loadTemplates();
+  }, []);
 
   // Load generated videos when component mounts
   useEffect(() => {
@@ -112,8 +93,8 @@ export default function FaceSwapPage() {
           const sources = data.files
             .map(file => ({
               id: file.id,
-              name: file.name,
-              imagePath: file.imagePath,
+              name: file.filename,
+              imagePath: file.filePath,
               createdAt: file.createdAt || 0
             }))
             .sort((a, b) => b.createdAt - a.createdAt) // Sort by creation time descending

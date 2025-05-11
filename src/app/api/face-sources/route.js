@@ -5,6 +5,8 @@ import fs from 'fs/promises';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import sharp from 'sharp';
+import db from '../../../lib/db';
+import { serializeBigInt } from '../../../utils/serializeBigInt';
 
 const prisma = new PrismaClient();
 
@@ -18,37 +20,14 @@ const sanitizeBigInt = (data) => {
 // GET all face sources
 export async function GET() {
   try {
-    const sources = await prisma.faceSource.findMany({
-      where: {
-        isActive: true
-      },
-      orderBy: {
-        createdAt: 'desc'
-      }
+    const sources = await db.faceSource.findMany({
+      where: { isActive: true },
+      orderBy: { createdAt: 'desc' },
     });
-
-    const sanitizedSources = sanitizeBigInt(sources);
-
-    return NextResponse.json({
-      files: sanitizedSources.map(source => ({
-        id: source.id,
-        name: source.filename,
-        imagePath: source.filePath,
-        createdAt: new Date(source.createdAt).getTime(),
-        width: source.width,
-        height: source.height,
-        fileSize: source.fileSize,
-        mimeType: source.mimeType
-      }))
-    });
+    const serializedSources = serializeBigInt(sources);
+    return NextResponse.json({ files: serializedSources });
   } catch (error) {
-    console.error('Error fetching sources:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch sources' },
-      { status: 500 }
-    );
-  } finally {
-    await prisma.$disconnect();
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
 

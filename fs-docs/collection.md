@@ -36,4 +36,47 @@ curl --location 'https://aceswap--facefusion-agent-facefusionagent-download-file
 - 可支持订阅模式。如用户支付月费，在每月享受一定量的生成和下载额度
 ```
 
+
+```js
+  const videoTargets = [
+    { 
+      id: 1, 
+      videoPath: '/videos/1.mp4', 
+      thumbnail: '/thumbnails/1_thumbnail.webp',
+      duration: '0:05',
+      author: 'demo'
+    },
+    { 
+      id: 2, 
+      videoPath: '/videos/2.mp4', 
+      thumbnail: '/thumbnails/2_thumbnail.webp',
+      duration: '0:05',
+      author: 'demo'
+    },
+    { 
+      id: 3, 
+      videoPath: '/videos/3.mp4', 
+      thumbnail: '/thumbnails/3_thumbnail.webp',
+      duration: '0:15',
+      author: 'demo'
+     },
+    { 
+      id: 4, 
+      videoPath: '/videos/4.mp4', 
+      thumbnail: '/thumbnails/4_thumbnail.webp',
+      duration: '0:15',
+      author: 'demo'
+    },
+    { 
+      id: 5, 
+      videoPath: '/videos/5.mp4', 
+      thumbnail: '/thumbnails/5_thumbnail.webp',
+      duration: '0:15',
+      author: 'demo'
+    }
+  ]
+
+```
+
 ## Payment - Crypto, Coinbase
+
