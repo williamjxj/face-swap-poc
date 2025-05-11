@@ -1,7 +1,7 @@
 'use client'
 
 import Image from "next/image"
-import { Info, Plus, Menu, ArrowLeftRight, X } from "lucide-react"
+import { Info, Plus, Menu, ArrowLeftRight, X, Download, Lock } from "lucide-react"
 import FaceSelection from "./FaceSelection"
 import { useState, useEffect } from "react"
 import VideoModal from "../../components/VideoModal"
@@ -218,12 +218,30 @@ export default function FaceFusion() {
   }
 
   const handleDownload = async (video) => {
-    const link = document.createElement('a')
-    link.href = video.url
-    link.download = video.name
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
+    if (!video.isPaid) {
+      setError('Please purchase the video to download');
+      return;
+    }
+    
+    try {
+      const response = await fetch(`/api/download-media?filename=${video.name}`);
+      if (!response.ok) {
+        throw new Error('Failed to download video');
+      }
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = video.name;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error downloading video:', error);
+      setError('Failed to download video');
+    }
   }
 
   const handleDelete = async (video) => {
@@ -698,7 +716,7 @@ export default function FaceFusion() {
           ) : (
             <div className="p-4">
               <h2 className="text-lg font-bold mb-4 text-white">Generated Media</h2>
-              <div className="grid gap-4">
+              <div className="grid grid-cols-2 gap-4">
                 {generatedVideos.map((media) => (
                   <div 
                     key={media.id}
@@ -706,24 +724,44 @@ export default function FaceFusion() {
                     onClick={() => handleVideoClick(media)}
                   >
                     {media.type === 'video' ? (
-                      <video
-                        src={media.filePath}
-                        className="w-full rounded-lg mb-2"
-                        autoPlay
-                        loop
-                        muted
-                        style={{ "borderRadius": "8px", objectFit: "cover" }}
-                      />
+                      <div className="relative">
+                        <video
+                          src={media.isPaid ? media.filePath : media.watermarkPath || media.filePath}
+                          className="w-full h-32 rounded-lg mb-2"
+                          autoPlay
+                          loop
+                          muted
+                          style={{ "borderRadius": "8px", objectFit: "cover" }}
+                        />
+                        {!media.isPaid && (
+                          <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                            <Lock className="w-8 h-8 text-white" />
+                          </div>
+                        )}
+                      </div>
                     ) : (
                       <img
-                        src={media.filePath}
+                        src={media.isPaid ? media.filePath : media.watermarkPath || media.filePath}
                         alt={media.name}
-                        className="w-full rounded-lg mb-2"
+                        className="w-full h-32 rounded-lg mb-2"
                         style={{ "borderRadius": "8px", objectFit: "cover" }}
                       />
                     )}
-                    <div className="text-sm text-gray-400">
-                      {media.name}
+                    <div className="flex justify-between items-center">
+                      <div className="text-sm text-gray-400">
+                        {media.name}
+                      </div>
+                      {media.isPaid && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDownload(media);
+                          }}
+                          className="p-1 hover:bg-blue-500/20 rounded"
+                        >
+                          <Download className="w-4 h-4 text-blue-500" />
+                        </button>
+                      )}
                     </div>
                     <div className="text-xs text-gray-500">
                       {new Date(media.createdAt).toLocaleString()}

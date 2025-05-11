@@ -6,6 +6,7 @@ import { promisify } from 'util';
 import FormData from 'form-data';
 import fetch from 'node-fetch';
 import prisma from '../../../lib/prisma';
+import { generateWatermarkedVersion } from '../../../utils/videoProcessing';
 
 // Promisify the stream pipeline for async/await usage
 const streamPipeline = promisify(pipeline);
@@ -76,7 +77,23 @@ export async function POST(request) {
     // Step 2: Poll QUERY_API to check task status
     const result = await pollTaskStatus(outputPath, sourceFile.name);
     
-    // Step 3: Return the result
+    // After generating the video, create a watermarked version
+    const filePath = path.join(process.cwd(), 'public', 'outputs', result.filePath.split('/').pop());
+    const watermarkPath = await generateWatermarkedVersion(filePath, result.filePath.split('/').pop());
+
+    // Save to database with watermark path
+    const media = await prisma.generatedMedia.create({
+      data: {
+        name: result.filePath.split('/').pop(),
+        type: 'video',
+        filePath: `/outputs/${result.filePath.split('/').pop()}`,
+        watermarkPath: watermarkPath,
+        fileSize: BigInt(result.fileSize),
+        mimeType: 'video/mp4',
+        isPaid: false
+      }
+    });
+
     return result;
   } catch (error) {
     console.error('Face fusion process failed:', error);

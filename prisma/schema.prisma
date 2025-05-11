@@ -74,6 +74,8 @@ model GeneratedMedia {
   targetTemplate TargetTemplate? @relation(fields: [templateId], references: [id])
   faceSource    FaceSource? @relation(fields: [faceSourceId], references: [id])
   faceSwaps     FaceSwap[]
+  isPaid        Boolean   @default(false)
+  watermarkPath String?
 }
 
 model FaceSwap {
