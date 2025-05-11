@@ -39,14 +39,16 @@ model Template {
 
 model FaceSource {
   id          String    @id @default(uuid())
-  name        String
+  filename    String
+  width       Int
+  height      Int
   filePath    String    @map("file_path")
   fileSize    BigInt    @map("file_size")
   mimeType    String    @map("mime_type")
   createdAt   DateTime  @default(now()) @map("created_at")
+  lastUsedAt  DateTime? @map("last_used_at")
   authorId    String?   @map("author_id")
   usageCount  Int       @default(0) @map("usage_count")
-  lastUsedAt  DateTime? @map("last_used_at")
   isActive    Boolean   @default(true) @map("is_active")
   author      User?     @relation(fields: [authorId], references: [id])
   generatedMedia GeneratedMedia[]
@@ -74,7 +76,6 @@ model GeneratedMedia {
   faceSource    FaceSource? @relation(fields: [faceSourceId], references: [id])
   faceSwaps     FaceSwap[]
 }
-
 
 model FaceSwap {
   id               Int       @id @default(autoincrement())

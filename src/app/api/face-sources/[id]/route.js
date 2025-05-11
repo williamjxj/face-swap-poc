@@ -1,63 +1,119 @@
 import { NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
+import { PrismaClient } from '@prisma/client';
+import fs from 'fs/promises';
+import path from 'path';
 
-// GET single face source
+const prisma = new PrismaClient();
+
+// GET a single face source by ID
 export async function GET(request, { params }) {
   try {
     const { id } = params;
+
     const faceSource = await prisma.faceSource.findUnique({
       where: { id },
       include: { author: true }
     });
-    
+
     if (!faceSource) {
-      return NextResponse.json({ error: 'Face source not found' }, { status: 404 });
+      return NextResponse.json(
+        { error: 'Face source not found' },
+        { status: 404 }
+      );
     }
-    
+
     return NextResponse.json(faceSource);
   } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error('Error fetching face source:', error);
+    return NextResponse.json(
+      { error: 'Failed to fetch face source' },
+      { status: 500 }
+    );
+  } finally {
+    await prisma.$disconnect();
   }
 }
 
-// PUT (update) face source
+// PUT (update) a face source by ID
 export async function PUT(request, { params }) {
   try {
     const { id } = params;
     const data = await request.json();
-    
-    const updatedFaceSource = await prisma.faceSource.update({
+
+    // Check if face source exists
+    const existingSource = await prisma.faceSource.findUnique({
+      where: { id }
+    });
+
+    if (!existingSource) {
+      return NextResponse.json(
+        { error: 'Face source not found' },
+        { status: 404 }
+      );
+    }
+
+    // Update face source
+    const updatedSource = await prisma.faceSource.update({
       where: { id },
       data: {
-        name: data.name,
-        filePath: data.filePath,
-        fileSize: data.fileSize,
-        mimeType: data.mimeType,
+        filename: data.filename,
+        isActive: data.isActive,
         usageCount: data.usageCount,
-        lastUsedAt: data.lastUsedAt,
-        isActive: data.isActive
+        lastUsedAt: data.lastUsedAt ? new Date(data.lastUsedAt) : undefined
       }
     });
-    
-    return NextResponse.json(updatedFaceSource);
+
+    return NextResponse.json(updatedSource);
   } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error('Error updating face source:', error);
+    return NextResponse.json(
+      { error: 'Failed to update face source' },
+      { status: 500 }
+    );
+  } finally {
+    await prisma.$disconnect();
   }
 }
 
-// DELETE face source
+// DELETE a face source by ID
 export async function DELETE(request, { params }) {
   try {
     const { id } = params;
-    
-    // Soft delete by setting isActive to false
-    const deletedFaceSource = await prisma.faceSource.update({
+
+    // Find the face source
+    const faceSource = await prisma.faceSource.findUnique({
+      where: { id }
+    });
+
+    if (!faceSource) {
+      return NextResponse.json(
+        { error: 'Face source not found' },
+        { status: 404 }
+      );
+    }
+
+    // Soft delete in database
+    await prisma.faceSource.update({
       where: { id },
       data: { isActive: false }
     });
-    
-    return NextResponse.json(deletedFaceSource);
+
+    // Delete physical file
+    const filePath = path.join(process.cwd(), 'public', faceSource.filePath);
+    try {
+      await fs.unlink(filePath);
+    } catch (error) {
+      console.warn('Warning: Could not delete physical file:', error);
+    }
+
+    return NextResponse.json({ success: true });
   } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error('Error deleting face source:', error);
+    return NextResponse.json(
+      { error: 'Failed to delete face source' },
+      { status: 500 }
+    );
+  } finally {
+    await prisma.$disconnect();
   }
 }

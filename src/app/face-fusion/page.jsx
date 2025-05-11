@@ -103,7 +103,7 @@ export default function FaceSwapPage() {
    useEffect(() => {
     const loadImageSources = async () => {
       try {
-        const response = await fetch('/api/list-sources')
+        const response = await fetch('/api/face-sources')
         const data = await response.json()
 
         if (data.files) {
@@ -317,7 +317,7 @@ export default function FaceSwapPage() {
   const handleSourceDelete = async (image, e) => {
     e.stopPropagation() // Prevent triggering image selection
     try {
-      const response = await fetch('/api/delete-source', {
+      const response = await fetch('/api/face-sources', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ filename: image.name })
