@@ -60,7 +60,7 @@ model GeneratedMedia {
   type          String    // ENUM('video', 'image')
   tempPath      String?   @map("temp_path")
   filePath      String    @map("file_path")
-  thumbnailPath String    @map("thumbnail_path")
+  thumbnailPath String?   @map("thumbnail_path")
   fileSize      BigInt    @map("file_size")
   createdAt     DateTime  @default(now()) @map("created_at")
   authorId      String?   @map("author_id")

@@ -1,42 +1,63 @@
 import { NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
+import prisma from '../../../lib/prisma'; // Adjust the import path as necessary
+import fs from 'fs';
+import path from 'path';
 
 // GET all generated media
 export async function GET() {
   try {
-    const generatedMedia = await prisma.generatedMedia.findMany({
-      where: { isActive: true },
-      include: {
-        author: true,
-        targetTemplate: true,
-        faceSource: true
-      }
+    const media = await prisma.generatedMedia.findMany({
+      orderBy: { createdAt: 'desc' }
     });
-    return NextResponse.json(generatedMedia);
+
+    // Convert BigInt values to strings
+    const serializedMedia = media.map(item => ({
+      ...item,
+      fileSize: item.fileSize.toString()
+    }));
+
+    return NextResponse.json({ files: serializedMedia });
   } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error('Error fetching generated media:', error);
+    return NextResponse.json(
+      { error: 'Failed to fetch generated media' },
+      { status: 500 }
+    );
   }
 }
 
-// POST new generated media
-export async function POST(request) {
+export async function DELETE(request) {
   try {
-    const data = await request.json();
-    const generatedMedia = await prisma.generatedMedia.create({
-      data: {
-        name: data.name,
-        type: data.type,
-        tempPath: data.tempPath,
-        filePath: data.filePath,
-        thumbnailPath: data.thumbnailPath,
-        fileSize: data.fileSize,
-        authorId: data.authorId,
-        templateId: data.templateId,
-        faceSourceId: data.faceSourceId
-      }
-    });
-    return NextResponse.json(generatedMedia, { status: 201 });
+    const { searchParams } = new URL(request.url);
+    const filename = searchParams.get('filename');
+
+    if (!filename) {
+      return NextResponse.json(
+        { error: 'Filename is required' },
+        { status: 400 }
+      );
+    }
+
+    const filePath = path.join(process.cwd(), 'public', 'outputs', filename);
+
+    if (!fs.existsSync(filePath)) {
+      return NextResponse.json(
+        { error: 'File not found' },
+        { status: 404 }
+      );
+    }
+
+    fs.unlinkSync(filePath);
+
+    // Optionally, delete from generatedMedia table as well
+    await prisma.generatedMedia.deleteMany({ where: { name: filename } });
+
+    return NextResponse.json({ success: true });
   } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error('Error deleting generated media:', error);
+    return NextResponse.json(
+      { error: 'Failed to delete generated media' },
+      { status: 500 }
+    );
   }
-}
+} 

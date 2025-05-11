@@ -72,29 +72,23 @@ export default function FaceFusion() {
   useEffect(() => {
     const loadGeneratedVideos = async () => {
       try {
-        // List files in the outputs directory
-        const response = await fetch('/api/list-outputs')
-        const data = await response.json()
+        const response = await fetch('/api/generated-media');
+        if (!response.ok) {
+          throw new Error('Failed to load generated videos');
+        }
+        const data = await response.json();
         
         if (data.files) {
-          // Sort by creation time descending
-          const sortedVideos = data.files
-            .map(file => ({
-              url: `/outputs/${file.name}`,
-              name: file.name,
-              createdAt: file.createdAt
-            }))
-            .sort((a, b) => b.createdAt - a.createdAt)
-            
-          setGeneratedVideos(sortedVideos)
+          setGeneratedVideos(data.files);
         }
       } catch (error) {
-        console.error('Error loading generated videos:', error)
+        console.error('Error loading generated videos:', error);
+        setError('Failed to load generated videos');
       }
-    }
+    };
 
-    loadGeneratedVideos()
-  }, [result]) // Reload when new video is generated
+    loadGeneratedVideos();
+  }, [result]); // Reload when new video is generated
 
    // Load image sources from API
    useEffect(() => {
@@ -125,7 +119,7 @@ export default function FaceFusion() {
 
   const handleTargetSelect = (target) => {
     setSelectedTarget(target)
-    setTargetPath(target.videoPath)
+    setTargetPath(target.filePath)
   }
 
   const handleSourceUpload = async (e) => {
@@ -180,6 +174,8 @@ export default function FaceFusion() {
   };
 
   const handleSubmit = async () => {
+    console.log('handleSubmit: ', sourcePath, targetPath)
+    
     if (!sourcePath || !targetPath) {
       return
     }
@@ -232,18 +228,19 @@ export default function FaceFusion() {
 
   const handleDelete = async (video) => {
     try {
-      const response = await fetch('/api/delete-output', {
+      const response = await fetch(`/api/generated-media?filename=${video.name}`, {
         method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ filename: video.name })
-      })
+      });
 
-      if (response.ok) {
-        setGeneratedVideos(videos => videos.filter(v => v.name !== video.name))
-        setSelectedVideo(null)
+      if (!response.ok) {
+        throw new Error('Failed to delete video');
       }
+
+      setGeneratedVideos(videos => videos.filter(v => v.name !== video.name));
+      setSelectedVideo(null);
     } catch (error) {
-      console.error('Error deleting video:', error)
+      console.error('Error deleting video:', error);
+      setError('Failed to delete video');
     }
   }
 
@@ -486,6 +483,7 @@ export default function FaceFusion() {
 
   const handleTemplateSelect = (template) => {
     setSelectedTemplate(template);
+    setTargetPath(template.filePath);
     setSelectedFace(0); // Reset face selection when template changes
   };
 
@@ -699,24 +697,36 @@ export default function FaceFusion() {
             </div>
           ) : (
             <div className="p-4">
-              <h2 className="text-lg font-bold mb-4 text-white">Generated Videos</h2>
+              <h2 className="text-lg font-bold mb-4 text-white">Generated Media</h2>
               <div className="grid gap-4">
-                {generatedVideos.map((video) => (
+                {generatedVideos.map((media) => (
                   <div 
-                    key={video.name}
+                    key={media.id}
                     className="bg-[#2a2d34] p-3 rounded-lg cursor-pointer hover:bg-[#3a3d44] transition-colors"
-                    onClick={() => handleVideoClick(video)}
+                    onClick={() => handleVideoClick(media)}
                   >
-                    <video
-                      src={video.url}
-                      className="w-full rounded-lg mb-2"
-                      autoPlay
-                      loop
-                      muted
-                      style={{ "borderRadius": "8px", objectFit: "cover" }}
-                    />
+                    {media.type === 'video' ? (
+                      <video
+                        src={media.filePath}
+                        className="w-full rounded-lg mb-2"
+                        autoPlay
+                        loop
+                        muted
+                        style={{ "borderRadius": "8px", objectFit: "cover" }}
+                      />
+                    ) : (
+                      <img
+                        src={media.filePath}
+                        alt={media.name}
+                        className="w-full rounded-lg mb-2"
+                        style={{ "borderRadius": "8px", objectFit: "cover" }}
+                      />
+                    )}
                     <div className="text-sm text-gray-400">
-                      {video.name}: {new Date(video.createdAt).toLocaleString()}
+                      {media.name}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      {new Date(media.createdAt).toLocaleString()}
                     </div>
                   </div>
                 ))}

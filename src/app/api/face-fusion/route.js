@@ -5,6 +5,7 @@ import { pipeline } from 'stream';
 import { promisify } from 'util';
 import FormData from 'form-data';
 import fetch from 'node-fetch';
+import prisma from '../../../lib/prisma';
 
 // Promisify the stream pipeline for async/await usage
 const streamPipeline = promisify(pipeline);
@@ -66,6 +67,7 @@ export async function POST(request) {
       }, { status: 400 });
     }
 
+    console.log('before createFusionTask: ', sourceFile, targetFile);
     // Step 1: Call CREATE_API to initiate face fusion task
     const outputPath = await createFusionTask(sourceFile, targetFile);
 
@@ -197,6 +199,46 @@ async function pollTaskStatus(outputPath, sourceFileName) {
           fs.writeFileSync(filePath, fileBuffer);
           
           console.log(`File saved successfully at: ${filePath}`);
+
+          // Generate thumbnail for video
+          let thumbnailPath = null;
+          if (fileExtension === '.mp4') {
+            const thumbnailFileName = `${name}_${Date.now()}_thumb.jpg`;
+            const thumbnailFilePath = path.join(process.cwd(), 'public', 'outputs', thumbnailFileName);
+            
+            // Use ffmpeg to generate thumbnail
+            const ffmpeg = require('fluent-ffmpeg');
+            await new Promise((resolve, reject) => {
+              ffmpeg(filePath)
+                .screenshots({
+                  timestamps: ['00:00:01'],
+                  filename: thumbnailFileName,
+                  folder: path.join(process.cwd(), 'public', 'outputs'),
+                  size: '320x240'
+                })
+                .on('end', () => {
+                  thumbnailPath = `/outputs/${thumbnailFileName}`;
+                  resolve();
+                })
+                .on('error', (err) => {
+                  console.error('Error generating thumbnail:', err);
+                  reject(err);
+                });
+            });
+          }
+
+          // Insert into generatedMedia table
+          const fileStats = fs.statSync(filePath);
+          await prisma.generatedMedia.create({
+            data: {
+              name: fileName,
+              type: 'video',
+              tempPath: outputPath,
+              filePath: `/outputs/${fileName}`,
+              thumbnailPath: thumbnailPath || `/outputs/${fileName}`, // Use video as thumbnail if thumbnail generation fails
+              fileSize: BigInt(fileStats.size),
+            }
+          });
           
           // Return the file path relative to public folder
           return NextResponse.json({

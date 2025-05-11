@@ -22,7 +22,7 @@ export default function VideoModal({ video, onClose, onDownload, onDelete }) {
         },
         body: JSON.stringify({
           imageId: video.name,
-          imageUrl: `http://localhost:3000${video.url}`,
+          imageUrl: `http://localhost:3000${video.filePath}`,
         })
       })
       
@@ -61,12 +61,20 @@ export default function VideoModal({ video, onClose, onDownload, onDelete }) {
           <X className="w-6 h-6 pointer-events-none" />
         </button>
         
-        <video
-          src={video.url}
-          controls
-          className="w-full rounded-lg mb-4 max-h-[70vh] object-contain"
-          autoPlay
-        />
+        {video.type === 'video' ? (
+          <video
+            src={video.filePath}
+            controls
+            className="w-full rounded-lg mb-4 max-h-[70vh] object-contain"
+            autoPlay
+          />
+        ) : (
+          <img
+            src={video.filePath}
+            alt={video.name}
+            className="w-full rounded-lg mb-4 max-h-[70vh] object-contain"
+          />
+        )}
         
         <div className="flex justify-end gap-2">
           <button
