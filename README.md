@@ -172,7 +172,6 @@ The application uses NextAuth.js with the following providers:
 
 `bg-gradient-to-r from-blue-400 to-purple-500 rounded-full shadow-lg`
 
-
 ### PostgreSQL@17
 
 ```bash

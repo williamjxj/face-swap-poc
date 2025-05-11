@@ -18,7 +18,7 @@ const geistMono = Geist_Mono({
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata = {
-  title: "SeaArt.AI - AI Face Swap",
+  title: "Custom Face Swap - AI Face Swap",
   description: "AI Face Swap Tool, Checkout Payment, CMS",
 }
 

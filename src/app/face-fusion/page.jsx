@@ -6,6 +6,8 @@ import { useState, useEffect } from "react"
 import VideoModal from "../../components/VideoModal"
 import GuidelineModal from "../../components/GuidelineModal"
 import styles from './page.module.css'
+import TabContent from "../../components/TabContent"
+import { handleTargetUpload, handleImageUpload, handleGifUpload, handleMultiFaceUpload } from "../../utils/uploadHandlers"
 
 export default function FaceSwapPage() {
   const [selectedTab, setSelectedTab] = useState('video')
@@ -125,70 +127,6 @@ export default function FaceSwapPage() {
     loadImageSources()
   }, [])
 
-
-  const renderTabContent = () => {
-    switch (selectedTab) {
-      case 'video':
-        return (
-          <div className="w-full bg-[#1a1d24] p-2 rounded-lg">
-            <div className="grid grid-cols-2 gap-2">
-              {videoTargets.map((video) => (
-                <div 
-                  key={video.id}
-                  className={`cursor-pointer border-2 relative ${selectedTarget?.id === video.id ? 'border-blue-500' : 'border-transparent'}`}
-                  style={{
-                    background: '#2b2c32',
-                    "borderRadius": '12px',
-                    cursor: 'pointer',
-                  }}
-                  onClick={handleTargetSelect.bind(null, video)}
-                >
-                  <div className="absolute top-2 left-2 bg-black/60 px-2 py-0.5 rounded-full text-xs text-white z-10">
-                    {video.duration}
-                  </div>
-                  <Image
-                    src={video.thumbnail}
-                    alt={`Video ${video.id}`}
-                    width={116}
-                    height={176}
-                    className="w-full h-[176px] object-cover"
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
-        );
-      case 'image':
-        return (
-          <div className="p-6 grid grid-cols-2 gap-4 overflow-y-auto">
-            <div className="aspect-square bg-[#2a2d34] rounded-lg flex flex-col items-center justify-center cursor-pointer hover:bg-[#3a3d44] transition-colors">
-              <Plus className="w-8 h-8 text-gray-400 mb-2" />
-              <span className="text-sm text-gray-400">Upload Image</span>
-            </div>
-          </div>
-        );
-      case 'gif':
-        return (
-          <div className="p-6 grid grid-cols-2 gap-4 overflow-y-auto">
-            <div className="aspect-square bg-[#2a2d34] rounded-lg flex flex-col items-center justify-center cursor-pointer hover:bg-[#3a3d44] transition-colors">
-              <Plus className="w-8 h-8 text-gray-400 mb-2" />
-              <span className="text-sm text-gray-400">Upload GIF</span>
-            </div>
-          </div>
-        );
-      case 'multi-face':
-        return (
-          <div className="p-6 grid grid-cols-2 gap-4 overflow-y-auto">
-            <div className="aspect-square bg-[#2a2d34] rounded-lg flex flex-col items-center justify-center cursor-pointer hover:bg-[#3a3d44] transition-colors">
-              <Plus className="w-8 h-8 text-gray-400 mb-2" />
-              <span className="text-sm text-gray-400">Multi-face Swap</span>
-            </div>
-          </div>
-        );
-      default:
-        return null;
-    }
-  };
 
   const handleTargetSelect = (target) => {
     setSelectedTarget(target)
@@ -337,6 +275,26 @@ export default function FaceSwapPage() {
     }
   }
 
+  const handleTargetUploadWrapper = async (e) => {
+    const file = e.target.files?.[0];
+    await handleTargetUpload(file, setError, videoTargets, handleTargetSelect);
+  };
+
+  const handleImageUploadWrapper = async (e) => {
+    const file = e.target.files?.[0];
+    await handleImageUpload(file, setError, videoTargets, handleTargetSelect);
+  };
+
+  const handleGifUploadWrapper = async (e) => {
+    const file = e.target.files?.[0];
+    await handleGifUpload(file, setError, videoTargets, handleTargetSelect);
+  };
+
+  const handleMultiFaceUploadWrapper = async (e) => {
+    const files = Array.from(e.target.files);
+    await handleMultiFaceUpload(files, setError, videoTargets);
+  };
+
   return (
     <div className="flex h-screen gap-4 bg-[#0e1117] text-white">
       {/* Left side - Video Templates */}
@@ -362,7 +320,16 @@ export default function FaceSwapPage() {
         
         {/* Tab Content */}
         <div className="flex-1 overflow-y-auto">
-          {renderTabContent()}
+          <TabContent
+            selectedTab={selectedTab}
+            videoTargets={videoTargets}
+            selectedTarget={selectedTarget}
+            onTargetSelect={handleTargetSelect}
+            onTargetUpload={handleTargetUploadWrapper}
+            onImageUpload={handleImageUploadWrapper}
+            onGifUpload={handleGifUploadWrapper}
+            onMultiFaceUpload={handleMultiFaceUploadWrapper}
+          />
         </div>
       </div>
 

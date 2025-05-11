@@ -7,6 +7,8 @@ when user upload a video, the function
 
 ### 🌶  
 
+`npx prisma migrate deploy`
+
 ### 🌽 
 
 ### 🥕 create a shell script:
