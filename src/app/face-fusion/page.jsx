@@ -7,9 +7,12 @@ import VideoModal from "../../components/VideoModal"
 import GuidelineModal from "../../components/GuidelineModal"
 import styles from './page.module.css'
 import TabContent from "./TabContent"
-import { handleTargetUpload, handleImageUpload, handleGifUpload, handleMultiFaceUpload } from "../../utils/uploadHandlers"
+import TemplateList from './TemplateList'
+import VideoPlayer from './VideoPlayer'
+import { formatDuration } from '../../utils/formatUtils'
+import { handleTargetUpload, handleImageUpload, handleGifUpload, handleMultiFaceUpload } from "./uploadHandlers"
 
-export default function FaceSwapPage() {
+export default function FaceFusion() {
   const [selectedTab, setSelectedTab] = useState('video')
   const [rightSideTab, setRightSideTab] = useState('face-swap')
   // Store just the paths as strings for form data
@@ -27,6 +30,10 @@ export default function FaceSwapPage() {
   const [generatedVideos, setGeneratedVideos] = useState([])
   const [imageSources, setImageSources] = useState([])
   const [videoTargets, setVideoTargets] = useState([])
+  const [templates, setTemplates] = useState([])
+  const [selectedTemplate, setSelectedTemplate] = useState(null)
+  const [selectedFace, setSelectedFace] = useState(null)
+  const [loading, setLoading] = useState(true)
 
   const tabOptions = [
     { id: 'video', label: 'Video' },
@@ -45,9 +52,16 @@ export default function FaceSwapPage() {
         }
         const data = await response.json();
         setVideoTargets(data.templates);
+        setTemplates(data.templates);
+        if (data.templates.length > 0) {
+          setSelectedTemplate(data.templates[0]);
+          setSelectedFace(0); // Select first face by default
+        }
       } catch (error) {
         console.error('Error loading templates:', error);
         setError('Failed to load templates');
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -276,12 +290,21 @@ export default function FaceSwapPage() {
     await handleMultiFaceUpload(files, setError, videoTargets);
   };
 
+  const handleTemplateSelect = (template) => {
+    setSelectedTemplate(template);
+    setSelectedFace(0); // Reset face selection when template changes
+  };
+
+  if (loading) {
+    return <div className="flex items-center justify-center h-screen">Loading...</div>;
+  }
+
   return (
     <div className="flex h-screen gap-4 bg-[#0e1117] text-white">
       {/* Left side - Video Templates */}
       <div className="w-1/4 bg-[#1a1d24] rounded-lg flex flex-col">
         {/* Tab Navigation */}
-        <div className="p-4 border-b border-gray-800">
+        <div className="p-2 border-b border-gray-800">
           <div className="flex space-x-2">
             {tabOptions.map((tab) => (
               <button
@@ -301,16 +324,38 @@ export default function FaceSwapPage() {
         
         {/* Tab Content */}
         <div className="flex-1 overflow-y-auto">
-          <TabContent
-            selectedTab={selectedTab}
-            videoTargets={videoTargets}
-            selectedTarget={selectedTarget}
-            onTargetSelect={handleTargetSelect}
-            onTargetUpload={handleTargetUploadWrapper}
-            onImageUpload={handleImageUploadWrapper}
-            onGifUpload={handleGifUploadWrapper}
-            onMultiFaceUpload={handleMultiFaceUploadWrapper}
-          />
+          <div className="p-2">
+            <h2 className="text-xl font-semibold mb-3 text-white">Templates</h2>
+            <div className="grid grid-cols-3 gap-2">
+              {templates.map((template) => (
+                <div
+                  key={template.id}
+                  className={`cursor-pointer rounded-lg overflow-hidden transition-all duration-200 ${
+                    selectedTemplate?.id === template.id 
+                      ? 'ring-2 ring-blue-500 scale-[1.02]' 
+                      : 'hover:scale-[1.02] hover:ring-1 hover:ring-gray-400'
+                  }`}
+                  onClick={() => handleTemplateSelect(template)}
+                >
+                  <div className="relative group">
+                    <img
+                      src={template.thumbnailPath}
+                      alt={template.name}
+                      className="w-[116px] h-[176px] object-cover rounded-lg"
+                    />
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2">
+                      <div className="text-white text-xs font-medium">
+                        {formatDuration(template.duration)}
+                      </div>
+                    </div>
+                    {selectedTemplate?.id === template.id && (
+                      <div className="absolute inset-0 bg-blue-500/10 pointer-events-none" />
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
 
@@ -334,19 +379,22 @@ export default function FaceSwapPage() {
           </div>
         </div>
 
-        {selectedTarget ? (
+        {selectedTemplate ? (
           <div 
-            className="w-[calc(100%-160px)] min-h-[280px] h-[612px] max-h-[calc(100%-268px)] flex items-center justify-center bg-[#2a2832] rounded-[20px] border-2 border-dashed border-white/70 relative mt-[18px]"
+            className="w-[calc(100%-160px)] h-[612px] bg-[#2a2832] rounded-[20px] border-2 border-dashed border-white/70 relative mt-[18px] flex items-center justify-center"
           >
-            <video
-              src={selectedTarget.videoPath}
-              controls
-              className="max-w-full max-h-full object-contain rounded-lg shadow-lg"
-            />
+            <div className="w-full h-full flex items-center justify-center">
+              <video
+                src={selectedTemplate.filePath}
+                controls
+                className="w-full h-full object-contain rounded-lg"
+                poster={selectedTemplate.thumbnailPath}
+              />
+            </div>
           </div>
         ) : (
           <div 
-            className="w-[calc(100%-160px)] min-h-[280px] h-[612px] max-h-[calc(100%-268px)] flex items-center justify-center bg-[#2a2832] rounded-[20px] border-2 border-dashed border-white/70 relative mt-[18px]"
+            className="w-[calc(100%-160px)] h-[612px] bg-[#2a2832] rounded-[20px] border-2 border-dashed border-white/70 relative mt-[18px] flex items-center justify-center"
           >
             <div className="text-center p-12 space-y-6">
               <div className="flex flex-col items-center space-y-4">
@@ -375,9 +423,9 @@ export default function FaceSwapPage() {
               Face Swap
               <span className="text-gray-400 ml-0">
                 <Info 
-                className="inline-block ml-1 w-4 h-4 text-gray-400 cursor-pointer hover:text-gray-300" 
-                onClick={() => setIsModalOpen(true)} 
-              />
+                  className="inline-block ml-1 w-4 h-4 text-gray-400 cursor-pointer hover:text-gray-300" 
+                  onClick={() => setIsModalOpen(true)} 
+                />
               </span>
             </button>
             <button
@@ -399,12 +447,12 @@ export default function FaceSwapPage() {
             <div className="p-4">
               {/* Face Swap Content */}
               <div className="mb-6">
-                <h2 className="text-lg font-bold mb-4">Face Selection</h2>
+                <h2 className="text-lg font-bold mb-4 text-white">Face Selection</h2>
                 <div className="flex gap-4 justify-center relative">
                   <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-gray-600">
-                    {selectedTarget && (
+                    {selectedTemplate && (
                       <Image
-                        src={selectedTarget.thumbnail}
+                        src={selectedTemplate.thumbnailPath}
                         alt="Target"
                         width={96}
                         height={96}
@@ -433,7 +481,7 @@ export default function FaceSwapPage() {
 
               {/* Source Images Section */}
               <div className="flex-grow">
-                <h2 className="text-lg font-bold mb-4">Source Images</h2>
+                <h2 className="text-lg font-bold mb-4 text-white">Source Images</h2>
                 <div className="grid grid-cols-3 gap-2">
                   {/* Upload button */}
                   <label className="w-20 h-20 rounded-full border-2 border-dashed border-gray-600 flex items-center justify-center cursor-pointer hover:bg-[#2a2d34]">
@@ -480,9 +528,9 @@ export default function FaceSwapPage() {
               {/* Generate Button */}
               <button
                 onClick={handleSubmit}
-                disabled={!selectedSource || !selectedTarget || processing}
+                disabled={!selectedSource || !selectedTemplate || processing}
                 className={`mt-4 py-2 px-4 rounded w-full ${
-                  selectedSource && selectedTarget && !processing
+                  selectedSource && selectedTemplate && !processing
                     ? 'bg-blue-500 hover:bg-blue-600 text-white cursor-pointer'
                     : 'bg-blue-500/50 text-white/50 cursor-not-allowed'
                 }`}
@@ -513,7 +561,7 @@ export default function FaceSwapPage() {
             </div>
           ) : (
             <div className="p-4">
-              <h2 className="text-lg font-bold mb-4">Generated Videos</h2>
+              <h2 className="text-lg font-bold mb-4 text-white">Generated Videos</h2>
               <div className="grid gap-4">
                 {generatedVideos.map((video) => (
                   <div 

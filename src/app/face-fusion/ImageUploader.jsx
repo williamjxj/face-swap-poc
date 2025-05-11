@@ -32,7 +32,7 @@ export default function ImageUploader({ onUpload }) {
       <input type="file" accept="image/*" onChange={handleFileChange} className="hidden" id="upload" />
       <label htmlFor="upload" className="cursor-pointer flex flex-col items-center gap-4">
         <FiUpload className="w-12 h-12 text-blue-500" />
-        <span className="text-gray-600">拖放文件或点击上传</span>
+        <span className="text-gray-600">Drag and drop files or click upload</span>
         {preview && (
           <img src={preview} alt="Preview" className="mt-4 max-h-64 rounded-lg object-contain" />
         )}
