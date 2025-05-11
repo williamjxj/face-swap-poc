@@ -14,6 +14,78 @@ export default function TabContent({
   onMultiFaceUpload,
   onDeleteTemplate
 }) {
+  // Filter templates based on selected tab
+  const filteredTemplates = templates.filter(template => {
+    switch (selectedTab) {
+      case 'video':
+        return template.mimeType?.startsWith('video/');
+      case 'image':
+        return template.mimeType?.startsWith('image/') && template.mimeType !== 'image/gif';
+      case 'gif':
+        return template.mimeType === 'image/gif';
+      case 'multi-face':
+        return template.mimeType?.startsWith('image/') && template.mimeType !== 'image/gif';
+      default:
+        return false;
+    }
+  });
+
+  const renderTemplatePreview = (template) => {
+    if (template.mimeType?.startsWith('video/')) {
+      return (
+        <img
+          src={template.thumbnailPath}
+          alt={template.filename}
+          className="w-[116px] h-[176px] object-cover rounded-lg target-dimensions"
+        />
+      );
+    } else {
+      // For images and GIFs, use the file path directly
+      return (
+        <img
+          src={template.filePath}
+          alt={template.filename}
+          className="w-[116px] h-[176px] object-cover rounded-lg target-dimensions"
+        />
+      );
+    }
+  };
+
+  const renderTemplateCard = (template) => (
+    <div
+      key={template.id}
+      className={`cursor-pointer rounded-lg overflow-hidden transition-all duration-200 ${
+        selectedTemplate?.id === template.id 
+          ? 'ring-2 ring-blue-500 scale-[1.02]' 
+          : 'hover:scale-[1.02] hover:ring-1 hover:ring-gray-400'
+      }`}
+      onClick={() => onSelectTemplate(template)}
+    >
+      <div className="relative group">
+        {renderTemplatePreview(template)}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onDeleteTemplate(template.id, e);
+          }}
+          className="absolute top-1 right-1 bg-gray-800/80 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-gray-700/80"
+        >
+          ×
+        </button>
+        {template.duration && (
+          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2">
+            <div className="text-white text-xs font-medium">
+              {formatDuration(template.duration)}
+            </div>
+          </div>
+        )}
+        {selectedTemplate?.id === template.id && (
+          <div className="absolute inset-0 bg-blue-500/10 pointer-events-none" />
+        )}
+      </div>
+    </div>
+  );
+
   const renderVideoTab = () => (
     <div className="p-4">
       <h2 className="text-xl font-semibold mb-4 text-white">Templates</h2>
@@ -28,42 +100,7 @@ export default function TabContent({
             className="w-full h-full"
           />
         </div>
-        {templates.map((template) => (
-          <div
-            key={template.id}
-            className={`cursor-pointer rounded-lg overflow-hidden transition-all duration-200 ${
-              selectedTemplate?.id === template.id 
-                ? 'ring-2 ring-blue-500 scale-[1.02]' 
-                : 'hover:scale-[1.02] hover:ring-1 hover:ring-gray-400'
-            }`}
-            onClick={() => onSelectTemplate(template)}
-          >
-            <div className="relative group">
-              <img
-                src={template.thumbnailPath}
-                alt={template.name}
-                className="w-[116px] h-[176px] object-cover rounded-lg target-dimensions"
-              />
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDeleteTemplate(template.id, e);
-                }}
-                className="absolute top-1 right-1 bg-gray-800/80 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-gray-700/80"
-              >
-                ×
-              </button>
-              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2">
-                <div className="text-white text-xs font-medium">
-                  {formatDuration(template.duration)}
-                </div>
-              </div>
-              {selectedTemplate?.id === template.id && (
-                <div className="absolute inset-0 bg-blue-500/10 pointer-events-none" />
-              )}
-            </div>
-          </div>
-        ))}
+        {filteredTemplates.map(renderTemplateCard)}
       </div>
     </div>
   )
@@ -82,42 +119,7 @@ export default function TabContent({
             className="w-full h-full"
           />
         </div>
-        {templates.map((template) => (
-          <div
-            key={template.id}
-            className={`cursor-pointer rounded-lg overflow-hidden transition-all duration-200 ${
-              selectedTemplate?.id === template.id 
-                ? 'ring-2 ring-blue-500 scale-[1.02]' 
-                : 'hover:scale-[1.02] hover:ring-1 hover:ring-gray-400'
-            }`}
-            onClick={() => onSelectTemplate(template)}
-          >
-            <div className="relative group">
-              <img
-                src={template.thumbnailPath}
-                alt={template.name}
-                className="w-[116px] h-[176px] object-cover rounded-lg target-dimensions"
-              />
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDeleteTemplate(template.id, e);
-                }}
-                className="absolute top-1 right-1 bg-gray-800/80 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-gray-700/80"
-              >
-                ×
-              </button>
-              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2">
-                <div className="text-white text-xs font-medium">
-                  {formatDuration(template.duration)}
-                </div>
-              </div>
-              {selectedTemplate?.id === template.id && (
-                <div className="absolute inset-0 bg-blue-500/10 pointer-events-none" />
-              )}
-            </div>
-          </div>
-        ))}
+        {filteredTemplates.map(renderTemplateCard)}
       </div>
     </div>
   )
@@ -136,42 +138,7 @@ export default function TabContent({
             className="w-full h-full"
           />
         </div>
-        {templates.map((template) => (
-          <div
-            key={template.id}
-            className={`cursor-pointer rounded-lg overflow-hidden transition-all duration-200 ${
-              selectedTemplate?.id === template.id 
-                ? 'ring-2 ring-blue-500 scale-[1.02]' 
-                : 'hover:scale-[1.02] hover:ring-1 hover:ring-gray-400'
-            }`}
-            onClick={() => onSelectTemplate(template)}
-          >
-            <div className="relative group">
-              <img
-                src={template.thumbnailPath}
-                alt={template.name}
-                className="w-[116px] h-[176px] object-cover rounded-lg target-dimensions"
-              />
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDeleteTemplate(template.id, e);
-                }}
-                className="absolute top-1 right-1 bg-gray-800/80 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-gray-700/80"
-              >
-                ×
-              </button>
-              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2">
-                <div className="text-white text-xs font-medium">
-                  {formatDuration(template.duration)}
-                </div>
-              </div>
-              {selectedTemplate?.id === template.id && (
-                <div className="absolute inset-0 bg-blue-500/10 pointer-events-none" />
-              )}
-            </div>
-          </div>
-        ))}
+        {filteredTemplates.map(renderTemplateCard)}
       </div>
     </div>
   )
@@ -190,42 +157,7 @@ export default function TabContent({
             className="w-full h-full"
           />
         </div>
-        {templates.map((template) => (
-          <div
-            key={template.id}
-            className={`cursor-pointer rounded-lg overflow-hidden transition-all duration-200 ${
-              selectedTemplate?.id === template.id 
-                ? 'ring-2 ring-blue-500 scale-[1.02]' 
-                : 'hover:scale-[1.02] hover:ring-1 hover:ring-gray-400'
-            }`}
-            onClick={() => onSelectTemplate(template)}
-          >
-            <div className="relative group">
-              <img
-                src={template.thumbnailPath}
-                alt={template.name}
-                className="w-[116px] h-[176px] object-cover rounded-lg target-dimensions"
-              />
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDeleteTemplate(template.id, e);
-                }}
-                className="absolute top-1 right-1 bg-gray-800/80 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-gray-700/80"
-              >
-                ×
-              </button>
-              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2">
-                <div className="text-white text-xs font-medium">
-                  {formatDuration(template.duration)}
-                </div>
-              </div>
-              {selectedTemplate?.id === template.id && (
-                <div className="absolute inset-0 bg-blue-500/10 pointer-events-none" />
-              )}
-            </div>
-          </div>
-        ))}
+        {filteredTemplates.map(renderTemplateCard)}
       </div>
     </div>
   )

@@ -333,17 +333,155 @@ export default function FaceFusion() {
 
   const handleImageUploadWrapper = async (e) => {
     const file = e.target.files?.[0];
-    await handleImageUpload(file, setError, videoTargets, handleTargetSelect);
+    if (file) {
+      try {
+        // Check file size (10MB limit)
+        if (file.size > 10 * 1024 * 1024) {
+          setError('File size exceeds 10MB limit');
+          return;
+        }
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const response = await fetch('/api/upload-template', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!response.ok) {
+          const errorData = await response.text();
+          throw new Error(`Upload failed: ${errorData}`);
+        }
+
+        const data = await response.json();
+        
+        // Create a new template object
+        const newTemplate = {
+          id: data.id,
+          filename: data.filename,
+          type: 'image',
+          filePath: data.filePath,
+          thumbnailPath: data.thumbnailPath,
+          duration: data.duration,
+          fileSize: BigInt(data.fileSize),
+          mimeType: data.mimeType
+        };
+
+        // Update both templates and videoTargets
+        setTemplates(prev => [newTemplate, ...prev]);
+        setVideoTargets(prev => [newTemplate, ...prev]);
+        
+        // Select the new template
+        setSelectedTemplate(newTemplate);
+        setSelectedFace(0);
+      } catch (error) {
+        console.error('Error uploading image:', error);
+        setError(error.message || 'Failed to upload image');
+      }
+    }
   };
 
   const handleGifUploadWrapper = async (e) => {
     const file = e.target.files?.[0];
-    await handleGifUpload(file, setError, videoTargets, handleTargetSelect);
+    if (file) {
+      try {
+        // Check file size (50MB limit)
+        if (file.size > 50 * 1024 * 1024) {
+          setError('File size exceeds 50MB limit');
+          return;
+        }
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const response = await fetch('/api/upload-template', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!response.ok) {
+          const errorData = await response.text();
+          throw new Error(`Upload failed: ${errorData}`);
+        }
+
+        const data = await response.json();
+        
+        // Create a new template object
+        const newTemplate = {
+          id: data.id,
+          filename: data.filename,
+          type: 'gif',
+          filePath: data.filePath,
+          thumbnailPath: data.thumbnailPath,
+          duration: data.duration,
+          fileSize: BigInt(data.fileSize),
+          mimeType: data.mimeType
+        };
+
+        // Update both templates and videoTargets
+        setTemplates(prev => [newTemplate, ...prev]);
+        setVideoTargets(prev => [newTemplate, ...prev]);
+        
+        // Select the new template
+        setSelectedTemplate(newTemplate);
+        setSelectedFace(0);
+      } catch (error) {
+        console.error('Error uploading GIF:', error);
+        setError(error.message || 'Failed to upload GIF');
+      }
+    }
   };
 
   const handleMultiFaceUploadWrapper = async (e) => {
     const files = Array.from(e.target.files);
-    await handleMultiFaceUpload(files, setError, videoTargets);
+    if (files.length > 0) {
+      try {
+        // Check if any file exceeds 10MB
+        const oversizedFiles = files.filter(file => file.size > 10 * 1024 * 1024);
+        if (oversizedFiles.length > 0) {
+          setError('Some files exceed 10MB limit');
+          return;
+        }
+
+        // Upload each file
+        for (const file of files) {
+          const formData = new FormData();
+          formData.append('file', file);
+
+          const response = await fetch('/api/upload-template', {
+            method: 'POST',
+            body: formData,
+          });
+
+          if (!response.ok) {
+            const errorData = await response.text();
+            throw new Error(`Upload failed: ${errorData}`);
+          }
+
+          const data = await response.json();
+          
+          // Create a new template object
+          const newTemplate = {
+            id: data.id,
+            filename: data.filename,
+            type: 'image',
+            filePath: data.filePath,
+            thumbnailPath: data.thumbnailPath,
+            duration: data.duration,
+            fileSize: BigInt(data.fileSize),
+            mimeType: data.mimeType
+          };
+
+          // Update both templates and videoTargets
+          setTemplates(prev => [newTemplate, ...prev]);
+          setVideoTargets(prev => [newTemplate, ...prev]);
+        }
+      } catch (error) {
+        console.error('Error uploading multi-face images:', error);
+        setError(error.message || 'Failed to upload multi-face images');
+      }
+    }
   };
 
   const handleTemplateSelect = (template) => {
@@ -445,12 +583,20 @@ export default function FaceFusion() {
             className="w-[calc(100%-160px)] h-[612px] bg-[#2a2832] rounded-[20px] border-2 border-dashed border-white/70 relative mt-[18px] flex items-center justify-center"
           >
             <div className="w-full h-full flex items-center justify-center">
-              <video
-                src={selectedTemplate.filePath}
-                controls
-                className="w-full h-full object-contain rounded-lg"
-                poster={selectedTemplate.thumbnailPath}
-              />
+              {selectedTemplate.mimeType?.startsWith('video/') ? (
+                <video
+                  src={selectedTemplate.filePath}
+                  controls
+                  className="w-full h-full object-contain rounded-lg"
+                  poster={selectedTemplate.thumbnailPath}
+                />
+              ) : (
+                <img
+                  src={selectedTemplate.filePath}
+                  alt={selectedTemplate.filename}
+                  className="w-full h-full object-contain rounded-lg"
+                />
+              )}
             </div>
           </div>
         ) : (

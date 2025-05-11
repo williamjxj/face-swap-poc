@@ -32,11 +32,8 @@ export async function POST(request) {
       );
     }
 
-    // Generate filename preserving original name but ensuring uniqueness
-    const originalName = path.basename(file.name, path.extname(file.name));
-    const fileExtension = path.extname(file.name);
-    const uniqueId = uuidv4().slice(0, 8); // Use first 8 chars of UUID
-    const filename = `${originalName}_${uniqueId}${fileExtension}`;
+    // Use original filename
+    const filename = file.name;
     
     // Save file to public directory
     const publicDir = path.join(process.cwd(), 'public');
@@ -68,7 +65,7 @@ export async function POST(request) {
     let duration = null;
     if (file.type.startsWith('video/')) {
       try {
-        const thumbnailFilename = `${originalName}_${uniqueId}_thumbnail.webp`;
+        const thumbnailFilename = `${path.basename(filename, path.extname(filename))}_thumbnail.webp`;
         thumbnailPath = await video2thumbnail(filePath, thumbnailsDir, thumbnailFilename);
         duration = await getVideoDuration(filePath);
         console.log('Generated thumbnail and duration:', { thumbnailPath, duration });
@@ -122,6 +119,88 @@ export async function POST(request) {
     console.error('Error uploading template:', error);
     return NextResponse.json(
       { error: error.message || 'Failed to upload template' },
+      { status: 500 }
+    );
+  }
+}
+
+// Add GET endpoint to list templates
+export async function GET() {
+  try {
+    const templates = await db.targetTemplate.findMany({
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
+
+    return NextResponse.json({ templates });
+  } catch (error) {
+    console.error('Error fetching templates:', error);
+    return NextResponse.json(
+      { error: 'Failed to fetch templates' },
+      { status: 500 }
+    );
+  }
+}
+
+// Add DELETE endpoint
+export async function DELETE(request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+
+    if (!id) {
+      return NextResponse.json(
+        { error: 'Template ID is required' },
+        { status: 400 }
+      );
+    }
+
+    // Get template details before deletion
+    const template = await db.targetTemplate.findUnique({
+      where: { id: id }
+    });
+
+    if (!template) {
+      return NextResponse.json(
+        { error: 'Template not found' },
+        { status: 404 }
+      );
+    }
+
+    // Delete files
+    const publicDir = path.join(process.cwd(), 'public');
+    
+    // Delete video file
+    if (template.filePath) {
+      const videoPath = path.join(publicDir, template.filePath.slice(1));
+      try {
+        await unlink(videoPath);
+      } catch (error) {
+        console.error('Error deleting video file:', error);
+      }
+    }
+
+    // Delete thumbnail file
+    if (template.thumbnailPath) {
+      const thumbnailPath = path.join(publicDir, template.thumbnailPath.slice(1));
+      try {
+        await unlink(thumbnailPath);
+      } catch (error) {
+        console.error('Error deleting thumbnail file:', error);
+      }
+    }
+
+    // Delete database record
+    await db.targetTemplate.delete({
+      where: { id: id }
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting template:', error);
+    return NextResponse.json(
+      { error: 'Failed to delete template' },
       { status: 500 }
     );
   }
