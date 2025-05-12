@@ -13,6 +13,8 @@
 | headlessui/react    | Unstyled, accessible UI components for React, designed to integrate with Tailwind CSS      |
 | prisma/client       | Auto-generated Prisma Client for database access in Node.js and TypeScript/JavaScript apps |
 | prisma              | Next-generation ORM for Node.js and TypeScript, used to define and manage database schema  |
+| sharp | |
+
 
 ## Tech Stack
 

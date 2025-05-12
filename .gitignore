@@ -36,5 +36,10 @@ yarn-error.log*
 
 # vercel
 .vercel
+
+# macOS
+.DS_Store
 .vscode/
 storage/
+prisma/migrations/
+fs-docs/*.pdf

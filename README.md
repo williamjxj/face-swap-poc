@@ -175,7 +175,5 @@ The application uses NextAuth.js with the following providers:
 ### PostgreSQL@17
 
 ```bash
-$ PGPASSWORD=William1! psql -h localhost -p 5432 -U postgres -d facefusion -c "\l"
-
-$ PGPASSWORD=William1! psql -h 127.0.0.1 -p 5432 -U postgres -d facefusion -c "\conninfo"
+$ PGPASSWORD=pwd psql -h 127.0.0.1 -p 5432 -U postgres -d facefusion -c "\conninfo"
 ```

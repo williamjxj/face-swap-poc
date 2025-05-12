@@ -51,7 +51,7 @@ export default async function RootLayout({ children }) {
         className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-screen`}
       >
         <Header />
-        <main className="flex-grow mx-auto w-full">
+        <main className="flex-grow mx-auto w-full ml-1 mr-1">
           {children}
         </main>
         <Footer />

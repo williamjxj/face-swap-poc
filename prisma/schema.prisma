@@ -33,7 +33,6 @@ model TargetTemplate {
   isActive      Boolean   @default(true) @map("is_active")
   author        User?     @relation(fields: [authorId], references: [id])
   generatedMedia GeneratedMedia[]
-  faceSwaps     FaceSwap[]
 }
 
 model FaceSource {
@@ -51,7 +50,6 @@ model FaceSource {
   isActive    Boolean   @default(true) @map("is_active")
   author      User?     @relation(fields: [authorId], references: [id])
   generatedMedia GeneratedMedia[]
-  faceSwaps   FaceSwap[]
 }
 
 model GeneratedMedia {
@@ -73,20 +71,8 @@ model GeneratedMedia {
   author        User?     @relation(fields: [authorId], references: [id])
   targetTemplate TargetTemplate? @relation(fields: [templateId], references: [id])
   faceSource    FaceSource? @relation(fields: [faceSourceId], references: [id])
-  faceSwaps     FaceSwap[]
   isPaid        Boolean   @default(false)
   watermarkPath String?
-}
-
-model FaceSwap {
-  id               Int       @id @default(autoincrement())
-  faceSourceId     String?   @map("face_source_id")
-  templateId       String?   @map("template_id")
-  generatedMediaId String?   @map("generated_media_id")
-  createdAt        DateTime  @default(now()) @map("created_at")
-  faceSource       FaceSource? @relation(fields: [faceSourceId], references: [id])
-  targetTemplate   TargetTemplate? @relation(fields: [templateId], references: [id])
-  generatedMedia   GeneratedMedia? @relation(fields: [generatedMediaId], references: [id])
 }
 
 model Guideline {
