@@ -8,9 +8,6 @@ import VideoModal from "../../components/VideoModal"
 import GuidelineModal from "../../components/GuidelineModal"
 import styles from './page.module.css'
 import TabContent from "./TabContent"
-import TemplateList from './TemplateList'
-import VideoPlayer from './VideoPlayer'
-import { handleTargetUpload, handleImageUpload, handleGifUpload, handleMultiFaceUpload } from "./uploadHandlers"
 
 export default function FaceFusion() {
   const [selectedTab, setSelectedTab] = useState('video')
@@ -290,8 +287,8 @@ export default function FaceFusion() {
     if (file) {
       try {
         // Check file size (500MB limit)
-        if (file.size > 500 * 1024 * 1024) {
-          setError('File size exceeds 500MB limit');
+        if (file.size > 150 * 1024 * 1024) {
+          setError('File size exceeds 150MB limit');
           return;
         }
 

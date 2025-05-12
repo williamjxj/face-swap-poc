@@ -22,7 +22,7 @@ export const metadata = {
   description: "AI Face Swap Tool, Checkout Payment, CMS",
 }
 
-export default async function RootLayout({ children }) {
+export async function RootLayout2({ children }) {
   const session = await getServerSession(authOptions);
   const segment = children.props.childProp?.segment;
   const isAuthPage = segment === 'auth';
@@ -43,7 +43,7 @@ export default async function RootLayout({ children }) {
   );
 }
 
-export async function RootLayout1({ children }) {
+export default async function RootLayout({ children }) {
 
   return (
     <html lang="en">
@@ -51,7 +51,7 @@ export async function RootLayout1({ children }) {
         className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-screen`}
       >
         <Header />
-        <main className="flex-grow px-2 py-2 mx-auto max-w-7xl w-full">
+        <main className="flex-grow mx-auto w-full">
           {children}
         </main>
         <Footer />

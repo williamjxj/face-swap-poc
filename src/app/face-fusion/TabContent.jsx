@@ -2,8 +2,7 @@ import Image from "next/image"
 import UploadBox from "./UploadBox"
 import { formatDuration } from '../../utils/formatUtils'
 
-
-export default function TabContent({ 
+export default function TabContent({
   selectedTab, 
   templates, 
   selectedTemplate, 
@@ -88,7 +87,6 @@ export default function TabContent({
 
   const renderVideoTab = () => (
     <div className="p-4">
-      <h2 className="text-xl font-semibold mb-4 text-white">Templates</h2>
       <div className="grid grid-cols-3 gap-3">
         <div className="w-[116px] h-[176px]">
           <UploadBox
@@ -96,7 +94,7 @@ export default function TabContent({
             accept="video/mp4,video/wav"
             onUpload={onTargetUpload}
             title="Custom Video"
-            description="视频：最大500MB/10分钟"
+            description="Video: Max 150MB/3mins"
             className="w-full h-full"
           />
         </div>
@@ -107,7 +105,6 @@ export default function TabContent({
 
   const renderImageTab = () => (
     <div className="p-4">
-      <h2 className="text-xl font-semibold mb-4 text-white">Templates</h2>
       <div className="grid grid-cols-3 gap-3">
         <div className="w-[116px] h-[176px]">
           <UploadBox
@@ -126,7 +123,6 @@ export default function TabContent({
 
   const renderGifTab = () => (
     <div className="p-4">
-      <h2 className="text-xl font-semibold mb-4 text-white">Templates</h2>
       <div className="grid grid-cols-3 gap-3">
         <div className="w-[116px] h-[176px]">
           <UploadBox
@@ -145,7 +141,6 @@ export default function TabContent({
 
   const renderMultiFaceTab = () => (
     <div className="p-4">
-      <h2 className="text-xl font-semibold mb-4 text-white">Templates</h2>
       <div className="grid grid-cols-3 gap-3">
         <div className="w-[116px] h-[176px]">
           <UploadBox

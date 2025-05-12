@@ -15,3 +15,13 @@
 | prisma              | Next-generation ORM for Node.js and TypeScript, used to define and manage database schema  |
 
 ## Tech Stack
+
+### 🥬 
+
+### 🥒 
+
+### 🌶  
+
+### 🌽 
+
+### 🥕 

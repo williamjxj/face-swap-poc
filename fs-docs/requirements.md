@@ -1,0 +1,1 @@
+# Next.js Video Management System Database Schema
