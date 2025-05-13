@@ -7,7 +7,7 @@ if ! command -v identify &> /dev/null; then
 fi
 
 # Directory containing the PNG files
-GUIDELINES_DIR="/Users/william.jiang/my-experiments/face-swap-poc/storage/guideline-iamges"
+GUIDELINES_DIR="${HOME}/face-swap-poc/storage/guideline-images"
 
 # Check if directory exists
 if [ ! -d "$GUIDELINES_DIR" ]; then
@@ -48,7 +48,7 @@ for img in "$GUIDELINES_DIR"/*.png; do
     height=$(echo $dimensions | cut -d'x' -f2)
     
     # Get file size in bytes
-    filesize=$(stat -f%z "$img")
+    filesize=$(stat -c%s"$img")
     
     # Create file path
     file_path="/guidelines/${filename}"

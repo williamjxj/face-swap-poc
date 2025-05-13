@@ -9,8 +9,7 @@ export async function GET(request, { params }) {
       where: { id },
       include: {
         author: true,
-        generatedMedia: true,
-        faceSwaps: true
+        generatedMedia: true
       }
     });
     

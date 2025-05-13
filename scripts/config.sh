@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Base directories
-APP_DIR=${HOME}/my-experiments/face-swap-poc
+APP_DIR=${HOME}/face-swap-poc
 SOURCE_DIR=${APP_DIR}/public/sources
 VIDEOS_DIR=${APP_DIR}/public/videos
 THUMB_DIR=${APP_DIR}/public/thumbnails

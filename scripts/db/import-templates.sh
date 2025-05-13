@@ -7,8 +7,8 @@ if ! command -v ffprobe &> /dev/null; then
 fi
 
 # Directories containing the videos and thumbnails
-VIDEOS_DIR="/Users/william.jiang/my-experiments/face-swap-poc/public/videos"
-THUMBNAILS_DIR="/Users/william.jiang/my-experiments/face-swap-poc/public/thumbnails"
+VIDEOS_DIR="${HOME}/face-swap-poc/public/videos"
+THUMBNAILS_DIR="${HOME}/face-swap-poc/public/thumbnails"
 
 # Check if directories exist
 if [ ! -d "$VIDEOS_DIR" ]; then
@@ -71,7 +71,7 @@ for video in "$VIDEOS_DIR"/*.{mp4,wav}; do
     duration=$(printf "%.0f" "$duration")
     
     # Get file size in bytes
-    filesize=$(stat -f%z "$video")
+    filesize=$(stat -c%s"$video")
     
     # Get mime type
     mime_type=$(file --mime-type -b "$video")

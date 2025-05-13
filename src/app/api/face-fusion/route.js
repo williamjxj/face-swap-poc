@@ -6,7 +6,7 @@ import { promisify } from 'util';
 import FormData from 'form-data';
 import fetch from 'node-fetch';
 import prisma from '../../../lib/prisma';
-import { generateWatermarkedVersion } from '../../../utils/videoProcessing';
+import { serializeBigInt } from '../../../utils/serializeBigInt';
 
 // Promisify the stream pipeline for async/await usage
 const streamPipeline = promisify(pipeline);
@@ -77,24 +77,37 @@ export async function POST(request) {
     // Step 2: Poll QUERY_API to check task status
     const result = await pollTaskStatus(outputPath, sourceFile.name);
     
-    // After generating the video, create a watermarked version
-    const filePath = path.join(process.cwd(), 'public', 'outputs', result.filePath.split('/').pop());
-    const watermarkPath = await generateWatermarkedVersion(filePath, result.filePath.split('/').pop());
+    // Validate the result contains filePath
+    if (!result || !result.filePath) {
+      console.error('Invalid result from face fusion task:', result);
+      return NextResponse.json({
+        status: 'error',
+        message: result?.message || 'Face fusion task failed',
+        details: result?.details || {}
+      }, { status: 500 });
+    }
 
-    // Save to database with watermark path
-    const media = await prisma.generatedMedia.create({
+    const fileName = result.filePath.split('/').pop();
+    const filePath = path.join(process.cwd(), 'public', 'outputs', fileName);
+
+    // Validate fileSize exists before BigInt conversion
+    if (typeof result.fileSize === 'undefined') {
+      const fileStats = fs.statSync(filePath);
+      result.fileSize = fileStats.size;
+    }
+
+    // Save to database with basic video info
+    await prisma.generatedMedia.create({
       data: {
-        name: result.filePath.split('/').pop(),
+        name: fileName,
         type: 'video',
-        filePath: `/outputs/${result.filePath.split('/').pop()}`,
-        watermarkPath: watermarkPath,
+        filePath: `/outputs/${fileName}`,
         fileSize: BigInt(result.fileSize),
-        mimeType: 'video/mp4',
-        isPaid: false
+        mimeType: 'video/mp4'
       }
     });
 
-    return result;
+    return serializeBigInt(result);
   } catch (error) {
     console.error('Face fusion process failed:', error);
     return NextResponse.json({
@@ -174,7 +187,6 @@ async function pollTaskStatus(outputPath, sourceFileName) {
       // If response is JSON, it's a status update or error
       if (contentType && contentType.includes('application/json')) {
         const data = await response.json();
-        console.log('Status response:', data);
         
         // Check for specific status codes
         if (response.status === 202 || (response.status === 200 && data.status === 'processing')) {
@@ -185,16 +197,29 @@ async function pollTaskStatus(outputPath, sourceFileName) {
           continue;
         } else if ([400, 404, 500].includes(response.status)) {
           // Task failed with a known error
-          return NextResponse.json(data, { status: response.status });
+          console.error('Face fusion task failed:', data);
+          return {
+            status: 'error',
+            message: data.message || 'Face fusion processing failed',
+            details: data
+          };
         } else if (response.status === 200 && data.status !== 'processing') {
           // Task completed successfully with JSON response
-          return NextResponse.json(data);
+          if (!data.filePath) {
+            console.error('API returned 200 but missing filePath:', data);
+            return {
+              status: 'error',
+              message: 'API response missing required filePath'
+            };
+          }
+          return data; // Return parsed data directly, not wrapped in NextResponse
         } else {
           // Unknown error
-          return NextResponse.json({
+          return {
             status: 'error',
-            message: `Unexpected status: ${response.status} - ${data.message || 'Unknown error'}`
-          }, { status: response.status });
+            message: `Unexpected status: ${response.status} - ${data.message || 'Unknown error'}`,
+            details: data
+          };
         }
       } else {
         // Non-JSON response with 200 status means the file is ready
@@ -217,7 +242,7 @@ async function pollTaskStatus(outputPath, sourceFileName) {
           
           console.log(`File saved successfully at: ${filePath}`);
 
-          // Generate thumbnail for video
+          // Get file stats for size
           let thumbnailPath = null;
           if (fileExtension === '.mp4') {
             const thumbnailFileName = `${name}_${Date.now()}_thumb.jpg`;
@@ -257,12 +282,13 @@ async function pollTaskStatus(outputPath, sourceFileName) {
             }
           });
           
-          // Return the file path relative to public folder
-          return NextResponse.json({
+          // Return the file path and size
+          return {
             status: 'success',
             message: 'Face fusion completed successfully',
-            filePath: `/outputs/${fileName}` // Path that can be used in frontend
-          });
+            filePath: `/outputs/${fileName}`,
+            fileSize: fileStats.size
+          };
         }
       }
       
@@ -280,19 +306,20 @@ async function pollTaskStatus(outputPath, sourceFileName) {
         await new Promise(resolve => setTimeout(resolve, POLLING_INTERVAL));
       } else {
         // For other errors, fail the process
-        return NextResponse.json({
+        return {
           status: 'error',
-          message: `Polling error: ${error.message}`
-        }, { status: 500 });
+          message: `Polling error: ${error.message}`,
+          details: error
+        };
       }
     }
   }
   
   // If we've reached maximum retries
-  return NextResponse.json({
+  return {
     status: 'error',
     message: `Task timed out after ${MAX_RETRIES * POLLING_INTERVAL / 1000} seconds`
-  }, { status: 408 });
+  };
 }
 
 /**

@@ -111,7 +111,22 @@ when user upload a video, the function
 
 ### 🌶  
 
-`npx prisma migrate deploy`
+`npx prisma db push`
+
+- Directly applies schema changes to the database
+- Does not generate migration files
+- Ideal for rapid iteration in non-production environments
+
+
+```bash
+$ npx prisma migrate deploy
+$ npx prisma migrate dev --name <migration_name>
+```
+
+- Creates migration files in `prisma/migrations`
+- Applies changes to the database
+- Generates/updates Prisma Client
+
 
 ### 🌽 
 

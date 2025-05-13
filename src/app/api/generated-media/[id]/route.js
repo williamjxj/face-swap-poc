@@ -10,8 +10,7 @@ export async function GET(request, { params }) {
       include: {
         author: true,
         targetTemplate: true,
-        faceSource: true,
-        faceSwaps: true
+        faceSource: true
       }
     });
     
@@ -40,7 +39,7 @@ export async function PUT(request, { params }) {
         filePath: data.filePath,
         thumbnailPath: data.thumbnailPath,
         fileSize: data.fileSize,
-        isPurchased: data.isPurchased,
+        isPaid: data.isPaid,
         playCount: data.playCount,
         downloadCount: data.downloadCount,
         isActive: data.isActive

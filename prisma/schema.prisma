@@ -62,7 +62,6 @@ model GeneratedMedia {
   fileSize      BigInt    @map("file_size")
   createdAt     DateTime  @default(now()) @map("created_at")
   authorId      String?   @map("author_id")
-  isPurchased   Boolean   @default(false) @map("is_purchased")
   playCount     Int       @default(0) @map("play_count")
   downloadCount Int       @default(0) @map("download_count")
   isActive      Boolean   @default(true) @map("is_active")
