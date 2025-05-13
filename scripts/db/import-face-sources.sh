@@ -1,11 +1,5 @@
 #!/bin/bash
 
-# Check if ImageMagick is installed
-if ! command -v identify &> /dev/null; then
-    echo "ImageMagick is required but not installed. Please install it first."
-    exit 1
-fi
-
 # Directory containing the source images
 SOURCES_DIR="${HOME}/face-swap-poc/public/sources"
 
@@ -42,13 +36,13 @@ for img in "$SOURCES_DIR"/*.{jpg,jpeg,png,webp}; do
     filename=$(basename "$img")
     echo "Processing $filename..."
     
-    # Get image dimensions
-    dimensions=$(identify -format "%wx%h" "$img")
-    width=$(echo $dimensions | cut -d'x' -f1)
-    height=$(echo $dimensions | cut -d'x' -f2)
+    # Get image dimensions using sips (built into macOS)
+    dimensions=$(sips -g pixelWidth -g pixelHeight "$img")
+    width=$(echo "$dimensions" | grep pixelWidth | awk '{print $2}')
+    height=$(echo "$dimensions" | grep pixelHeight | awk '{print $2}')
     
-    # Get file size in bytes
-    filesize=$(stat -c%s"$img")
+    # Get file size in bytes using macOS stat
+    filesize=$(stat -f%z "$img")
     
     # Get mime type
     mime_type=$(file --mime-type -b "$img")

@@ -52,7 +52,7 @@ for media in "$OUTPUTS_DIR"/*.{mp4,jpg,jpeg,png}; do
     echo "Processing $filename..."
     
     # Get file size in bytes
-    filesize=$(stat -c%s"$media")
+    filesize=$(stat -f%z "$media")  # Use stat -f%z for macOS
     
     # Get mime type
     mime_type=$(file --mime-type -b "$media")
@@ -85,6 +85,7 @@ for media in "$OUTPUTS_DIR"/*.{mp4,jpg,jpeg,png}; do
                         type: '$media_type',
                         filePath: '$file_path',
                         fileSize: BigInt('$filesize'),
+                        mimeType: '$mime_type',
                         isActive: true,
                         playCount: 0,
                         downloadCount: 0,

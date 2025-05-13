@@ -1,13 +1,7 @@
 #!/bin/bash
 
-# Check if ImageMagick is installed
-if ! command -v identify &> /dev/null; then
-    echo "ImageMagick is required but not installed. Please install it first."
-    exit 1
-fi
-
 # Directory containing the PNG files
-GUIDELINES_DIR="${HOME}/face-swap-poc/storage/guideline-images"
+GUIDELINES_DIR="${HOME}/face-swap-poc/public/guidelines"
 
 # Check if directory exists
 if [ ! -d "$GUIDELINES_DIR" ]; then
@@ -42,26 +36,23 @@ for img in "$GUIDELINES_DIR"/*.png; do
     filename=$(basename "$img")
     echo "Processing $filename..."
     
-    # Get image dimensions
-    dimensions=$(identify -format "%wx%h" "$img")
-    width=$(echo $dimensions | cut -d'x' -f1)
-    height=$(echo $dimensions | cut -d'x' -f2)
+    # Get image dimensions using sips (built into macOS)
+    dimensions=$(sips -g pixelWidth -g pixelHeight "$img")
+    width=$(echo "$dimensions" | grep pixelWidth | awk '{print $2}')
+    height=$(echo "$dimensions" | grep pixelHeight | awk '{print $2}')
     
-    # Get file size in bytes
-    filesize=$(stat -c%s"$img")
+    # Get file size in bytes using macOS stat
+    filesize=$(stat -f%z "$img")
     
-    # Create file path
+    # Get file type using file command
+    file_type=$(file --mime-type -b "$img")
+    
+    # Create file path (relative to storage directory)
     file_path="/guidelines/${filename}"
     
-    # Determine is_allowed based on filename prefix
-    if [[ $filename =~ ^s ]]; then
-        is_allowed="true"
-    elif [[ $filename =~ ^f ]]; then
-        is_allowed="false"
-    else
-        echo "Warning: Filename $filename doesn't start with 's' or 'f', skipping..."
-        continue
-    fi
+    echo "Dimensions: ${width}x${height}"
+    echo "File size: ${filesize} bytes"
+    echo "File type: ${file_type}"
     
     # Insert into database using Prisma
     node -e "
@@ -75,10 +66,9 @@ for img in "$GUIDELINES_DIR"/*.png; do
                         filename: '$filename',
                         width: $width,
                         height: $height,
-                        fileType: 'image/png',
-                        fileSize: BigInt('$filesize'),
-                        filePath: '$file_path',
-                        isAllowed: $is_allowed
+                        fileType: '${file_type}',
+                        filePath: '${file_path}',
+                        fileSize: BigInt('${filesize}')
                     }
                 });
                 console.log('Created guideline record for $filename');

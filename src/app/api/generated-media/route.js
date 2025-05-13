@@ -13,7 +13,8 @@ export async function GET() {
     // Convert BigInt values to strings
     const serializedMedia = media.map(item => ({
       ...item,
-      fileSize: item.fileSize.toString()
+      fileSize: item.fileSize.toString(),
+      mimeType: item.mimeType || 'video/mp4' // Provide default mimeType if not set
     }));
 
     return NextResponse.json({ files: serializedMedia });

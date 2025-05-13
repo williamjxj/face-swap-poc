@@ -1,7 +1,11 @@
 #!/usr/bin/env bash
 
+APP_DIR=${HOME}/face-swap-poc
+
+cd "${APP_DIR}" || exit 1
+
 # Configuration
-BASE_DIR="./public"
+BASE_DIR="${APP_DIR}/public"
 INPUT_DIR="${BASE_DIR}/videos"            # Folder where your videos live
 OUTPUT_DIR="${BASE_DIR}/thumbnails"       # Folder where thumbnails will be saved
 CAPTURE_TIME="00:00:01"         # Timestamp to capture frame (HH:MM:SS)

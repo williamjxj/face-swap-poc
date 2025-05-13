@@ -30,7 +30,7 @@ $ sudo systemctl restart postgresql
 | Generate client | `npx prisma generate` |
 
 ```bash
-scp -r ~/my-experiments/face-swap-poc/storage nextjs@43.135.142.221:/home/nextjs/face-swap-poc/
+$ scp -r ~/my-experiments/face-swap-poc/storage nextjs@43.135.142.221:/home/nextjs/face-swap-poc/
 ```
 
 ### TODO

@@ -63,9 +63,7 @@ export default function FaceFusion() {
     };
 
     loadTemplates();
-  }, []);
-
-  // Load generated videos when component mounts
+  }, []);    // Load generated videos when component mounts
   useEffect(() => {
     const loadGeneratedVideos = async () => {
       try {
@@ -76,7 +74,12 @@ export default function FaceFusion() {
         const data = await response.json();
         
         if (data.files) {
-          setGeneratedVideos(data.files);
+          // Convert strings back to BigInt if needed
+          const videos = data.files.map(video => ({
+            ...video,
+            fileSize: BigInt(video.fileSize || 0), // Convert back to BigInt
+          }));
+          setGeneratedVideos(videos);
         }
       } catch (error) {
         console.error('Error loading generated videos:', error);

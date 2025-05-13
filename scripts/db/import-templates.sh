@@ -70,8 +70,8 @@ for video in "$VIDEOS_DIR"/*.{mp4,wav}; do
     # Round duration to nearest integer
     duration=$(printf "%.0f" "$duration")
     
-    # Get file size in bytes
-    filesize=$(stat -c%s"$video")
+    # Get file size in bytes using macOS stat
+    filesize=$(stat -f%z "$video")
     
     # Get mime type
     mime_type=$(file --mime-type -b "$video")

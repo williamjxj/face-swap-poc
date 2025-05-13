@@ -68,7 +68,6 @@ export async function POST(request) {
       }, { status: 400 });
     }
 
-    console.log('before createFusionTask: ', sourceFile, targetFile);
     // Step 1: Call CREATE_API to initiate face fusion task
     const outputPath = await createFusionTask(sourceFile, targetFile);
 
@@ -77,13 +76,41 @@ export async function POST(request) {
     // Step 2: Poll QUERY_API to check task status
     const result = await pollTaskStatus(outputPath, sourceFile.name);
     
-    // Validate the result contains filePath
-    if (!result || !result.filePath) {
-      console.error('Invalid result from face fusion task:', result);
+    // Enhanced error handling and logging
+    if (!result) {
+      console.error('No result received from face fusion task');
       return NextResponse.json({
         status: 'error',
-        message: result?.message || 'Face fusion task failed',
-        details: result?.details || {}
+        message: 'Face fusion task failed - no result received',
+        details: { outputPath }
+      }, { status: 500 });
+    }
+
+    if (result.status === 'error') {
+      console.error('Face fusion task failed with error:', result);
+      return NextResponse.json({
+        status: 'error',
+        message: result.message || 'Face fusion task failed',
+        details: {
+          ...result,
+          outputPath,
+          sourceName: sourceFile.name,
+          targetName: targetFile.name
+        }
+      }, { status: 500 });
+    }
+
+    if (!result.filePath) {
+      console.error('Invalid result from face fusion task - missing filePath:', result);
+      return NextResponse.json({
+        status: 'error',
+        message: 'Face fusion task failed - invalid result format',
+        details: {
+          ...result,
+          outputPath,
+          sourceName: sourceFile.name,
+          targetName: targetFile.name
+        }
       }, { status: 500 });
     }
 
@@ -124,42 +151,85 @@ async function createFusionTask(sourceFile, targetFile) {
   // Create a new FormData instance for the API request
   const apiFormData = new FormData();
   
-  // Convert File objects to Buffers and add to form data
-  const sourceBuffer = Buffer.from(await sourceFile.arrayBuffer());
-  const targetBuffer = Buffer.from(await targetFile.arrayBuffer());
-  
-  apiFormData.append('source', sourceBuffer, {
-    filename: sourceFile.name,
-    contentType: sourceFile.type,
-  });
-  
-  apiFormData.append('target', targetBuffer, {
-    filename: targetFile.name,
-    contentType: targetFile.type,
-  });
+  try {
+    // Convert File objects to Buffers and add to form data
+    console.log('Processing source file:', sourceFile.name);
+    const sourceBuffer = Buffer.from(await sourceFile.arrayBuffer());
+    console.log('Source file size:', sourceBuffer.length);
+    
+    console.log('Processing target file:', targetFile.name);
+    const targetBuffer = Buffer.from(await targetFile.arrayBuffer());
+    console.log('Target file size:', targetBuffer.length);
+    
+    apiFormData.append('source', sourceBuffer, {
+      filename: sourceFile.name,
+      contentType: sourceFile.type,
+    });
+    
+    apiFormData.append('target', targetBuffer, {
+      filename: targetFile.name,
+      contentType: targetFile.type,
+    });
 
-  // Call the CREATE_API
-  const response = await fetch(CREATE_API, {
-    method: 'POST',
-    body: apiFormData,
-    headers: apiFormData.getHeaders && apiFormData.getHeaders(), // Only needed for node-fetch
-  });
+    // Log API endpoint
+    console.log('Calling CREATE_API endpoint:', CREATE_API);
 
-  // Check if the request was successful
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
-    throw new Error(`Failed to create fusion task: ${response.status} - ${errorData.message || response.statusText}`);
+    // Call the CREATE_API with timeout
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+
+    const response = await fetch(CREATE_API, {
+      method: 'POST',
+      body: apiFormData,
+      headers: apiFormData.getHeaders && apiFormData.getHeaders(),
+      signal: controller.signal
+    });
+
+    clearTimeout(timeout);
+
+    // Check response status and content type
+    const contentType = response.headers.get('content-type');
+    if (!response.ok) {
+      const errorText = await response.text();
+      let errorData;
+      try {
+        errorData = JSON.parse(errorText);
+      } catch {
+        errorData = { message: errorText };
+      }
+      
+      console.error('Create task API error:', {
+        status: response.status,
+        statusText: response.statusText,
+        errorData
+      });
+      
+      throw new Error(JSON.stringify({
+        status: 'error',
+        message: `Failed to create fusion task: ${response.status} - ${errorData.message || response.statusText}`,
+        details: errorData
+      }));
+    }
+
+    if (!contentType?.includes('application/json')) {
+      throw new Error('Unexpected response type from create task API');
+    }
+
+    const data = await response.json();
+    console.log('Create task response:', data);
+    
+    if (!data.output_path) {
+      throw new Error('No output_path received from create task API');
+    }
+    
+    return data.output_path;
+  } catch (error) {
+    console.error('Error in createFusionTask:', error);
+    if (error.name === 'AbortError') {
+      throw new Error('Create fusion task timed out after 30 seconds');
+    }
+    throw error;
   }
-
-  // Extract the output_path from the response
-  const data = await response.json();
-  console.log('Create task response:', data);
-  
-  if (!data.output_path) {
-    throw new Error('No output_path received from create task API');
-  }
-  
-  return data.output_path;
 }
 
 /**
@@ -172,55 +242,75 @@ async function pollTaskStatus(outputPath, sourceFileName) {
     try {
       console.log(`Polling attempt ${retryCount + 1} for output: ${outputPath}`);
       
-      // Query the task status
+      // Query the task status with timeout
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
       const response = await fetch(QUERY_API, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ output_path: outputPath }),
+        signal: controller.signal
       });
+
+      clearTimeout(timeout);
 
       // Check response status code
       const contentType = response.headers.get('content-type');
+      console.log(`Poll response: ${response.status} ${response.statusText}, Content-Type: ${contentType}`);
       
       // If response is JSON, it's a status update or error
       if (contentType && contentType.includes('application/json')) {
         const data = await response.json();
+        console.log('Poll response data:', data);
         
         // Check for specific status codes
         if (response.status === 202 || (response.status === 200 && data.status === 'processing')) {
-          // Task is still processing, wait and retry
           console.log('Task is still processing, waiting for next poll...');
           retryCount++;
           await new Promise(resolve => setTimeout(resolve, POLLING_INTERVAL));
           continue;
-        } else if ([400, 404, 500].includes(response.status)) {
-          // Task failed with a known error
+        }
+
+        if ([400, 404, 500].includes(response.status)) {
           console.error('Face fusion task failed:', data);
           return {
             status: 'error',
             message: data.message || 'Face fusion processing failed',
-            details: data
-          };
-        } else if (response.status === 200 && data.status !== 'processing') {
-          // Task completed successfully with JSON response
-          if (!data.filePath) {
-            console.error('API returned 200 but missing filePath:', data);
-            return {
-              status: 'error',
-              message: 'API response missing required filePath'
-            };
-          }
-          return data; // Return parsed data directly, not wrapped in NextResponse
-        } else {
-          // Unknown error
-          return {
-            status: 'error',
-            message: `Unexpected status: ${response.status} - ${data.message || 'Unknown error'}`,
-            details: data
+            details: {
+              ...data,
+              outputPath,
+              statusCode: response.status,
+              retryCount
+            }
           };
         }
+
+        if (response.status === 200 && data.status === 'completed') {
+          console.log('Task completed successfully:', data);
+          return data;
+        }
+
+        if (response.status === 200 && data.status === 'error') {
+          console.error('Task completed with error:', data);
+          return {
+            status: 'error',
+            message: data.message || 'Face fusion processing failed',
+            details: {
+              ...data,
+              outputPath,
+              retryCount
+            }
+          };
+        }
+
+        // Unknown status
+        console.warn('Unexpected response status:', { status: response.status, data });
+        retryCount++;
+        await new Promise(resolve => setTimeout(resolve, POLLING_INTERVAL));
+        continue;
       } else {
         // Non-JSON response with 200 status means the file is ready
         if (response.status === 200) {
@@ -279,6 +369,7 @@ async function pollTaskStatus(outputPath, sourceFileName) {
               filePath: `/outputs/${fileName}`,
               thumbnailPath: thumbnailPath || `/outputs/${fileName}`, // Use video as thumbnail if thumbnail generation fails
               fileSize: BigInt(fileStats.size),
+              mimeType: 'video/mp4', // Add mimeType field
             }
           });
           
