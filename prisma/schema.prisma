@@ -15,6 +15,7 @@ model User {
   targetTemplates       TargetTemplate[]
   faceSources     FaceSource[]
   generatedMedia  GeneratedMedia[]
+  Payment Payment[]
 }
 
 model TargetTemplate {
@@ -86,4 +87,17 @@ model Guideline {
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @updatedAt @map("updated_at")
   isAllowed     Boolean  @default(true) @map("is_allowed")
+}
+
+model Payment {
+  id            String   @id @default(uuid())
+  amount        Decimal
+  currency      String   // USD, ETH, BTC
+  status       String   // pending, completed, failed
+  type         String   // crypto, fiat
+  txHash       String?  // for crypto transactions
+  createdAt    DateTime @default(now())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id])
+  generatedMediaId String
 }
