@@ -1,5 +1,7 @@
 ## REST APIs
 
+- add watermark
+
 ```bash
 curl --location 'https://aceswap--facefusion-agent-facefusionagent-index.modal.run' \
 --form 'source=@"./src/assets/image.png"' \
@@ -12,11 +14,19 @@ curl --location 'https://aceswap--facefusion-agent-facefusionagent-download-file
 --data '{"output_path":"/tmp/tmpd0oou2uw/bc7ee887663b4f8d9c9de2967f1988e1.mp4"}'
 ```
 
-## Features
+## Fake test file metadata object
 
-- add watermark
-
-## Database
+```js
+  const videoTargets = [
+    { 
+      id: 1, 
+      videoPath: '/videos/1.mp4', 
+      thumbnail: '/thumbnails/1_thumbnail.webp',
+      duration: '0:05',
+      author: 'demo'
+    },
+  ]
+```
 
 ## Payment - Stripe
 
@@ -34,48 +44,6 @@ curl --location 'https://aceswap--facefusion-agent-facefusionagent-download-file
 - 图片存储在 AWS s3 上，支持  signed URL，可以短时间内过期，避免滥用下载链接
 - generate 页面可以根据您 API 参数提供更多设置选项
 - 可支持订阅模式。如用户支付月费，在每月享受一定量的生成和下载额度
-```
-
-
-```js
-  const videoTargets = [
-    { 
-      id: 1, 
-      videoPath: '/videos/1.mp4', 
-      thumbnail: '/thumbnails/1_thumbnail.webp',
-      duration: '0:05',
-      author: 'demo'
-    },
-    { 
-      id: 2, 
-      videoPath: '/videos/2.mp4', 
-      thumbnail: '/thumbnails/2_thumbnail.webp',
-      duration: '0:05',
-      author: 'demo'
-    },
-    { 
-      id: 3, 
-      videoPath: '/videos/3.mp4', 
-      thumbnail: '/thumbnails/3_thumbnail.webp',
-      duration: '0:15',
-      author: 'demo'
-     },
-    { 
-      id: 4, 
-      videoPath: '/videos/4.mp4', 
-      thumbnail: '/thumbnails/4_thumbnail.webp',
-      duration: '0:15',
-      author: 'demo'
-    },
-    { 
-      id: 5, 
-      videoPath: '/videos/5.mp4', 
-      thumbnail: '/thumbnails/5_thumbnail.webp',
-      duration: '0:15',
-      author: 'demo'
-    }
-  ]
-
 ```
 
 ## Payment - Crypto, Coinbase
