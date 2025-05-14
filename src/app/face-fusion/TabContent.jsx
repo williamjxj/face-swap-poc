@@ -1,6 +1,6 @@
 import Image from "next/image"
 import UploadBox from "./UploadBox"
-import { formatDuration } from '../../utils/formatUtils'
+import { formatDuration } from '../../utils/helper'
 
 export default function TabContent({
   selectedTab, 

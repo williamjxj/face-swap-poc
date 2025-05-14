@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import db from '../../../lib/db';
-import { serializeBigInt } from '../../../utils/serializeBigInt';
+import { serializeBigInt } from '../../../utils/helper';
 
 // GET all templates
 export async function GET() {
