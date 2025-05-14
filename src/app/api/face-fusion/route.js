@@ -5,8 +5,8 @@ import { pipeline } from 'stream';
 import { promisify } from 'util';
 import FormData from 'form-data';
 import fetch from 'node-fetch';
-import prisma from '../../../lib/db';
-import { serializeBigInt } from '../../../utils/helper';
+import prisma from '@/lib/db';
+import { serializeBigInt } from '@/utils/helper';
 
 // Promisify the stream pipeline for async/await usage
 const streamPipeline = promisify(pipeline);

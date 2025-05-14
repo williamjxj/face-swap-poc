@@ -2,8 +2,8 @@ import { NextResponse } from 'next/server';
 import { writeFile, mkdir } from 'fs/promises';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
-import db from '../../../lib/db';
-import { video2thumbnail, getVideoDuration } from '../../../utils/videoHelper';
+import db from '@/lib/db';
+import { video2thumbnail, getVideoDuration } from '@/utils/videoHelper';
 
 export async function POST(request) {
   try {

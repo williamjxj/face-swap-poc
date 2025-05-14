@@ -4,8 +4,8 @@ import Image from "next/image"
 import { Info, Plus, Menu, ArrowLeftRight, X, Download, Lock } from "lucide-react"
 import FaceSelection from "./FaceSelection"
 import { useState, useEffect } from "react"
-import VideoModal from "../../components/VideoModal"
-import GuidelineModal from "../../components/GuidelineModal"
+import VideoModal from "@/components/VideoModal"
+import GuidelineModal from "@/components/GuidelineModal"
 import styles from './page.module.css'
 import TabContent from "./TabContent"
 

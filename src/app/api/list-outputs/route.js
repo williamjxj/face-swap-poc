@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
-import db from '../../../lib/db';
-import { serializeBigInt } from '../../../utils/helper';
+import db from '@/lib/db';
+import { serializeBigInt } from '@/utils/helper';
 
 export async function GET() {
   try {

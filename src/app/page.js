@@ -1,5 +1,5 @@
 import { getServerSession } from "next-auth"
-import { authOptions } from "../services/auth"
+import { authOptions } from "@/services/auth"
 import { redirect } from "next/navigation"
 import Image from "next/image"
 

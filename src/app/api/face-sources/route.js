@@ -5,8 +5,8 @@ import fs from 'fs/promises';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import sharp from 'sharp';
-import db from '../../../lib/db';
-import { serializeBigInt } from '../../../utils/helper';
+import db from '@/lib/db';
+import { serializeBigInt } from '@/utils/helper';
 
 const prisma = new PrismaClient();
 

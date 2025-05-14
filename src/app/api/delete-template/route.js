@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { unlink } from 'fs/promises';
 import path from 'path';
-import db from '../../../lib/db';
+import db from '@/lib/db';
 
 export async function DELETE(request) {
   try {

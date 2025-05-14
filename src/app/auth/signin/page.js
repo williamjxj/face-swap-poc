@@ -1,5 +1,5 @@
 'use client'
-import AuthButton from '../../../components/AuthButton'
+import AuthButton from '@/components/AuthButton'
 import styles from './signin.module.css'
 import Image from 'next/image'
 import { useEffect } from 'react'
