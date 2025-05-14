@@ -16,11 +16,61 @@
 | sharp | |
 
 
-## Tech Stack
+## DB Table Based APIs
 
-### 🥬 
+```tree
+/src/app/api/
+├── auth/
+│   └── [...nextauth]/
+│       └── route.js
+├── target-templates/
+│   ├── route.js (GET, POST - list/create)
+│   └── [id]/
+│       └── route.js (GET, PUT, DELETE - single item ops)
+├── generated-media/
+│   ├── route.js (GET, POST - list/create)
+│   └── [id]/
+│       └── route.js (GET, PUT, DELETE - single item ops)
+├── face-sources/
+│   ├── route.js (GET, POST - list/create)
+│   └── [id]/
+│       └── route.js (GET, PUT, DELETE - single item ops)
+├── guidelines/
+│   └── route.js (GET - list only)
+└── users/
+    ├── route.js (GET, POST)
+    └── [id]/
+        └── route.js (GET, PUT, DELETE)
+```
 
-### 🥒 
+### 🥬 Storage Operations APIs
+
+```tree
+/src/app/api/storage/
+├── outputs/
+│   ├── route.js (GET - list files)
+│   ├── upload/route.js (POST - upload)
+│   └── delete/route.js (DELETE)
+├── sources/
+│   ├── route.js (GET - list files)
+│   ├── upload/route.js (POST - upload)
+│   └── delete/route.js (DELETE)
+└── templates/
+    ├── route.js (GET - list files)
+    ├── upload/route.js (POST - upload)
+    └── delete/route.js (DELETE)
+```
+
+### 🥒 Processing APIs
+
+```tree
+/src/app/api/processing/
+├── face-fusion/
+│   └── route.js (POST - process fusion)
+└── face-swap/
+    └── route.js (POST - process swap)
+```
+
 
 ### 🌶  
 
