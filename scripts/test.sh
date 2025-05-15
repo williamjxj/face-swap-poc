@@ -3,8 +3,8 @@
 # Source shared configuration
 source "$(dirname "$0")/config.sh"
 
-source_img="${HOME}/my-experiments/face-swap-poc/src/assets/image.png"
-target_img="${HOME}/my-experiments/face-swap-poc/src/assets/video.mp4"
+source_img="${HOME}/face-swap-poc/src/assets/image.png"
+target_img="${HOME}/face-swap-poc/src/assets/video.mp4"
 
 # First curl: create experiment and capture response
 response=$(curl --location --request POST "https://ultimatech-research--facefusion-agent-facefusionagent-index.modal.run" \

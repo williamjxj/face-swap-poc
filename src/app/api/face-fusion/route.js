@@ -6,7 +6,6 @@ import { promisify } from 'util';
 import FormData from 'form-data';
 import fetch from 'node-fetch';
 import prisma from '../../../lib/prisma';
-import { generateWatermarkedVersion } from '../../../utils/videoProcessing';
 
 // Promisify the stream pipeline for async/await usage
 const streamPipeline = promisify(pipeline);
@@ -75,26 +74,31 @@ export async function POST(request) {
     console.log('Fusion task created successfully, output path:', outputPath);
     
     // Step 2: Poll QUERY_API to check task status
-    const result = await pollTaskStatus(outputPath, sourceFile.name);
+    const response = await pollTaskStatus(outputPath, sourceFile.name);
     
-    // After generating the video, create a watermarked version
-    const filePath = path.join(process.cwd(), 'public', 'outputs', result.filePath.split('/').pop());
-    const watermarkPath = await generateWatermarkedVersion(filePath, result.filePath.split('/').pop());
+    // Since pollTaskStatus returns a NextResponse object, we need to extract the data
+    const responseData = await response.json();
+   
+    if (!responseData || !responseData.filePath) {
+      console.error('Error: Missing filePath in result', responseData);
+      return NextResponse.json({ error: 'Failed to process video - missing path information' }, { status: 500 });
+    }
 
-    // Save to database with watermark path
+    const filePath = path.join(process.cwd(), 'public', 'outputs', responseData.filePath.split('/').pop());
+
+    // Save to database
     const media = await prisma.generatedMedia.create({
       data: {
-        name: result.filePath.split('/').pop(),
+        name: responseData.filePath.split('/').pop(),
         type: 'video',
-        filePath: `/outputs/${result.filePath.split('/').pop()}`,
-        watermarkPath: watermarkPath,
-        fileSize: BigInt(result.fileSize),
-        mimeType: 'video/mp4',
+        filePath: `/outputs/${responseData.filePath.split('/').pop()}`,
+        thumbnailPath: `/outputs/${responseData.filePath.split('/').pop()}`, // Use video itself as thumbnail
+        fileSize: responseData.fileSize ? BigInt(responseData.fileSize) : 0,
         isPaid: false
       }
     });
 
-    return result;
+    return response;
   } catch (error) {
     console.error('Face fusion process failed:', error);
     return NextResponse.json({
@@ -217,33 +221,6 @@ async function pollTaskStatus(outputPath, sourceFileName) {
           
           console.log(`File saved successfully at: ${filePath}`);
 
-          // Generate thumbnail for video
-          let thumbnailPath = null;
-          if (fileExtension === '.mp4') {
-            const thumbnailFileName = `${name}_${Date.now()}_thumb.jpg`;
-            const thumbnailFilePath = path.join(process.cwd(), 'public', 'outputs', thumbnailFileName);
-            
-            // Use ffmpeg to generate thumbnail
-            const ffmpeg = require('fluent-ffmpeg');
-            await new Promise((resolve, reject) => {
-              ffmpeg(filePath)
-                .screenshots({
-                  timestamps: ['00:00:01'],
-                  filename: thumbnailFileName,
-                  folder: path.join(process.cwd(), 'public', 'outputs'),
-                  size: '320x240'
-                })
-                .on('end', () => {
-                  thumbnailPath = `/outputs/${thumbnailFileName}`;
-                  resolve();
-                })
-                .on('error', (err) => {
-                  console.error('Error generating thumbnail:', err);
-                  reject(err);
-                });
-            });
-          }
-
           // Insert into generatedMedia table
           const fileStats = fs.statSync(filePath);
           await prisma.generatedMedia.create({
@@ -252,8 +229,8 @@ async function pollTaskStatus(outputPath, sourceFileName) {
               type: 'video',
               tempPath: outputPath,
               filePath: `/outputs/${fileName}`,
-              thumbnailPath: thumbnailPath || `/outputs/${fileName}`, // Use video as thumbnail if thumbnail generation fails
-              fileSize: BigInt(fileStats.size),
+              thumbnailPath: `/outputs/${fileName}`, // Use video itself as thumbnail
+              fileSize: BigInt(fileStats.size)
             }
           });
           
@@ -261,7 +238,8 @@ async function pollTaskStatus(outputPath, sourceFileName) {
           return NextResponse.json({
             status: 'success',
             message: 'Face fusion completed successfully',
-            filePath: `/outputs/${fileName}` // Path that can be used in frontend
+            filePath: `/outputs/${fileName}`, // Path that can be used in frontend
+            fileSize: fileStats.size
           });
         }
       }

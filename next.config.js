@@ -15,7 +15,14 @@ const nextConfig = {
       '@': path.join(__dirname, 'src')
     };
     return config;
-  }
+  },
+  allowedDevOrigins: [
+    'https://shop.ultimatech.hk',
+    'http://shop.ultimatech.hk',
+    'https://nextjs.org',
+    'http://nextjs.org',
+    // Add any other domains that need to access your app
+  ],
 }
 
 module.exports = nextConfig 

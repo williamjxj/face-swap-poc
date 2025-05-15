@@ -1,6 +1,6 @@
 #!/bin/bash
 
-APP_DIR=${HOME}/my-experiments/face-swap-poc
+APP_DIR=${HOME}/face-swap-poc
 
 cd "${APP_DIR}" || exit 1
 
@@ -18,7 +18,7 @@ create_link() {
 }
 
 # Create symbolic links
-create_link "storage/guideline-iamges" "public/guidelines"
+create_link "storage/guideline-images" "public/guidelines"
 create_link "storage/generated-outputs" "public/outputs"
 create_link "storage/face-sources" "public/sources"
 create_link "storage/template-thumbnails" "public/thumbnails"
