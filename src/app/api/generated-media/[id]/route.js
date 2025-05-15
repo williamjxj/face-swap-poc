@@ -40,7 +40,7 @@ export async function PUT(request, { params }) {
         filePath: data.filePath,
         thumbnailPath: data.thumbnailPath,
         fileSize: data.fileSize,
-        isPurchased: data.isPurchased,
+        isPaid: data.isPaid,
         playCount: data.playCount,
         downloadCount: data.downloadCount,
         isActive: data.isActive

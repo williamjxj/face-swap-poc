@@ -7,7 +7,7 @@ if ! command -v identify &> /dev/null; then
 fi
 
 # Directory containing the source images
-SOURCES_DIR="/Users/william.jiang/my-experiments/face-swap-poc/public/sources"
+SOURCES_DIR="${HOME}/face-swap-poc/public/sources"
 
 # Check if directory exists
 if [ ! -d "$SOURCES_DIR" ]; then
@@ -48,7 +48,7 @@ for img in "$SOURCES_DIR"/*.{jpg,jpeg,png,webp}; do
     height=$(echo $dimensions | cut -d'x' -f2)
     
     # Get file size in bytes
-    filesize=$(stat -f%z "$img")
+    filesize=$(stat -c%s "$img")
     
     # Get mime type
     mime_type=$(file --mime-type -b "$img")

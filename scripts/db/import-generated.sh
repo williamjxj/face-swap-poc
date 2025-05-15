@@ -7,7 +7,7 @@ if ! command -v ffprobe &> /dev/null; then
 fi
 
 # Directories containing the generated media files
-OUTPUTS_DIR="/Users/william.jiang/my-experiments/face-swap-poc/public/outputs"
+OUTPUTS_DIR="${HOME}/face-swap-poc/public/outputs"
 
 # Check if directory exists
 if [ ! -d "$OUTPUTS_DIR" ]; then
@@ -52,7 +52,7 @@ for media in "$OUTPUTS_DIR"/*.{mp4,jpg,jpeg,png}; do
     echo "Processing $filename..."
     
     # Get file size in bytes
-    filesize=$(stat -f%z "$media")
+    filesize=$(stat -c%s "$media")
     
     # Get mime type
     mime_type=$(file --mime-type -b "$media")
@@ -88,7 +88,7 @@ for media in "$OUTPUTS_DIR"/*.{mp4,jpg,jpeg,png}; do
                         isActive: true,
                         playCount: 0,
                         downloadCount: 0,
-                        isPurchased: false
+                        isPaid: false
                     }
                 });
                 console.log('Created generated media record for $filename');
