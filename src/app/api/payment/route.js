@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { stripe } from '@/lib/stripe';
-import { client as coinbaseClient } from '@/lib/crypto-payment';
+import { client as coinbaseClient } from '@/lib/crypto';
 
 export async function POST(request) {
   const { amount, currency, type } = await request.json();

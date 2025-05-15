@@ -48,3 +48,5 @@ curl --location 'https://aceswap--facefusion-agent-facefusionagent-download-file
 
 ## Payment - Crypto, Coinbase
 
+1. 使用第三方支付网关（如Coinbase Commerce、BitPay），这些服务提供API，处理加密货币支付，用户只需调用接口即可。
+2. 直接与区块链网络交互，通过智能合约处理支付，比如使用web3.js或ethers.js库发送交易，并监听交易状态。
