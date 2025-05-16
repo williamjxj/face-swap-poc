@@ -2,6 +2,8 @@ import Image from 'next/image';
 import { Plus, X } from 'lucide-react';
 import styles from './page.module.css';
 
+import Loading from '@/components/Loading';
+
 export default function FaceSelection({
   selectedTemplate,
   selectedFace, 
@@ -10,7 +12,8 @@ export default function FaceSelection({
   selectedSource,
   onSourceSelect,
   onSourceUpload,
-  onSourceDelete 
+  onSourceDelete,
+  processing 
 }) {
   return (
     <div className="p-4">
@@ -57,14 +60,23 @@ export default function FaceSelection({
         <h2 className="text-lg font-bold mb-4 text-white">Source Images</h2>
         <div className="grid grid-cols-3 gap-2">
           {/* Upload button */}
-          <label className="w-20 h-20 rounded-full border-2 border-dashed border-gray-600 flex items-center justify-center cursor-pointer hover:bg-[#2a2d34] transition-colors">
+          <label 
+            className={`w-20 h-20 rounded-full border-2 border-dashed border-gray-600 flex items-center justify-center cursor-pointer hover:bg-[#2a2d34] transition-colors ${
+              processing ? 'opacity-50 pointer-events-none' : ''
+            }`}
+          >
             <input
               type="file"
               className="hidden"
               accept="image/*"
               onChange={onSourceUpload}
+              disabled={processing}
             />
-            <Plus className="w-6 h-6 text-gray-400" />
+            {processing ? (
+              <Loading />
+            ) : (
+              <Plus className="w-6 h-6 text-gray-400" />
+            )}
           </label>
           
           {/* Source images */}

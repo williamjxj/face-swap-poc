@@ -1,12 +1,12 @@
 'use client'
 
 import Image from "next/image"
-import { Info, Plus, Menu, ArrowLeftRight, X, Download, Lock } from "lucide-react"
+import { Info, ArrowLeftRight, Download, Lock } from "lucide-react"
 import FaceSelection from "./FaceSelection"
 import { useState, useEffect } from "react"
 import VideoModal from "@/components/VideoModal"
 import GuidelineModal from "@/components/GuidelineModal"
-import styles from './page.module.css'
+import Loading from "@/components/Loading"
 import TabContent from "./TabContent"
 
 export default function FaceFusion() {
@@ -126,6 +126,9 @@ export default function FaceFusion() {
     const file = e.target.files?.[0];
     if (file) {
       try {
+        setProcessing(true);
+        setError(null);
+        
         const formData = new FormData();
         formData.append('file', file);
 
@@ -161,6 +164,8 @@ export default function FaceFusion() {
       } catch (error) {
         console.error('Error uploading file:', error);
         setError('Failed to upload image');
+      } finally {
+        setProcessing(false);
       }
     }
   };
@@ -181,10 +186,20 @@ export default function FaceFusion() {
     }
 
     setProcessing(true)
+    setProgress(0)  // Reset progress
     setError(null)
     setResult(null)
 
     try {
+      // Set up progress simulation
+      const progressInterval = setInterval(() => {
+        setProgress(prevProgress => {
+          // Simulate progress up to 90% (the last 10% will be when we get the response)
+          const newProgress = prevProgress + (90 - prevProgress) * 0.1;
+          return Math.min(newProgress, 90);
+        });
+      }, 500);
+
       // Submit form data
       const response = await fetch('/api/face-fusion', {
         method: 'POST',
@@ -197,19 +212,27 @@ export default function FaceFusion() {
         })
       })
 
+      clearInterval(progressInterval);  // Clean up interval
+
       if (!response.ok) {
         const error = await response.text()
         throw new Error(`Face swap failed: ${error}`)
       }
 
+      // Set progress to 100% when complete
+      setProgress(100);
+      
       const generatedVideo = await response.json()
       setResult(generatedVideo)
       setRightSideTab('history') // Switch to history tab after successful generation
     } catch (error) {
       console.error('Face swap error:', error)
       setError(error.message)
+      setProgress(0)  // Reset progress on error
     } finally {
-      setProcessing(false)
+      setTimeout(() => {
+        setProcessing(false)
+      }, 500); // Slight delay to show 100% progress
     }
   }
 
@@ -677,6 +700,7 @@ export default function FaceFusion() {
                 onSourceSelect={handleSourceSelect}
                 onSourceUpload={handleSourceUpload}
                 onSourceDelete={handleSourceDelete}
+                processing={processing}
               />
 
               {/* Generate Button */}
@@ -689,7 +713,13 @@ export default function FaceFusion() {
                     : 'bg-blue-500/50 text-white/50 cursor-not-allowed'
                 }`}
               >
-                {processing ? 'Processing...' : 'Generate'}
+                {processing ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <Loading /> Processing...
+                  </span>
+                ) : (
+                  'Generate'
+                )}
               </button>
 
               {processing && (

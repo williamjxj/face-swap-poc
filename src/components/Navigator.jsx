@@ -23,7 +23,8 @@ export default function Navigator() {
   const navItems = [
     { href: '/face-fusion', icon: <FaMagic size={16} />, label: 'FaceFusion' },
     { href: '/gallery', icon: <FaImages size={16} />, label: 'Gallery' },
-    { href: '/profile', icon: <FaUser size={16} />, label: 'Profile' }
+    { href: '/profile', icon: <FaUser size={16} />, label: 'Profile' },
+    { href: '/payment/crypto', icon: <span className="text-[16px]">₿</span>, label: 'Crypto' }
   ]
 
   return (

@@ -41,352 +41,242 @@ export async function POST(request) {
         }, { status: 404 });
       }
 
-      // Create file-like objects from the files
+      // Prepare files
       sourceFile = {
-        name: path.basename(source),
-        type: source.endsWith('.png') ? 'image/png' : 'image/jpeg',
-        arrayBuffer: async () => fs.promises.readFile(sourcePath)
+        name: path.basename(sourcePath),
+        path: sourcePath,
+        buffer: fs.readFileSync(sourcePath)
       };
-
+      
       targetFile = {
-        name: path.basename(target),
-        type: 'video/mp4',
-        arrayBuffer: async () => fs.promises.readFile(targetPath)
+        name: path.basename(targetPath),
+        path: targetPath,
+        buffer: fs.readFileSync(targetPath)
       };
-    } else {
+    } else if (contentType?.includes('multipart/form-data')) {
       // Handle multipart form data
       const formData = await request.formData();
-      sourceFile = formData.get('source');
-      targetFile = formData.get('target');
-    }
-
-    // Validate inputs
-    if (!sourceFile || !targetFile) {
+      
+      // Get source and target files from form data
+      const sourceFormFile = formData.get('source');
+      const targetFormFile = formData.get('target');
+      
+      if (!sourceFormFile || !targetFormFile) {
+        return NextResponse.json({
+          status: 'error',
+          message: 'Source and target files are required'
+        }, { status: 400 });
+      }
+      
+      // Process source file
+      sourceFile = {
+        name: sourceFormFile.name,
+        type: sourceFormFile.type,
+        buffer: Buffer.from(await sourceFormFile.arrayBuffer())
+      };
+      
+      // Process target file
+      targetFile = {
+        name: targetFormFile.name,
+        type: targetFormFile.type,
+        buffer: Buffer.from(await targetFormFile.arrayBuffer())
+      };
+    } else {
       return NextResponse.json({
         status: 'error',
-        message: 'Both source image and target video files are required'
+        message: 'Unsupported content type'
       }, { status: 400 });
     }
 
-    // Step 1: Call CREATE_API to initiate face fusion task
-    const outputPath = await createFusionTask(sourceFile, targetFile);
+    console.log('Processing source file:', sourceFile.name);
+    console.log('Processing target file:', targetFile.name);
 
-    console.log('Fusion task created successfully, output path:', outputPath);
+    // Send the files to the face swap API
+    const result = await processFaceSwap(sourceFile, targetFile);
     
-    // Step 2: Poll QUERY_API to check task status
-    const result = await pollTaskStatus(outputPath, sourceFile.name);
-    
-    // Enhanced error handling and logging
-    if (!result) {
-      console.error('No result received from face fusion task');
-      return NextResponse.json({
-        status: 'error',
-        message: 'Face fusion task failed - no result received',
-        details: { outputPath }
-      }, { status: 500 });
-    }
-
-    if (result.status === 'error') {
-      console.error('Face fusion task failed with error:', result);
-      return NextResponse.json({
-        status: 'error',
-        message: result.message || 'Face fusion task failed',
-        details: {
-          ...result,
-          outputPath,
-          sourceName: sourceFile.name,
-          targetName: targetFile.name
-        }
-      }, { status: 500 });
-    }
-
-    if (!result.filePath) {
-      console.error('Invalid result from face fusion task - missing filePath:', result);
-      return NextResponse.json({
-        status: 'error',
-        message: 'Face fusion task failed - invalid result format',
-        details: {
-          ...result,
-          outputPath,
-          sourceName: sourceFile.name,
-          targetName: targetFile.name
-        }
-      }, { status: 500 });
-    }
-
-    const fileName = result.filePath.split('/').pop();
-    const filePath = path.join(process.cwd(), 'public', 'outputs', fileName);
-
-    // Validate fileSize exists before BigInt conversion
-    if (typeof result.fileSize === 'undefined') {
-      const fileStats = fs.statSync(filePath);
-      result.fileSize = fileStats.size;
-    }
-
-    // Save to database with basic video info
-    await prisma.generatedMedia.create({
-      data: {
-        name: fileName,
-        type: 'video',
-        filePath: `/outputs/${fileName}`,
-        fileSize: BigInt(result.fileSize),
-        mimeType: 'video/mp4'
-      }
-    });
-
-    return serializeBigInt(result);
+    return NextResponse.json(result);
   } catch (error) {
-    console.error('Face fusion process failed:', error);
+    console.error('Error in face-fusion API:', error);
     return NextResponse.json({
       status: 'error',
-      message: `Face fusion process failed: ${error.message}`
+      message: error.message || 'An error occurred during processing',
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
     }, { status: 500 });
   }
 }
 
 /**
- * Create a face fusion task by uploading source and target files
+ * Process the face swap operation by sending source and target images to the API
  */
-async function createFusionTask(sourceFile, targetFile) {
-  // Create a new FormData instance for the API request
-  const apiFormData = new FormData();
-  
+async function processFaceSwap(sourceFile, targetFile) {
   try {
-    // Convert File objects to Buffers and add to form data
-    console.log('Processing source file:', sourceFile.name);
-    const sourceBuffer = Buffer.from(await sourceFile.arrayBuffer());
-    console.log('Source file size:', sourceBuffer.length);
+    // 1. Create a new face swap task
+    console.log('Creating face swap task...');
+    const taskId = await createFaceSwapTask(sourceFile, targetFile);
     
-    console.log('Processing target file:', targetFile.name);
-    const targetBuffer = Buffer.from(await targetFile.arrayBuffer());
-    console.log('Target file size:', targetBuffer.length);
+    if (!taskId) {
+      return { 
+        status: 'error',
+        message: 'Failed to create face swap task'
+      };
+    }
     
-    apiFormData.append('source', sourceBuffer, {
+    console.log('Face swap task created with ID:', taskId);
+    
+    // 2. Poll for results
+    console.log('Polling for results...');
+    const result = await pollForResults(taskId);
+    
+    if (result.status === 'error') {
+      return result;
+    }
+    
+    // 3. Save the result to database
+    console.log('Saving result to database...');
+    const savedResult = await saveResultToDatabase(
+      sourceFile, 
+      targetFile, 
+      result.output_url
+    );
+    
+    // 4. Return the final result
+    return {
+      status: 'success',
+      task_id: taskId,
+      ...result,
+      saved_result: serializeBigInt(savedResult)
+    };
+  } catch (error) {
+    console.error('Error in processFaceSwap:', error);
+    return {
+      status: 'error',
+      message: error.message || 'An error occurred during face swap processing'
+    };
+  }
+}
+
+/**
+ * Create a new face swap task by sending source and target images to the API
+ */
+async function createFaceSwapTask(sourceFile, targetFile) {
+  try {
+    // Prepare form data for the API request
+    const formData = new FormData();
+    formData.append('source_image', sourceFile.buffer, {
       filename: sourceFile.name,
-      contentType: sourceFile.type,
+      contentType: sourceFile.type || 'image/jpeg'
+    });
+    formData.append('target_image', targetFile.buffer, {
+      filename: targetFile.name,
+      contentType: targetFile.type || 'image/jpeg' 
     });
     
-    apiFormData.append('target', targetBuffer, {
-      filename: targetFile.name,
-      contentType: targetFile.type,
-    });
-
-    // Log API endpoint
-    console.log('Calling CREATE_API endpoint:', CREATE_API);
-
-    // Call the CREATE_API with timeout
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 30000); // 30 second timeout
-
+    // Make the API request
     const response = await fetch(CREATE_API, {
       method: 'POST',
-      body: apiFormData,
-      headers: apiFormData.getHeaders && apiFormData.getHeaders(),
-      signal: controller.signal
+      body: formData,
+      headers: {
+        ...formData.getHeaders()
+      }
     });
-
-    clearTimeout(timeout);
-
-    // Check response status and content type
-    const contentType = response.headers.get('content-type');
+    
+    // Check for successful response
     if (!response.ok) {
       const errorText = await response.text();
-      let errorData;
-      try {
-        errorData = JSON.parse(errorText);
-      } catch {
-        errorData = { message: errorText };
-      }
-      
-      console.error('Create task API error:', {
-        status: response.status,
-        statusText: response.statusText,
-        errorData
-      });
-      
-      throw new Error(JSON.stringify({
-        status: 'error',
-        message: `Failed to create fusion task: ${response.status} - ${errorData.message || response.statusText}`,
-        details: errorData
-      }));
+      console.error('API error:', errorText);
+      throw new Error(`API error: ${response.status} ${errorText}`);
     }
-
-    if (!contentType?.includes('application/json')) {
-      throw new Error('Unexpected response type from create task API');
-    }
-
+    
+    // Parse the response to get the task ID
     const data = await response.json();
-    console.log('Create task response:', data);
-    
-    if (!data.output_path) {
-      throw new Error('No output_path received from create task API');
-    }
-    
-    return data.output_path;
+    return data.task_id;
   } catch (error) {
-    console.error('Error in createFusionTask:', error);
-    if (error.name === 'AbortError') {
-      throw new Error('Create fusion task timed out after 30 seconds');
-    }
+    console.error('Error creating face swap task:', error);
     throw error;
   }
 }
 
 /**
- * Poll the task status until it completes or fails
+ * Save the processing result to the database
  */
-async function pollTaskStatus(outputPath, sourceFileName) {
+async function saveResultToDatabase(sourceFile, targetFile, outputUrl) {
+  try {
+    // Create a new record in the database
+    const result = await prisma.faceSwap.create({
+      data: {
+        sourceFileName: sourceFile.name,
+        targetFileName: targetFile.name,
+        outputUrl: outputUrl,
+        status: 'completed'
+      }
+    });
+    
+    return result;
+  } catch (error) {
+    console.error('Error saving to database:', error);
+    throw error;
+  }
+}
+
+/**
+ * Poll for results using the task ID
+ */
+async function pollForResults(taskId) {
+  // Initialize retry counter
   let retryCount = 0;
   
+  // Poll until we get a result or reach max retries
   while (retryCount < MAX_RETRIES) {
     try {
-      console.log(`Polling attempt ${retryCount + 1} for output: ${outputPath}`);
-      
-      // Query the task status with timeout
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 10000); // 10 second timeout
-
-      const response = await fetch(QUERY_API, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ output_path: outputPath }),
-        signal: controller.signal
+      // Make the API request to check status
+      const response = await fetch(`${QUERY_API}?task_id=${taskId}`, {
+        method: 'GET'
       });
-
-      clearTimeout(timeout);
-
-      // Check response status code
-      const contentType = response.headers.get('content-type');
-      console.log(`Poll response: ${response.status} ${response.statusText}, Content-Type: ${contentType}`);
       
-      // If response is JSON, it's a status update or error
-      if (contentType && contentType.includes('application/json')) {
-        const data = await response.json();
-        console.log('Poll response data:', data);
+      // Check for successful response
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`API error (${retryCount + 1}/${MAX_RETRIES}):`, errorText);
         
-        // Check for specific status codes
-        if (response.status === 202 || (response.status === 200 && data.status === 'processing')) {
-          console.log('Task is still processing, waiting for next poll...');
+        // If we get a server error, wait and retry
+        if (response.status >= 500) {
           retryCount++;
           await new Promise(resolve => setTimeout(resolve, POLLING_INTERVAL));
           continue;
         }
-
-        if ([400, 404, 500].includes(response.status)) {
-          console.error('Face fusion task failed:', data);
-          return {
-            status: 'error',
-            message: data.message || 'Face fusion processing failed',
-            details: {
-              ...data,
-              outputPath,
-              statusCode: response.status,
-              retryCount
-            }
-          };
-        }
-
-        if (response.status === 200 && data.status === 'completed') {
-          console.log('Task completed successfully:', data);
-          return data;
-        }
-
-        if (response.status === 200 && data.status === 'error') {
-          console.error('Task completed with error:', data);
-          return {
-            status: 'error',
-            message: data.message || 'Face fusion processing failed',
-            details: {
-              ...data,
-              outputPath,
-              retryCount
-            }
-          };
-        }
-
-        // Unknown status
-        console.warn('Unexpected response status:', { status: response.status, data });
-        retryCount++;
-        await new Promise(resolve => setTimeout(resolve, POLLING_INTERVAL));
-        continue;
-      } else {
-        // Non-JSON response with 200 status means the file is ready
-        if (response.status === 200) {
-          // Determine the file extension from content-type
-          const fileExtension = getFileExtensionFromContentType(response.headers.get('content-type'));
-          const name = sourceFileName.split('.')[0];
-          const fileName = `${name}_${Date.now()}${fileExtension}`;
-          const filePath = path.join(process.cwd(), 'public', 'outputs', fileName);
-          
-          // Ensure the output directory exists
-          const outputDir = path.dirname(filePath);
-          if (!fs.existsSync(outputDir)) {
-            fs.mkdirSync(outputDir, { recursive: true });
-          }
-          
-          // Save the file
-          const fileBuffer = await response.buffer();
-          fs.writeFileSync(filePath, fileBuffer);
-          
-          console.log(`File saved successfully at: ${filePath}`);
-
-          // Get file stats for size
-          let thumbnailPath = null;
-          if (fileExtension === '.mp4') {
-            const thumbnailFileName = `${name}_${Date.now()}_thumb.jpg`;
-            const thumbnailFilePath = path.join(process.cwd(), 'public', 'outputs', thumbnailFileName);
-            
-            // Use ffmpeg to generate thumbnail
-            const ffmpeg = require('fluent-ffmpeg');
-            await new Promise((resolve, reject) => {
-              ffmpeg(filePath)
-                .screenshots({
-                  timestamps: ['00:00:01'],
-                  filename: thumbnailFileName,
-                  folder: path.join(process.cwd(), 'public', 'outputs'),
-                  size: '320x240'
-                })
-                .on('end', () => {
-                  thumbnailPath = `/outputs/${thumbnailFileName}`;
-                  resolve();
-                })
-                .on('error', (err) => {
-                  console.error('Error generating thumbnail:', err);
-                  reject(err);
-                });
-            });
-          }
-
-          // Insert into generatedMedia table
-          const fileStats = fs.statSync(filePath);
-          await prisma.generatedMedia.create({
-            data: {
-              name: fileName,
-              type: 'video',
-              tempPath: outputPath,
-              filePath: `/outputs/${fileName}`,
-              thumbnailPath: thumbnailPath || `/outputs/${fileName}`, // Use video as thumbnail if thumbnail generation fails
-              fileSize: BigInt(fileStats.size),
-              mimeType: 'video/mp4', // Add mimeType field
-            }
-          });
-          
-          // Return the file path and size
-          return {
-            status: 'success',
-            message: 'Face fusion completed successfully',
-            filePath: `/outputs/${fileName}`,
-            fileSize: fileStats.size
-          };
-        }
+        
+        // For client errors, stop polling
+        throw new Error(`API error: ${response.status} ${errorText}`);
       }
       
-      // Increment retry counter and wait before next poll
-      retryCount++;
-      await new Promise(resolve => setTimeout(resolve, POLLING_INTERVAL));
+      // Parse the response
+      const data = await response.json();
       
+      // Check task status
+      if (data.status === 'completed') {
+        console.log('Task completed successfully!');
+        return data;
+      } else if (data.status === 'failed') {
+        console.error('Task failed:', data.error || 'Unknown error');
+        return {
+          status: 'error',
+          message: data.error || 'Task processing failed',
+          details: data
+        };
+      } else if (data.status === 'processing' || data.status === 'pending') {
+        // Task is still processing, wait and retry
+        console.log(`Task status (${retryCount + 1}/${MAX_RETRIES}): ${data.status}`);
+        retryCount++;
+        await new Promise(resolve => setTimeout(resolve, POLLING_INTERVAL));
+      } else {
+        // Unknown status
+        console.error('Unknown task status:', data.status);
+        return {
+          status: 'error',
+          message: `Unknown task status: ${data.status}`,
+          details: data
+        };
+      }
     } catch (error) {
       console.error('Error during polling:', error);
       

@@ -1,6 +1,6 @@
 'use client'
 import { X, Download, Trash2, CreditCard } from 'lucide-react'
-import { useCallback, useState } from 'react'
+import { useCallback } from 'react'
 
 export default function VideoModal({ video, onClose, onDownload, onDelete }) {
   const handleBackdropClick = useCallback((e) => {
@@ -13,7 +13,9 @@ export default function VideoModal({ video, onClose, onDownload, onDelete }) {
     e.stopPropagation()
   }, [])
   
+  
   const handleCheckout = async () => {
+    const url = process.env.NEXT_PUBLIC_BASE_URL
     try {
       const response = await fetch('/api/checkout', {
         method: 'POST',
@@ -22,7 +24,7 @@ export default function VideoModal({ video, onClose, onDownload, onDelete }) {
         },
         body: JSON.stringify({
           imageId: video.name,
-          imageUrl: `http://localhost:3000${video.filePath}`,
+          imageUrl: `${url}/${video.filePath}`,
         })
       })
       
