@@ -88,8 +88,7 @@ export async function POST(request) {
       }, { status: 400 });
     }
 
-    console.log('Processing source file:', sourceFile.name);
-    console.log('Processing target file:', targetFile.name);
+    console.log('Processing source file, target file:', sourceFile.name, targetFile.name);
 
     // Send the files to the face swap API
     const result = await processFaceSwap(sourceFile, targetFile);

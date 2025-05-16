@@ -81,10 +81,18 @@ export async function POST(request) {
       throw new Error('Database client not initialized');
     }
 
+    // Get template type from formData or infer it from file type
+    let templateType = formData.get('templateType');
+    
+    // If no template type is provided, infer it from file type
+    if (!templateType) {
+      templateType = file.type.startsWith('video/') ? 'video' : 
+                    file.type === 'image/gif' ? 'gif' : 'image';
+    }
+    
     const templateData = {
       filename: filename,
-      type: file.type.startsWith('video/') ? 'video' : 
-            file.type === 'image/gif' ? 'gif' : 'image',
+      type: templateType,
       filePath: `/videos/${filename}`,
       thumbnailPath: thumbnailPath ? `/thumbnails/${path.basename(thumbnailPath)}` : null,
       fileSize: BigInt(file.size),

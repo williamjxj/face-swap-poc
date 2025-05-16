@@ -48,12 +48,11 @@ export default function FaceFusion() {
           throw new Error('Failed to load templates');
         }
         const data = await response.json();
+        console.log('Loaded templates from server:', data.templates);
         setVideoTargets(data.templates);
         setTemplates(data.templates);
-        if (data.templates.length > 0) {
-          setSelectedTemplate(data.templates[0]);
-          setSelectedFace(0); // Select first face by default
-        }
+        // Do not auto-select first template on initial load
+        // Template will be selected when user clicks on it
       } catch (error) {
         console.error('Error loading templates:', error);
         setError('Failed to load templates');
@@ -320,6 +319,7 @@ export default function FaceFusion() {
 
         const formData = new FormData();
         formData.append('file', file);
+        formData.append('templateType', 'video');
 
         console.log('Uploading file:', {
           name: file.name,
@@ -359,9 +359,10 @@ export default function FaceFusion() {
         setTemplates(prev => [newTemplate, ...prev]);
         setVideoTargets(prev => [newTemplate, ...prev]);
         
-        // Select the new template
+        // Select the new template - this will update both the middle preview and the face selection circle
         setSelectedTemplate(newTemplate);
         setSelectedFace(0); // Reset face selection
+        setTargetPath(newTemplate.filePath); // Ensure target path is updated
       } catch (error) {
         console.error('Error uploading template:', error);
         setError(error.message || 'Failed to upload template');
@@ -381,6 +382,7 @@ export default function FaceFusion() {
 
         const formData = new FormData();
         formData.append('file', file);
+        formData.append('templateType', 'image');
 
         const response = await fetch('/api/upload-template', {
           method: 'POST',
@@ -413,6 +415,7 @@ export default function FaceFusion() {
         // Select the new template
         setSelectedTemplate(newTemplate);
         setSelectedFace(0);
+        setTargetPath(newTemplate.filePath); // Ensure target path is updated
       } catch (error) {
         console.error('Error uploading image:', error);
         setError(error.message || 'Failed to upload image');
@@ -432,6 +435,7 @@ export default function FaceFusion() {
 
         const formData = new FormData();
         formData.append('file', file);
+        formData.append('templateType', 'gif');
 
         const response = await fetch('/api/upload-template', {
           method: 'POST',
@@ -464,6 +468,7 @@ export default function FaceFusion() {
         // Select the new template
         setSelectedTemplate(newTemplate);
         setSelectedFace(0);
+        setTargetPath(newTemplate.filePath); // Ensure target path is updated
       } catch (error) {
         console.error('Error uploading GIF:', error);
         setError(error.message || 'Failed to upload GIF');
@@ -486,6 +491,7 @@ export default function FaceFusion() {
         for (const file of files) {
           const formData = new FormData();
           formData.append('file', file);
+          formData.append('templateType', 'multi-face');
 
           const response = await fetch('/api/upload-template', {
             method: 'POST',
@@ -503,7 +509,7 @@ export default function FaceFusion() {
           const newTemplate = {
             id: data.id,
             filename: data.filename,
-            type: 'image',
+            type: 'multi-face',
             filePath: data.filePath,
             thumbnailPath: data.thumbnailPath,
             duration: data.duration,
@@ -514,6 +520,11 @@ export default function FaceFusion() {
           // Update both templates and videoTargets
           setTemplates(prev => [newTemplate, ...prev]);
           setVideoTargets(prev => [newTemplate, ...prev]);
+          
+          // For multi-face upload, also select the template after upload
+          setSelectedTemplate(newTemplate);
+          setSelectedFace(0);
+          setTargetPath(newTemplate.filePath); // Ensure target path is updated
         }
       } catch (error) {
         console.error('Error uploading multi-face images:', error);
@@ -569,7 +580,7 @@ export default function FaceFusion() {
               <button
                 key={tab.id}
                 onClick={() => setSelectedTab(tab.id)}
-                className={`px-3 py-2 rounded-lg text-sm ${
+                className={`px-3 py-2 rounded-lg text-sm cursor-pointer ${
                   selectedTab === tab.id
                     ? 'bg-blue-500 text-white'
                     : 'text-gray-400 hover:bg-[#2a2d34]'
@@ -599,28 +610,53 @@ export default function FaceFusion() {
 
       {/* Middle - Video Preview */}
       <div className="flex-1 bg-[#1a1d24] flex flex-col items-center rounded-lg relative p-6 pt-2 pb-2">
-        <div className="flex flex-col items-center justify-center space-y-0">
-          <div className="w-16 h-16 relative">
+        <div className="flex items-center justify-center gap-3">
+          <div className="w-12 h-12 relative overflow-hidden">
+            <div className="absolute inset-0 w-full h-full overflow-hidden">
+              <div className="absolute inset-0 animate-pulse" style={{ 
+                background: 'linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%)',
+                opacity: 0.85,
+                mixBlendMode: 'color',
+                zIndex: 10 
+              }}></div>
+            </div>
             <Image
               src={'/face.webp'}
               alt="Face Changing"
               fill
               className="object-contain"
+              style={{ 
+                zIndex: 5,
+                filter: 'contrast(1.2) brightness(1.1)'
+              }}
               priority
             />
           </div>
-          <h2 className="text-2xl font-semibold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
-            AI Face Swap
-          </h2>
-          <div className="text-gray-400 text-center mb-0">
-            <span className="text-sm">Support video for face swapping</span>
+          <div>
+            <h2 className="text-2xl font-semibold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+              AI Face Swap
+            </h2>
+            <span className="text-sm text-gray-400">Support video for face swapping</span>
           </div>
         </div>
 
         {selectedTemplate ? (
           <div 
-            className="w-[calc(100%-160px)] h-[612px] bg-[#2a2832] rounded-[20px] border-2 border-dashed border-white/70 relative mt-[18px] flex items-center justify-center"
+            className="w-[calc(100%-160px)] h-[calc(100vh-240px)] max-h-[480px] bg-[#2a2832] rounded-[20px] border-2 border-dashed border-white/70 relative mt-3 flex items-center justify-center"
           >
+            {/* Close button for clearing selection */}
+            <button 
+              onClick={() => {
+                setSelectedTemplate(null);
+                setTargetPath(null);
+                setSelectedFace(null);
+                setSelectedSource(null);
+                setSourcePath(null);
+              }}
+              className="absolute top-2 right-2 z-10 w-8 h-8 bg-gray-800/80 hover:bg-gray-700 text-white rounded-full flex items-center justify-center cursor-pointer"
+            >
+              ×
+            </button>
             <div className="w-full h-full flex items-center justify-center">
               {selectedTemplate.mimeType?.startsWith('video/') ? (
                 <video
@@ -640,7 +676,7 @@ export default function FaceFusion() {
           </div>
         ) : (
           <div 
-            className="w-[calc(100%-160px)] h-[612px] bg-[#2a2832] rounded-[20px] border-2 border-dashed border-white/70 relative mt-[18px] flex items-center justify-center"
+            className="w-[calc(100%-160px)] h-[calc(100vh-240px)] max-h-[480px] bg-[#2a2832] rounded-[20px] border-2 border-dashed border-white/70 relative mt-3 flex items-center justify-center"
           >
             <div className="text-center p-12 space-y-6">
               <div className="flex flex-col items-center space-y-4">
@@ -660,7 +696,7 @@ export default function FaceFusion() {
           <div className="flex space-x-2">
             <button
               onClick={() => setRightSideTab('face-swap')}
-              className={`px-3 py-2 rounded-lg text-sm ${
+              className={`px-3 py-2 rounded-lg text-sm cursor-pointer ${
                 rightSideTab === 'face-swap'
                   ? 'bg-blue-500 text-white'
                   : 'text-gray-400 hover:bg-[#2a2d34]'
@@ -676,7 +712,7 @@ export default function FaceFusion() {
             </button>
             <button
               onClick={() => setRightSideTab('history')}
-              className={`px-3 py-2 rounded-lg text-sm ${
+              className={`px-3 py-2 rounded-lg text-sm cursor-pointer ${
                 rightSideTab === 'history'
                   ? 'bg-blue-500 text-white'
                   : 'text-gray-400 hover:bg-[#2a2d34]'

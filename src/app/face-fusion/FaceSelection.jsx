@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import { Plus, X } from 'lucide-react';
 import styles from './page.module.css';
+import { useState, useRef, useEffect } from 'react';
 
 import Loading from '@/components/Loading';
 
@@ -15,6 +16,43 @@ export default function FaceSelection({
   onSourceDelete,
   processing 
 }) {
+  // State to manage tooltip
+  const [tooltip, setTooltip] = useState({ visible: false, content: '', position: { x: 0, y: 0 } });
+  const tooltipTimeoutRef = useRef(null);
+  
+  // Clear tooltip timeout when component unmounts
+  useEffect(() => {
+    return () => {
+      if (tooltipTimeoutRef.current) {
+        clearTimeout(tooltipTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  // Handler for mouse enter event
+  const handleMouseEnter = (image, e) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    // Set a 2-second timeout before showing the tooltip
+    tooltipTimeoutRef.current = setTimeout(() => {
+      setTooltip({
+        visible: true,
+        content: image.name || `Source ${image.id}`,
+        position: {
+          x: rect.left + rect.width / 2,
+          y: rect.top - 10
+        }
+      });
+    }, 2000); // 2000ms = 2 seconds
+  };
+
+  // Handler for mouse leave event
+  const handleMouseLeave = () => {
+    if (tooltipTimeoutRef.current) {
+      clearTimeout(tooltipTimeoutRef.current);
+    }
+    setTooltip({ ...tooltip, visible: false });
+  };
+
   return (
     <div className="p-4">
       {/* Face Selection Preview */}
@@ -92,6 +130,8 @@ export default function FaceSelection({
                     : 'hover:scale-[1.02] hover:ring-1 hover:ring-gray-400'
                 }`}
                 onClick={() => onSourceSelect(image)}
+                onMouseEnter={(e) => handleMouseEnter(image, e)}
+                onMouseLeave={handleMouseLeave}
               >
                 <Image 
                   src={image.imagePath}
@@ -103,14 +143,30 @@ export default function FaceSelection({
               </div>
               <button
                 onClick={(e) => onSourceDelete(image, e)}
-                className="absolute -top-1 -right-1 w-5 h-5 bg-gray-600 rounded-full flex items-center justify-center hover:bg-gray-700 transition-colors"
+                className="absolute top-1 right-1 bg-gray-800/80 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-gray-700/80 cursor-pointer"
               >
-                <X className="w-3 h-3 text-white" />
+                ×
               </button>
             </div>
           ))}
         </div>
       </div>
+
+      {/* Tooltip component */}
+      {tooltip.visible && (
+        <div 
+          className="fixed px-2 py-1 bg-gray-800 text-white text-xs rounded shadow-lg z-50 whitespace-nowrap transform -translate-x-1/2 -translate-y-full pointer-events-none"
+          style={{ 
+            left: `${tooltip.position.x}px`, 
+            top: `${tooltip.position.y}px`,
+            opacity: tooltip.visible ? 1 : 0,
+            transition: 'opacity 0.2s ease-in-out'
+          }}
+        >
+          {tooltip.content}
+          <div className="absolute w-2 h-2 bg-gray-800 transform rotate-45 left-1/2 -translate-x-1/2 -bottom-1"></div>
+        </div>
+      )}
     </div>
   );
 }
