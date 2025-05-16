@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import AtlosPaymentButton from '@/components/AtlosPaymentButton';
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -14,20 +13,6 @@ export default function ProfilePage() {
     email: 'john.doe@example.com',
     credits: 10,
     membership: 'Basic'
-  };
-  
-  // Payment package options
-  const packages = [
-    { id: 'basic', name: 'Basic', credits: 10, price: 9.99 },
-    { id: 'standard', name: 'Standard', credits: 25, price: 19.99 },
-    { id: 'premium', name: 'Premium', credits: 75, price: 49.99 }
-  ];
-  
-  // Handle successful payment
-  const handlePaymentSuccess = (result, packageInfo) => {
-    console.log('Payment successful:', result);
-    // In a real app, you would update the user's credits/membership here
-    alert(`Thank you for purchasing the ${packageInfo.name} package! ${packageInfo.credits} credits have been added to your account.`);
   };
   
   return (
@@ -88,29 +73,11 @@ export default function ProfilePage() {
         
         {activeTab === 'payments' && (
           <div className="bg-white shadow rounded-lg p-6">
-            <h2 className="text-xl font-medium mb-4">Add Credits</h2>
-            <p className="mb-4 text-gray-600">Purchase additional credits to use for face swaps.</p>
+            <h2 className="text-xl font-medium mb-4">Payment History</h2>
+            <p className="mb-4 text-gray-600">View your payment history and transactions.</p>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-              {packages.map((pkg) => (
-                <div key={pkg.id} className="border rounded-lg p-4 text-center">
-                  <h3 className="text-lg font-semibold mb-1">{pkg.name} Package</h3>
-                  <p className="text-2xl font-bold mb-2">${pkg.price}</p>
-                  <p className="text-gray-600 mb-4">{pkg.credits} credits</p>
-                  <AtlosPaymentButton 
-                    amount={pkg.price} 
-                    onSuccess={(result) => handlePaymentSuccess(result, pkg)}
-                  />
-                </div>
-              ))}
-            </div>
-            
-            <div className="bg-blue-50 rounded-lg p-4">
-              <h3 className="text-lg font-semibold text-blue-800 mb-2">About Cryptocurrency Payments</h3>
-              <p className="text-sm text-blue-700">
-                We accept payments in Bitcoin, Ethereum, USDT, USDC and other cryptocurrencies.
-                All transactions are secure and processed instantly.
-              </p>
+            <div className="text-center py-8 text-gray-500">
+              <p>No payment history available.</p>
             </div>
           </div>
         )}

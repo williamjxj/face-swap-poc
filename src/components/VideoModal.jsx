@@ -1,8 +1,12 @@
 'use client'
-import { X, Download, Trash2, CreditCard } from 'lucide-react'
-import { useCallback } from 'react'
+import { X, Download, Trash2 } from 'lucide-react'
+import { useCallback, useState } from 'react'
+import StripeCheckoutButton from './StripeCheckoutButton'
+import AtlosCheckoutButton from './AtlosCheckoutButton'
 
 export default function VideoModal({ video, onClose, onDownload, onDelete }) {
+  const [showPaymentOptions, setShowPaymentOptions] = useState(false)
+  
   const handleBackdropClick = useCallback((e) => {
     if (e.target === e.currentTarget) {
       onClose()
@@ -13,38 +17,8 @@ export default function VideoModal({ video, onClose, onDownload, onDelete }) {
     e.stopPropagation()
   }, [])
   
-  
-  const handleCheckout = async () => {
-    const url = process.env.NEXT_PUBLIC_BASE_URL
-    try {
-      const response = await fetch('/api/checkout', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          imageId: video.name,
-          imageUrl: `${url}/${video.filePath}`,
-        })
-      })
-      
-      if (!response.ok) {
-        throw new Error('Checkout failed')
-      }
-      
-      const data = await response.json()
-
-      console.log('Checkout response:', data)
-      // Redirect to checkout URL if provided
-      if (data.url) {
-        window.location.href = data.url
-      }
-      else if (data.checkoutUrl) {
-        window.location.href = data.checkoutUrl
-      }
-    } catch (error) {
-      console.error('Checkout error:', error)
-    }
+  const togglePaymentOptions = () => {
+    setShowPaymentOptions(prev => !prev)
   }
 
   return (
@@ -78,28 +52,47 @@ export default function VideoModal({ video, onClose, onDownload, onDelete }) {
           />
         )}
         
-        <div className="flex justify-end gap-2">
-          <button
-            onClick={handleCheckout}
-            className="flex items-center gap-2 px-3 py-2 bg-green-500 hover:bg-green-600 rounded-md cursor-pointer"
-          >
-            <CreditCard className="w-4 h-4" />
-            Checkout
-          </button>
-          <button
-            onClick={onDownload}
-            className="flex items-center gap-2 px-3 py-2 bg-blue-500 hover:bg-blue-600 rounded-md cursor-pointer"
-          >
-            <Download className="w-4 h-4" />
-            Download
-          </button>
-          <button
-            onClick={onDelete}
-            className="flex items-center gap-2 px-3 py-2 bg-red-500 hover:bg-red-600 rounded-md cursor-pointer"
-          >
-            <Trash2 className="w-4 h-4" />
-            Delete
-          </button>
+        <div className="space-y-4">
+          {!showPaymentOptions ? (
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={togglePaymentOptions}
+                className="flex items-center gap-2 px-3 py-2 bg-green-500 hover:bg-green-600 rounded-md cursor-pointer"
+              >
+                Checkout
+              </button>
+              <button
+                onClick={onDownload}
+                className="flex items-center gap-2 px-3 py-2 bg-blue-500 hover:bg-blue-600 rounded-md cursor-pointer"
+              >
+                <Download className="w-4 h-4" />
+                Download
+              </button>
+              <button
+                onClick={onDelete}
+                className="flex items-center gap-2 px-3 py-2 bg-red-500 hover:bg-red-600 rounded-md cursor-pointer"
+              >
+                <Trash2 className="w-4 h-4" />
+                Delete
+              </button>
+            </div>
+          ) : (
+            <>
+              <h3 className="text-lg font-semibold mb-2 text-center">Choose Payment Method</h3>
+              <div className="flex justify-center gap-3">
+                <StripeCheckoutButton video={video} />
+                <AtlosCheckoutButton video={video} />
+              </div>
+              <div className="text-center">
+                <button
+                  onClick={togglePaymentOptions}
+                  className="text-sm text-gray-400 hover:text-white underline"
+                >
+                  Cancel
+                </button>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>

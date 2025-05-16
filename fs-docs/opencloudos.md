@@ -11,7 +11,7 @@ $ sudo systemctl start postgresql
 $ sudo systemctl enable postgresql
 ```
 
-### 🥕 Postgresql
+### 🥕 psql
 
 ```bash
 $ sudo -i -u postgres # su - postgres, sudo su - postgres
@@ -49,8 +49,15 @@ $ pm2 delete face-swap-app
 
 - PostgreSQL, PostgREST, `https://<project_ref>.supabase.co/rest/v1/`
 
-### scp
+### 🥕 scp
 
 ```bash
 $ scp -r ~/my-experiments/face-swap-poc/storage nextjs@43.135.142.221:/home/nextjs/face-swap-poc/
 ```
+
+### 🥕 github (ssh key -> git@)
+
+1. `ssh-keygen -t ed25519 -C "williamjxj@hotmail.com"`, add to github
+2. `github` -> `settings` -> `Developer Mode` -> `generate password` for `git push` (`git config --list`)
+3. change `git remote -v` from `https` to `git`, then no password prompt anymore
+
