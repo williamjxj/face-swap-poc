@@ -8,6 +8,7 @@ import VideoModal from "@/components/VideoModal"
 import GuidelineModal from "@/components/GuidelineModal"
 import Loading from "@/components/Loading"
 import TabContent from "./TabContent"
+import CloseButton from "@/components/CloseButton"
 
 export default function FaceFusion() {
   const [selectedTab, setSelectedTab] = useState('video')
@@ -645,18 +646,18 @@ export default function FaceFusion() {
             className="w-[calc(100%-160px)] h-[calc(100vh-240px)] max-h-[480px] bg-[#2a2832] rounded-[20px] border-2 border-dashed border-white/70 relative mt-3 flex items-center justify-center"
           >
             {/* Close button for clearing selection */}
-            <button 
-              onClick={() => {
-                setSelectedTemplate(null);
-                setTargetPath(null);
-                setSelectedFace(null);
-                setSelectedSource(null);
-                setSourcePath(null);
-              }}
-              className="absolute top-2 right-2 z-10 w-8 h-8 bg-gray-800/80 hover:bg-gray-700 text-white rounded-full flex items-center justify-center cursor-pointer"
-            >
-              ×
-            </button>
+            <div className="absolute top-2 right-2 z-10">
+              <CloseButton 
+                onClick={() => {
+                  setSelectedTemplate(null);
+                  setTargetPath(null);
+                  setSelectedFace(null);
+                  setSelectedSource(null);
+                  setSourcePath(null);
+                }}
+                variant="dark"
+              />
+            </div>
             <div className="w-full h-full flex items-center justify-center">
               {selectedTemplate.mimeType?.startsWith('video/') ? (
                 <video

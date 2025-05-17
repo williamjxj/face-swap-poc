@@ -1,8 +1,8 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { X } from "lucide-react"
 import Image from "next/image"
+import CloseButton from "./CloseButton"
 
 export default function FaceFusionGuidelinesModal({ isOpen, onClose }) {
   const [guidelines, setGuidelines] = useState({ allowed: [], notAllowed: [] });
@@ -36,13 +36,9 @@ export default function FaceFusionGuidelinesModal({ isOpen, onClose }) {
         <div className="p-4">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-center text-xl font-medium w-full">How to Create High-Quality Photos</h2>
-            <button 
-              className="absolute right-4 top-4 p-2 hover:bg-gray-100 rounded-full"
-              onClick={onClose}
-            >
-              <X className="h-4 w-4" />
-              <span className="sr-only">Close</span>
-            </button>
+            <div className="absolute right-4 top-4">
+              <CloseButton onClick={onClose} variant="light" size="small" />
+            </div>
           </div>
 
           <div className="space-y-2">

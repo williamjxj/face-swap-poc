@@ -1,8 +1,9 @@
 'use client'
-import { X, Download, Trash2 } from 'lucide-react'
+import { Download, Trash2 } from 'lucide-react'
 import { useCallback, useState } from 'react'
 import StripeCheckoutButton from './StripeCheckoutButton'
 import AtlosCheckoutButton from './AtlosCheckoutButton'
+import CloseButton from './CloseButton'
 
 export default function VideoModal({ video, onClose, onDownload, onDelete }) {
   const [showPaymentOptions, setShowPaymentOptions] = useState(false)
@@ -17,6 +18,11 @@ export default function VideoModal({ video, onClose, onDownload, onDelete }) {
     e.stopPropagation()
   }, [])
   
+  const handleCloseClick = useCallback((e) => {
+    e.stopPropagation()
+    onClose()
+  }, [onClose])
+  
   const togglePaymentOptions = () => {
     setShowPaymentOptions(prev => !prev)
   }
@@ -30,12 +36,9 @@ export default function VideoModal({ video, onClose, onDownload, onDelete }) {
         className="relative bg-[#1a1d24] rounded-lg w-[90%] max-w-2xl p-4 max-h-[90vh] overflow-y-auto"
         onClick={handleModalClick}
       >
-        <button
-          onClick={onClose}
-          className="absolute top-2 right-2 p-2 hover:bg-gray-700/80 rounded-full cursor-pointer transition-all duration-200 hover:scale-110 flex items-center justify-center"
-        >
-          <X className="w-6 h-6 pointer-events-none" />
-        </button>
+        <div className="absolute top-2 right-2 z-10">
+          <CloseButton onClick={handleCloseClick} variant="default" size="medium" />
+        </div>
         
         {video.type === 'video' ? (
           <video

@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Loading from "@/components/Loading"
 import { Download, Play, Eye, Lock } from 'lucide-react'
+import CloseButton from '@/components/CloseButton'
 
 export default function GalleryPage() {
   const [mediaItems, setMediaItems] = useState([])
@@ -157,7 +158,7 @@ export default function GalleryPage() {
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={`
-                  px-4 py-3 rounded-lg text-sm font-medium transition-colors
+                  px-4 py-3 rounded-lg text-sm font-medium transition-colors cursor-pointer
                   ${activeTab === tab.id 
                     ? 'bg-blue-600 text-white' 
                     : 'text-gray-400 hover:bg-[#2a2d34] hover:text-white'
@@ -179,7 +180,7 @@ export default function GalleryPage() {
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`
-                flex-1 py-3 text-xs font-medium text-center transition-colors
+                flex-1 py-3 text-xs font-medium text-center transition-colors cursor-pointer
                 ${activeTab === tab.id 
                   ? 'text-blue-500 border-t-2 border-blue-500' 
                   : 'text-gray-400'
@@ -335,15 +336,13 @@ export default function GalleryPage() {
             className="relative bg-[#1a1d24] rounded-xl max-w-4xl w-[95%] md:w-[90%] max-h-[90vh] overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
-            <button 
-              className="absolute top-4 right-4 z-10 p-2 bg-black/50 rounded-full text-white hover:bg-black/70"
-              onClick={() => setSelectedMedia(null)}
-            >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M18 6L6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </button>
+            <div className="absolute top-4 right-4 z-10">
+              <CloseButton 
+                onClick={() => setSelectedMedia(null)} 
+                variant="gallery"
+                size="medium"
+              />
+            </div>
             
             <div className="p-4">
               {getMediaType(selectedMedia) === 'video' ? (

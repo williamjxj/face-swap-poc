@@ -1,5 +1,5 @@
 import Image from 'next/image';
-import { Plus, X } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import styles from './page.module.css';
 import { useState, useRef, useEffect } from 'react';
 
