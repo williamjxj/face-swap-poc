@@ -1,6 +1,7 @@
 import { signIn, signOut, getSession } from 'next-auth/react'
 import GoogleProvider from 'next-auth/providers/google'
 import AzureADProvider from 'next-auth/providers/azure-ad'
+import { db } from '@/lib/db'
 
 export const authOptions = {
   providers: [
@@ -16,6 +17,8 @@ export const authOptions = {
   ],
   session: {
     strategy: 'jwt',
+    // Keep session active for 30 days
+    maxAge: 30 * 24 * 60 * 60, // 30 days in seconds
   },
   pages: {
     signIn: '/auth/signin',
@@ -28,16 +31,46 @@ export const authOptions = {
       else if (new URL(url).origin === baseUrl) return url
       return baseUrl + '/welcome'
     },
-    async jwt({ token, user }) {
+    async jwt({ token, user, account, profile }) {
+      // Initial sign in
+      if (account && profile) {
+        // Store user email in the token
+        token.email = profile.email || profile.mail
+      }
       if (user) {
         token.id = user.id
       }
       return token
     },
     async session({ session, token }) {
+      // Pass user ID to the client session
       session.user.id = token.id
+      
+      // If we have an email, ensure the user exists in the database
+      if (session?.user?.email) {
+        try {
+          // Simple upsert operation to ensure user exists
+          await db.user.upsert({
+            where: { account: session.user.email },
+            update: { lastLogin: new Date() },
+            create: {
+              account: session.user.email,
+              lastLogin: new Date()
+            }
+          });
+        } catch (error) {
+          console.error('Error updating user in database:', error);
+        }
+      }
+      
       return session
     },
+    async signIn({ profile }) {
+      if (profile?.email || profile?.mail) {
+        return true;
+      }
+      return false;
+    }
   },
 }
 
@@ -73,20 +106,33 @@ export const getCurrentSession = async () => {
 
 export const logout = async () => {
   try {
-    // Clear client-side storage
-    window.localStorage.removeItem('nextauth.message')
-    window.sessionStorage.clear()
+    // Get current session to know which user is logging out
+    const session = await getSession();
     
-    // Clear cookies via API
-    await fetch('/api/logout', { method: 'POST' })
+    // If we have an email, update the logout time
+    if (session?.user?.email) {
+      try {
+        await db.user.update({
+          where: { account: session.user.email },
+          data: { lastLogout: new Date() }
+        });
+      } catch (error) {
+        console.error('Error updating logout time:', error);
+        // Continue with logout even if the update fails
+      }
+    }
+    
+    // Clear client-side storage
+    window.localStorage.removeItem('nextauth.message');
+    window.sessionStorage.clear();
     
     // Sign out via NextAuth
-    await signOut({ callbackUrl: '/' })
+    await signOut({ callbackUrl: '/' });
     
-    return { success: true }
+    return { success: true };
   } catch (error) {
-    console.error('Logout error:', error)
-    return { success: false, error: error.message }
+    console.error('Logout error:', error);
+    return { success: false, error: error.message };
   }
 }
 

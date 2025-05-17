@@ -1,19 +1,28 @@
 'use client'
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 
 export default function ProfilePage() {
   const router = useRouter();
+  const { data: session, status } = useSession();
   const [activeTab, setActiveTab] = useState('profile');
   
-  // Mock user data - in a real app, this would come from your authentication system
-  const user = {
-    name: 'John Doe',
-    email: 'john.doe@example.com',
-    credits: 10,
-    membership: 'Basic'
-  };
+  useEffect(() => {
+    // If user is not authenticated, redirect to login
+    if (status === 'unauthenticated') {
+      router.push('/auth/signin');
+    }
+  }, [status, router]);
+
+  if (status === 'loading') {
+    return (
+      <div className="flex justify-center items-center h-[50vh]">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
   
   return (
     <div className="flex-grow p-6">
@@ -47,25 +56,23 @@ export default function ProfilePage() {
         </div>
         
         {/* Tab content */}
-        {activeTab === 'profile' && (
+        {activeTab === 'profile' && session?.user && (
           <div className="bg-white shadow rounded-lg p-6">
             <h2 className="text-xl font-medium mb-4">User Profile</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <p className="text-sm font-medium text-gray-500">Name</p>
-                <p className="mt-1">{user.name}</p>
-              </div>
-              <div>
                 <p className="text-sm font-medium text-gray-500">Email</p>
-                <p className="mt-1">{user.email}</p>
+                <p className="mt-1">{session.user.email}</p>
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-500">Membership</p>
-                <p className="mt-1">{user.membership}</p>
+                <p className="text-sm font-medium text-gray-500">User ID</p>
+                <p className="mt-1">{session.user.id ? `${session.user.id.substring(0, 8)}...` : 'N/A'}</p>
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-500">Available Credits</p>
-                <p className="mt-1 text-lg font-semibold">{user.credits}</p>
+                <p className="text-sm font-medium text-gray-500">Status</p>
+                <p className="mt-1 flex items-center">
+                  <span className="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full">Active</span>
+                </p>
               </div>
             </div>
           </div>
@@ -83,5 +90,5 @@ export default function ProfilePage() {
         )}
       </div>
     </div>
-  )
+  );
 }

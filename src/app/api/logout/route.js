@@ -1,7 +1,21 @@
 import { NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/services/auth'
+import { db } from '@/lib/db'
 
 export async function POST() {
   try {
+    // Get the current session to identify the user
+    const session = await getServerSession(authOptions)
+    
+    // If we have a user session, update their logout timestamp
+    if (session?.user?.email) {
+      await db.user.update({
+        where: { account: session.user.email },
+        data: { lastLogout: new Date() }
+      })
+    }
+    
     const response = NextResponse.json({ success: true })
     
     // Clear all auth-related cookies
@@ -15,6 +29,7 @@ export async function POST() {
     
     return response
   } catch (error) {
+    console.error('Logout error:', error)
     return NextResponse.json(
       { success: false, error: error.message },
       { status: 500 }

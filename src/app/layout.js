@@ -4,6 +4,7 @@ import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/services/auth";
+import AuthProvider from "@/components/AuthProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -22,39 +23,24 @@ export const metadata = {
   description: "AI Face Swap Tool, Checkout Payment, CMS",
 }
 
-export async function RootLayout2({ children }) {
+export default async function RootLayout({ children }) {
   const session = await getServerSession(authOptions);
   const segment = children.props.childProp?.segment;
   const isAuthPage = segment === 'auth';
-  const isHomePage = segment === undefined || segment === '';
 
   return (
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-screen`}
       >
-        {!isAuthPage && !isHomePage && session && <Header />}
-        <main className={inter.className}>
-          {children}
-        </main>
-        {!isHomePage && <Footer />}
-      </body>
-    </html>
-  );
-}
-
-export default async function RootLayout({ children }) {
-
-  return (
-    <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-screen`}
-      >
-        <Header />
-        <main className="flex-grow mx-auto w-full ml-1 mr-1">
-          {children}
-        </main>
-        <Footer />
+        <AuthProvider session={session}>
+          {/* Show Header with Navigator whenever user is logged in, except on auth pages */}
+          {!isAuthPage && session && <Header />}
+          <main className={inter.className}>
+            {children}
+          </main>
+          <Footer />
+        </AuthProvider>
       </body>
     </html>
   );
