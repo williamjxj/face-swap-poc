@@ -30,24 +30,50 @@ export async function PUT(request, { params }) {
     const { id } = params;
     const data = await request.json();
     
-    const updatedGeneratedMedia = await prisma.generatedMedia.update({
-      where: { id },
-      data: {
-        name: data.name,
-        type: data.type,
-        tempPath: data.tempPath,
-        filePath: data.filePath,
-        thumbnailPath: data.thumbnailPath,
-        fileSize: data.fileSize,
-        isPaid: data.isPaid,
-        playCount: data.playCount,
-        downloadCount: data.downloadCount,
-        isActive: data.isActive
-      }
+    // Get the existing media item first
+    const existingMedia = await prisma.generatedMedia.findUnique({
+      where: { id }
     });
     
-    return NextResponse.json(updatedGeneratedMedia);
+    if (!existingMedia) {
+      return NextResponse.json({ error: 'Media not found' }, { status: 404 });
+    }
+    
+    // Only update fields that were provided in the request
+    const updateData = {};
+    
+    if (data.name !== undefined) updateData.name = data.name;
+    if (data.type !== undefined) updateData.type = data.type;
+    if (data.tempPath !== undefined) updateData.tempPath = data.tempPath;
+    if (data.filePath !== undefined) updateData.filePath = data.filePath;
+    if (data.thumbnailPath !== undefined) updateData.thumbnailPath = data.thumbnailPath;
+    if (data.fileSize !== undefined) updateData.fileSize = data.fileSize;
+    if (data.isPaid !== undefined) updateData.isPaid = data.isPaid;
+    if (data.isActive !== undefined) updateData.isActive = data.isActive;
+    
+    // Special handling for counters - increment instead of replace if they're set
+    if (data.playCount !== undefined) {
+      updateData.playCount = existingMedia.playCount + 1;
+    }
+    
+    if (data.downloadCount !== undefined) {
+      updateData.downloadCount = existingMedia.downloadCount + 1;
+    }
+    
+    const updatedGeneratedMedia = await prisma.generatedMedia.update({
+      where: { id },
+      data: updateData
+    });
+    
+    // Convert BigInt to string for response
+    const serializedMedia = {
+      ...updatedGeneratedMedia,
+      fileSize: updatedGeneratedMedia.fileSize.toString()
+    };
+    
+    return NextResponse.json(serializedMedia);
   } catch (error) {
+    console.error('Error updating generated media:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

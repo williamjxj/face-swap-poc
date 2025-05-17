@@ -4,17 +4,34 @@ import fs from 'fs';
 import path from 'path';
 
 // GET all generated media
-export async function GET() {
+export async function GET(request) {
   try {
+    // Parse type filter from query params if provided
+    const { searchParams } = new URL(request.url);
+    const typeFilter = searchParams.get('type');
+    
+    // Construct where clause with isActive filter and optional type filter
+    const whereClause = { 
+      isActive: true,
+      ...(typeFilter ? { type: typeFilter } : {})
+    };
+    
     const media = await prisma.generatedMedia.findMany({
-      orderBy: { createdAt: 'desc' }
+      where: whereClause,
+      orderBy: { createdAt: 'desc' },
+      include: {
+        targetTemplate: { select: { type: true } },
+        faceSource: { select: { id: true, filename: true } }
+      }
     });
 
     // Convert BigInt values to strings
     const serializedMedia = media.map(item => ({
       ...item,
       fileSize: item.fileSize.toString(),
-      mimeType: item.mimeType || 'video/mp4' // Provide default mimeType if not set
+      mimeType: item.mimeType || 'video/mp4', // Provide default mimeType if not set
+      // If item doesn't have a thumbnailPath, try to use the filePath as fallback
+      thumbnailPath: item.thumbnailPath || item.filePath
     }));
 
     return NextResponse.json({ files: serializedMedia });
