@@ -7,6 +7,7 @@ import CloseButton from './CloseButton'
 
 export default function VideoModal({ video, onClose, onDownload, onDelete }) {
   const [showPaymentOptions, setShowPaymentOptions] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
   
   const handleBackdropClick = useCallback((e) => {
     if (e.target === e.currentTarget) {
@@ -22,6 +23,41 @@ export default function VideoModal({ video, onClose, onDownload, onDelete }) {
     e.stopPropagation()
     onClose()
   }, [onClose])
+  
+  const handleDelete = async () => {
+    if (window.confirm('Are you sure you want to delete this video? This action cannot be undone.')) {
+      try {
+        setIsDeleting(true)
+        
+        const response = await fetch('/api/videos/delete', {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ id: video.id }),
+        })
+        
+        const data = await response.json()
+        
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to delete video')
+        }
+        
+        // Call the onDelete callback to update the UI
+        if (onDelete) {
+          onDelete(video.id)
+        }
+        
+        // Close the modal
+        onClose()
+      } catch (error) {
+        console.error('Error deleting video:', error)
+        alert('Failed to delete the video. Please try again.')
+      } finally {
+        setIsDeleting(false)
+      }
+    }
+  }
   
   const togglePaymentOptions = () => {
     setShowPaymentOptions(prev => !prev)
@@ -57,27 +93,42 @@ export default function VideoModal({ video, onClose, onDownload, onDelete }) {
         
         <div className="space-y-4">
           {!showPaymentOptions ? (
-            <div className="flex justify-end gap-2">
-              {!video.isPaid && (
-                <button
-                  onClick={togglePaymentOptions}
-                  className="flex items-center gap-2 px-3 py-2 bg-green-500 hover:bg-green-600 rounded-md cursor-pointer"
-                >
-                  Checkout
-                </button>
-              )}
+            <div className="flex justify-between gap-2">
+              {/* Delete button on the left */}
               <button
-                onClick={onDownload}
-                disabled={!video.isPaid}
-                className={`flex items-center gap-2 px-3 py-2 ${
-                  video.isPaid 
-                    ? 'bg-blue-500 hover:bg-blue-600 cursor-pointer' 
-                    : 'bg-gray-500 cursor-not-allowed opacity-50'
-                } rounded-md`}
+                onClick={handleDelete}
+                disabled={isDeleting}
+                className={`flex items-center gap-2 px-3 py-2 bg-red-500 hover:bg-red-600 rounded-md ${
+                  isDeleting ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+                }`}
               >
-                <Download className="w-4 h-4" />
-                {video.isPaid ? 'Download' : 'Pay to Download'}
+                <Trash2 className="w-4 h-4" />
+                {isDeleting ? 'Deleting...' : 'Delete'}
               </button>
+              
+              {/* Payment and download buttons on the right */}
+              <div className="flex gap-2">
+                {!video.isPaid && (
+                  <button
+                    onClick={togglePaymentOptions}
+                    className="flex items-center gap-2 px-3 py-2 bg-green-500 hover:bg-green-600 rounded-md cursor-pointer"
+                  >
+                    Checkout
+                  </button>
+                )}
+                <button
+                  onClick={onDownload}
+                  disabled={!video.isPaid}
+                  className={`flex items-center gap-2 px-3 py-2 ${
+                    video.isPaid 
+                      ? 'bg-blue-500 hover:bg-blue-600 cursor-pointer' 
+                      : 'bg-gray-500 cursor-not-allowed opacity-50'
+                  } rounded-md`}
+                >
+                  <Download className="w-4 h-4" />
+                  {video.isPaid ? 'Download' : 'Pay to Download'}
+                </button>
+              </div>
             </div>
           ) : (
             <>

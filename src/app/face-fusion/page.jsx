@@ -296,6 +296,7 @@ export default function FaceFusion() {
 
   // Note: Delete functionality is now handled only in the admin area, not in user-facing UI
   
+  // Handle download of video
   const handleDownload = async (video) => {
     if (!video.isPaid) {
       setError('Please purchase the video to download');
@@ -346,23 +347,13 @@ export default function FaceFusion() {
       setError('Failed to download video');
     }
   }
-
-  const handleDelete = async (video) => {
-    try {
-      const response = await fetch(`/api/generated-media?filename=${video.name}`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to delete video');
-      }
-
-      setGeneratedVideos(videos => videos.filter(v => v.name !== video.name));
-      setSelectedVideo(null);
-    } catch (error) {
-      console.error('Error deleting video:', error);
-      setError('Failed to delete video');
-    }
+  
+  // Handle deletion of video
+  const handleDelete = (video) => {
+    // Update the UI by removing the video from generatedVideos
+    setGeneratedVideos((prev) => prev.filter((item) => item.id !== video.id));
+    // Close the modal
+    setSelectedVideo(null);
   }
 
   const handleSourceDelete = async (image, e) => {
