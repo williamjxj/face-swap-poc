@@ -74,31 +74,15 @@ export async function POST(request) {
     console.log('Fusion task created successfully, output path:', outputPath);
     
     // Step 2: Poll QUERY_API to check task status
+    // This now returns a NextResponse with the result data
     const response = await pollTaskStatus(outputPath, sourceFile.name);
     
-    // Since pollTaskStatus returns a NextResponse object, we need to extract the data
-    const responseData = await response.json();
-   
-    if (!responseData || !responseData.filePath) {
-      console.error('Error: Missing filePath in result', responseData);
-      return NextResponse.json({ error: 'Failed to process video - missing path information' }, { status: 500 });
-    }
-
-    const filePath = path.join(process.cwd(), 'public', 'outputs', responseData.filePath.split('/').pop());
-
-    // Save to database
-    const media = await prisma.generatedMedia.create({
-      data: {
-        name: responseData.filePath.split('/').pop(),
-        type: 'video',
-        filePath: `/outputs/${responseData.filePath.split('/').pop()}`,
-        thumbnailPath: `/outputs/${responseData.filePath.split('/').pop()}`, // Use video itself as thumbnail
-        fileSize: responseData.fileSize ? BigInt(responseData.fileSize) : 0,
-        isPaid: false
-      }
-    });
-
+    // Simply return the response from pollTaskStatus - no need to extract and then parse again
+    // This avoids the "stream already consumed" issue
     return response;
+
+    // We've updated pollTaskStatus to handle database insertion
+    // and we're simply returning its response now
   } catch (error) {
     console.error('Face fusion process failed:', error);
     return NextResponse.json({
@@ -215,8 +199,9 @@ async function pollTaskStatus(outputPath, sourceFileName) {
             fs.mkdirSync(outputDir, { recursive: true });
           }
           
-          // Save the file
-          const fileBuffer = await response.buffer();
+          // Save the file - use arrayBuffer instead of buffer
+          const arrayBuffer = await response.arrayBuffer();
+          const fileBuffer = Buffer.from(arrayBuffer);
           fs.writeFileSync(filePath, fileBuffer);
           
           console.log(`File saved successfully at: ${filePath}`);
