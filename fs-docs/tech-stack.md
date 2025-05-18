@@ -72,18 +72,40 @@
 ```
 
 
-### 🌶  
+### 🌶  identity
 
 - `identify` file size (file)
-- 
-- sharp npm module
-    •	Resize, crop, and rotate images
-	•	Convert images between formats (JPEG, PNG, WebP, AVIF, GIF, TIFF, SVG)
-	•	Compress and optimize images for web use
-	•	Extract image metadata
-	•	Perform advanced operations like compositing, color adjustment, and more
+
+
+### 🌽 sharp npm module
+
+- Resize, crop, and rotate images
+- Convert images between formats (JPEG, PNG, WebP, AVIF, GIF, TIFF, SVG)
+- Compress and optimize images for web use
+- Extract image metadata
+- Perform advanced operations like compositing, color adjustment, and more
+
+```jsx
+sharp('input.jpg')
+  .resize(200, 200)
+  .toFile('output.webp', (err, info) => {
+    // Processed image saved as output.webp
+  });
+```
 
 ### 🌽 
+
+### 🌽 
+
+### 🌽 video
+
+```jsx
+<video width="320" height="240" controls preload="none">
+  <source src="/path/to/video.mp4" type="video/mp4" />
+  <track src="/path/to/captions.vtt" kind="subtitles" srcLang="en" label="English" />
+  Your browser does not support the video tag.
+</video>
+```
 
 ### 🥕 Claude, Gemini, o4-mini, GPT-4o, o4-mini (preview)
 

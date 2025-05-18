@@ -58,25 +58,25 @@ export default function VideoModal({ video, onClose, onDownload, onDelete }) {
         <div className="space-y-4">
           {!showPaymentOptions ? (
             <div className="flex justify-end gap-2">
-              <button
-                onClick={togglePaymentOptions}
-                className="flex items-center gap-2 px-3 py-2 bg-green-500 hover:bg-green-600 rounded-md cursor-pointer"
-              >
-                Checkout
-              </button>
+              {!video.isPaid && (
+                <button
+                  onClick={togglePaymentOptions}
+                  className="flex items-center gap-2 px-3 py-2 bg-green-500 hover:bg-green-600 rounded-md cursor-pointer"
+                >
+                  Checkout
+                </button>
+              )}
               <button
                 onClick={onDownload}
-                className="flex items-center gap-2 px-3 py-2 bg-blue-500 hover:bg-blue-600 rounded-md cursor-pointer"
+                disabled={!video.isPaid}
+                className={`flex items-center gap-2 px-3 py-2 ${
+                  video.isPaid 
+                    ? 'bg-blue-500 hover:bg-blue-600 cursor-pointer' 
+                    : 'bg-gray-500 cursor-not-allowed opacity-50'
+                } rounded-md`}
               >
                 <Download className="w-4 h-4" />
-                Download
-              </button>
-              <button
-                onClick={onDelete}
-                className="flex items-center gap-2 px-3 py-2 bg-red-500 hover:bg-red-600 rounded-md cursor-pointer"
-              >
-                <Trash2 className="w-4 h-4" />
-                Delete
+                {video.isPaid ? 'Download' : 'Pay to Download'}
               </button>
             </div>
           ) : (

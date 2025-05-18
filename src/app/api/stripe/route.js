@@ -3,7 +3,7 @@ import stripe from '@/lib/stripe';
 
 export async function POST(request) {
   try {
-    const { name, description, amount, currency, imageId, imageUrl } = await request.json();
+    const { name, description, amount, currency, imageId, videoId } = await request.json();
 
     if (!name || !description || !amount || !currency) {
       return NextResponse.json(
@@ -39,10 +39,11 @@ export async function POST(request) {
         },
       ],
       mode: 'payment',
-      success_url: `${baseUrl}/payment/success?session_id={CHECKOUT_SESSION_ID}&method=stripe`,
-      cancel_url: `${baseUrl}/payment/canceled?method=stripe`,
+      success_url: `${baseUrl}/api/payment/success?session_id={CHECKOUT_SESSION_ID}&method=stripe`,
+      cancel_url: `${baseUrl}/face-fusion?tab=history`,
       metadata: {
         imageId: imageId || '',
+        videoId: videoId || '',
       },
     });
 

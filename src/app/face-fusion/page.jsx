@@ -9,10 +9,64 @@ import GuidelineModal from "@/components/GuidelineModal"
 import Loading from "@/components/Loading"
 import TabContent from "./TabContent"
 import CloseButton from "@/components/CloseButton"
+import StripeCheckoutButton from "@/components/StripeCheckoutButton"
 
 export default function FaceFusion() {
   const [selectedTab, setSelectedTab] = useState('video')
   const [rightSideTab, setRightSideTab] = useState('face-swap')
+  const [paymentSuccessId, setPaymentSuccessId] = useState(null)
+  
+  // Handle URL query parameters
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const tab = searchParams.get('tab');
+    const paymentSuccess = searchParams.get('paymentSuccess');
+    
+    if (tab === 'history') {
+      setRightSideTab('history');
+    }
+    
+    if (paymentSuccess) {
+      setPaymentSuccessId(paymentSuccess);
+      
+      // Immediately refresh the videos list to get updated payment status
+      const refreshVideos = async () => {
+        try {
+          const response = await fetch('/api/generated-media');
+          if (response.ok) {
+            const data = await response.json();
+            if (data.files) {
+              // Convert strings back to BigInt if needed
+              const videos = data.files.map(video => ({
+                ...video,
+                fileSize: BigInt(video.fileSize || 0),
+              }));
+              setGeneratedVideos(videos);
+            }
+          }
+        } catch (error) {
+          console.error('Error refreshing videos after payment:', error);
+        }
+      };
+      
+      refreshVideos();
+      
+      // Clear payment success parameter from URL after 5 seconds
+      setTimeout(() => {
+        const newUrl = new URL(window.location.href);
+        newUrl.searchParams.delete('paymentSuccess');
+        window.history.replaceState({}, '', newUrl);
+        
+        // Keep success message for a bit longer than URL param
+        setTimeout(() => {
+          setPaymentSuccessId(null);
+          
+          // Refresh videos list again after success message disappears
+          refreshVideos();
+        }, 3000);
+      }, 2000);
+    }
+  }, [])
   // Store just the paths as strings for form data
   const [targetPath, setTargetPath] = useState(null)
   const [sourcePath, setSourcePath] = useState(null)
@@ -240,15 +294,26 @@ export default function FaceFusion() {
     setSelectedVideo(video)
   }
 
+  // Note: Delete functionality is now handled only in the admin area, not in user-facing UI
+  
   const handleDownload = async (video) => {
     if (!video.isPaid) {
       setError('Please purchase the video to download');
+      
+      // Open the video modal for payment
+      setSelectedVideo(video);
       return;
     }
     
     try {
       const response = await fetch(`/api/download-media?filename=${video.name}`);
       if (!response.ok) {
+        // Check if it's a payment issue
+        if (response.status === 403) {
+          setError('Please purchase the video to download');
+          setSelectedVideo(video); // Open the modal for payment
+          return;
+        }
         throw new Error('Failed to download video');
       }
       
@@ -261,6 +326,21 @@ export default function FaceFusion() {
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
+      
+      // Update download count
+      try {
+        await fetch(`/api/generated-media/${video.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            downloadCount: video.downloadCount ? video.downloadCount + 1 : 1
+          })
+        });
+      } catch (err) {
+        console.error('Error updating download count:', err);
+      }
     } catch (error) {
       console.error('Error downloading video:', error);
       setError('Failed to download video');
@@ -805,30 +885,60 @@ export default function FaceFusion() {
                             <Lock className="w-8 h-8 text-white" />
                           </div>
                         )}
+                        {paymentSuccessId === media.id && (
+                          <div className="absolute inset-0 flex items-center justify-center bg-green-500/30 animate-pulse">
+                            <div className="bg-green-500 text-white px-3 py-2 rounded-md font-medium">
+                              Payment Successful!
+                            </div>
+                          </div>
+                        )}
                       </div>
                     ) : (
-                      <img
-                        src={media.isPaid ? media.filePath : media.watermarkPath || media.filePath}
-                        alt={media.name}
-                        className="w-full h-32 rounded-lg mb-2"
-                        style={{ "borderRadius": "8px", objectFit: "cover" }}
-                      />
+                      <div className="relative">
+                        <img
+                          src={media.isPaid ? media.filePath : media.watermarkPath || media.filePath}
+                          alt={media.name}
+                          className="w-full h-32 rounded-lg mb-2"
+                          style={{ "borderRadius": "8px", objectFit: "cover" }}
+                        />
+                        {!media.isPaid && (
+                          <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                            <Lock className="w-8 h-8 text-white" />
+                          </div>
+                        )}
+                        {paymentSuccessId === media.id && (
+                          <div className="absolute inset-0 flex items-center justify-center bg-green-500/30 animate-pulse">
+                            <div className="bg-green-500 text-white px-3 py-2 rounded-md font-medium">
+                              Payment Successful!
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     )}
                     <div className="flex justify-between items-center">
                       <div className="text-sm text-gray-400">
                         {media.name}
                       </div>
-                      {media.isPaid && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDownload(media);
-                          }}
-                          className="p-1 hover:bg-blue-500/20 rounded"
-                        >
-                          <Download className="w-4 h-4 text-blue-500" />
-                        </button>
-                      )}
+                      <div className="flex gap-1">
+                        {media.isPaid ? (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDownload(media);
+                            }}
+                            className="p-1 hover:bg-blue-500/20 rounded"
+                            title="Download"
+                          >
+                            <Download className="w-4 h-4 text-blue-500" />
+                          </button>
+                        ) : (
+                          <StripeCheckoutButton 
+                            video={media} 
+                            disabled={false} 
+                            small={true} 
+                          />
+                        )}
+                      </div>
                     </div>
                     <div className="text-xs text-gray-500">
                       {new Date(media.createdAt).toLocaleString()}

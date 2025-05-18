@@ -7,7 +7,7 @@ import { CreditCard } from 'lucide-react';
 // Initialize Stripe outside the component
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY);
 
-export default function StripeCheckoutButton({ video, disabled = false }) {
+export default function StripeCheckoutButton({ video, disabled = false, small = false }) {
   const [isLoading, setIsLoading] = useState(false);
   
   const handleStripeCheckout = async () => {
@@ -32,7 +32,8 @@ export default function StripeCheckoutButton({ video, disabled = false }) {
           amount: '4.98',  // You can make this dynamic based on your pricing
           currency: 'USD',
           imageId: video.name,
-          // Removed imageUrl to avoid Stripe URL validation error
+          // Include the video id to use in webhook
+          videoId: video.id,
         }),
       });
       
@@ -56,6 +57,22 @@ export default function StripeCheckoutButton({ video, disabled = false }) {
       setIsLoading(false);
     }
   };
+  
+  if (small) {
+    return (
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          handleStripeCheckout();
+        }}
+        disabled={isLoading || disabled}
+        className={`p-1 bg-purple-500 hover:bg-purple-600 rounded transition-colors ${isLoading || disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+        title="Pay with Card"
+      >
+        <CreditCard className="w-4 h-4 text-white" />
+      </button>
+    );
+  }
   
   return (
     <button
