@@ -6,12 +6,12 @@ if ! command -v ffprobe &> /dev/null; then
     exit 1
 fi
 
-# Directories containing the generated media files
-OUTPUTS_DIR="${HOME}/face-swap-poc/public/outputs"
+source "$(dirname "$0")/../config.sh"
+
 
 # Check if directory exists
-if [ ! -d "$OUTPUTS_DIR" ]; then
-    echo "Error: Directory $OUTPUTS_DIR does not exist"
+if [ ! -d "$OUTPUT_DIR" ]; then
+    echo "Error: Directory $OUTPUT_DIR does not exist"
     exit 1
 fi
 
@@ -42,7 +42,7 @@ node -e "
 "
 
 # Process each media file (both MP4 and images)
-for media in "$OUTPUTS_DIR"/*.{mp4,jpg,jpeg,png}; do
+for media in "$OUTPUT_DIR"/*.{mp4,jpg,jpeg,png}; do
     # Skip if no media files found
     [ -e "$media" ] || continue
     

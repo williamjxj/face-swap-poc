@@ -50,26 +50,35 @@ export async function GET(request) {
             
             console.log(`Fallback: Video ${videoId} marked as paid`);
             
-            // Create payment record if it doesn't exist
-            const existingPayment = await prisma.payment.findFirst({
-              where: {
-                generatedMediaId: videoId,
-                status: 'completed'
-              }
-            });
-            
-            if (!existingPayment) {
-              await prisma.payment.create({
-                data: {
-                  amount: parseFloat(session.amount_total) / 100,
-                  currency: session.currency.toUpperCase(),
-                  status: 'completed',
-                  type: 'fiat',
-                  userId: video.authorId || '00000000-0000-0000-0000-000000000000',
-                  generatedMediaId: videoId
+            // Create payment record if it doesn't exist and Payment model is available
+            if (prisma.payment) {
+              try {
+                const existingPayment = await prisma.payment.findFirst({
+                  where: {
+                    generatedMediaId: videoId,
+                    status: 'completed'
+                  }
+                });
+                
+                if (!existingPayment) {
+                  await prisma.payment.create({
+                    data: {
+                      amount: parseFloat(session.amount_total) / 100,
+                      currency: session.currency.toUpperCase(),
+                      status: 'completed',
+                      type: 'fiat',
+                      userId: video.authorId || '00000000-0000-0000-0000-000000000000',
+                      generatedMediaId: videoId
+                    }
+                  });
+                  console.log('Fallback: Created payment record');
                 }
-              });
-              console.log('Fallback: Created payment record');
+              } catch (paymentError) {
+                console.error('Error handling payment record:', paymentError.message);
+                // Continue execution even if payment record handling fails
+              }
+            } else {
+              console.log('Payment model not available in Prisma client, skipping payment record creation');
             }
           }
         } catch (dbError) {

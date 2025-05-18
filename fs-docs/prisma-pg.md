@@ -9,10 +9,11 @@
 - Ensure proper backup strategy for both database and file storage
 - Implement migration strategy for future cloud storage transition
 
-
 ### 🥒 video2thumbnail
 
+```html
 <Image src="video2thumbnail.png" alt="video2thumbnail" width={116} height={176} />
+```
 
 ### 🌶  npx prisma db push
 

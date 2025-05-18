@@ -6,18 +6,15 @@ if ! command -v ffprobe &> /dev/null; then
     exit 1
 fi
 
-# Directories containing the videos and thumbnails
-VIDEOS_DIR="${HOME}/face-swap-poc/public/videos"
-THUMBNAILS_DIR="${HOME}/face-swap-poc/public/thumbnails"
-
+source "$(dirname "$0")/../config.sh"
 # Check if directories exist
 if [ ! -d "$VIDEOS_DIR" ]; then
     echo "Error: Directory $VIDEOS_DIR does not exist"
     exit 1
 fi
 
-if [ ! -d "$THUMBNAILS_DIR" ]; then
-    echo "Error: Directory $THUMBNAILS_DIR does not exist"
+if [ ! -d "$THUMBNAIL_DIR" ]; then
+    echo "Error: Directory $THUMBNAIL_DIR does not exist"
     exit 1
 fi
 
@@ -55,7 +52,7 @@ for video in "$VIDEOS_DIR"/*.{mp4,wav}; do
     filename=$(basename "$video")
     base_name="${filename%.*}"
     thumbnail_name="${base_name}_thumbnail.webp"
-    thumbnail_path="$THUMBNAILS_DIR/$thumbnail_name"
+    thumbnail_path="$THUMBNAIL_DIR/$thumbnail_name"
     
     # Check if corresponding thumbnail exists
     if [ ! -f "$thumbnail_path" ]; then

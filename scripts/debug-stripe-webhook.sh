@@ -1,5 +1,7 @@
 #!/bin/bash
 
+source "$(dirname "$0")/config.sh"
+
 # Script to help debug Stripe webhook issues
 echo "=== Stripe Webhook Debug Tool ==="
 echo ""

@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 
-# Source shared configuration
 source "$(dirname "$0")/config.sh"
 
 output_path="$1"

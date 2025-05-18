@@ -31,7 +31,7 @@ export default function TabContent({
   // Filter templates based on selected tab
   const filteredTemplates = templates.filter(template => {
     // Log the template type for debugging
-    console.log(`Template ${template.filename}: type=${template.type}, mimeType=${template.mimeType}`);
+    // console.log(`Template ${template.filename}: type=${template.type}, mimeType=${template.mimeType}`);
     
     switch (selectedTab) {
       case 'video':

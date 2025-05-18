@@ -6,10 +6,14 @@ import prisma from '@/lib/db';
 // This is your Stripe CLI webhook secret for testing your endpoint locally
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
+// Check if Payment model exists in Prisma schema
+const paymentModelExists = !!prisma.payment;
+console.log(`Payment model exists in Prisma: ${paymentModelExists}`);
+
 export async function POST(req) {
   console.log('Stripe webhook received');
   const body = await req.text();
-  const headersList = headers();
+  const headersList = await headers();
   const sig = headersList.get('stripe-signature');
 
   let event;
@@ -69,16 +73,27 @@ export async function POST(req) {
           console.log(`Payment successful, video marked as paid:`, updatedVideo);
           
           // Also create a payment record in the database
-          await prisma.payment.create({
-            data: {
-              amount: parseFloat(session.amount_total) / 100,
-              currency: session.currency.toUpperCase(),
-              status: 'completed',
-              type: 'fiat',
-              userId: updatedVideo.authorId || '00000000-0000-0000-0000-000000000000', // Use default if no author
-              generatedMediaId: videoId
+          // Skip payment creation if there's no Payment model available
+          if (prisma.payment) {
+            try {
+              await prisma.payment.create({
+                data: {
+                  amount: parseFloat(session.amount_total) / 100,
+                  currency: session.currency.toUpperCase(),
+                  status: 'completed',
+                  type: 'fiat',
+                  userId: updatedVideo.authorId || '00000000-0000-0000-0000-000000000000', // Use default if no author
+                  generatedMediaId: videoId
+                }
+              });
+              console.log(`Payment record created successfully`);
+            } catch (paymentError) {
+              // Don't fail the whole process if payment record creation fails
+              console.error(`Error creating payment record: ${paymentError.message}`);
             }
-          });
+          } else {
+            console.log('Payment model not available in Prisma client, skipping payment record creation');
+          }
           
           console.log(`Payment record created successfully`);
         } catch (dbError) {

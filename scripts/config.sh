@@ -2,18 +2,22 @@
 
 # Base directories
 APP_DIR=${HOME}/face-swap-poc
-SOURCE_DIR=${APP_DIR}/public/sources
-VIDEOS_DIR=${APP_DIR}/public/videos
-THUMB_DIR=${APP_DIR}/public/thumbnails
-OUTPUT_DIR=${APP_DIR}/outputs
-DOWNLOAD_DIR=${APP_DIR}/downloads
+PUBLIC_DIR=${APP_DIR}/public
+SOURCE_DIR=${PUBLIC_DIR}/sources
+VIDEOS_DIR=${PUBLIC_DIR}/videos
+THUMBNAIL_DIR=${PUBLIC_DIR}/thumbnails
+OUTPUT_DIR=${PUBLIC_DIR}/outputs
+ASSET_DIR=${APP_DIR}/storage/assets
+DOWNLOAD_DIR=${APP_DIR}/storage/downloads
 
-# Source environment variables
-source ${APP_DIR}/.env
+if [ -f "${APP_DIR}/.env" ]; then
+  echo "Loading environment variables from ${APP_DIR}/.env"
+  FILE=${APP_DIR}/.env
+elif [ -f "${APP_DIR}/.env.local" ]; then
+  echo "Loading environment variables from ${APP_DIR}/.env.local"
+  FILE=${APP_DIR}/.env.local
+else
+  echo "No .env file found in ${APP_DIR}. Using default values."
+fi
 
-# API endpoints from environment
-CREATE_API=$MODAL_CREATE_API
-QUERY_API=$MODAL_QUERY_API
-
-# Ensure required directories exist
-mkdir -p "$SOURCE_DIR" "$VIDEOS_DIR" "$THUMB_DIR" "$OUTPUT_DIR" "$DOWNLOAD_DIR"
+source ${FILE}

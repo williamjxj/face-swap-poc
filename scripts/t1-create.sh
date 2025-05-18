@@ -1,13 +1,12 @@
 #!/usr/bin/env bash
 
-# Source shared configuration
 source "$(dirname "$0")/config.sh"
 
-source_img=${APP_DIR}/src/assets/image.png
-target_img=${APP_DIR}/src/assets/video.mp4
+source_img="${ASSET_DIR}/image.png"
+target_img="${ASSET_DIR}/video.mp4"
 
 # First curl: create experiment and capture response
-response=$(curl --location --request POST "${CREATE_API}" \
+response=$(curl --location --request POST "${MODAL_QUERY_API}" \
     --form "source=@${source_img}" \
     --form "target=@${target_img}")
 
@@ -20,6 +19,6 @@ echo "response: $response"
 echo "output_path: $output_path"
 
 # Second curl: use output_path in the request body
-curl --location "${QUERY_API}" \
+curl --location "${MODAL_QUERY_API}" \
   --header 'Content-Type: application/json' \
   --data "{\"output_path\":\"${output_path}\"}"

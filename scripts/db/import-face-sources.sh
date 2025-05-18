@@ -1,11 +1,10 @@
 #!/bin/bash
 
-# Directory containing the source images
-SOURCES_DIR="${HOME}/face-swap-poc/public/sources"
+source "$(dirname "$0")/../config.sh"
 
 # Check if directory exists
-if [ ! -d "$SOURCES_DIR" ]; then
-    echo "Error: Directory $SOURCES_DIR does not exist"
+if [ ! -d "$SOURCE_DIR" ]; then
+    echo "Error: Directory $SOURCE_DIR does not exist"
     exit 1
 fi
 
@@ -29,7 +28,7 @@ node -e "
 "
 
 # Process each image file (supporting common image formats)
-for img in "$SOURCES_DIR"/*.{jpg,jpeg,png,webp}; do
+for img in "$SOURCE_DIR"/*.{jpg,jpeg,png,webp}; do
     # Skip if no image files found
     [ -e "$img" ] || continue
     
