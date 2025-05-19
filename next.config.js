@@ -15,7 +15,11 @@ const nextConfig = {
       '@': path.join(__dirname, 'src')
     };
     return config;
-  }
+  },
+  allowedDevOrigins: [
+  	'shop.ultimatech.hk',
+    'localhost:3000',
+  ]
 }
 
 module.exports = nextConfig 

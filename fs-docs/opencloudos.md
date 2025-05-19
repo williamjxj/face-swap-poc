@@ -34,8 +34,8 @@ $ sudo systemctl restart postgresql
 ### ▶️ Start the app with PM2
 
 ```bash
+$ PORT=8000 pm2 start npm --name face-swap-app -- run dev
 $ pm2 start npm --name "face-swap-app" -- run start
-$ pm2 start npm --name 'face-swap-app-dev' --run dev
 $ pm2 status
 $ pm2 logs face-swap-app
 
@@ -61,3 +61,13 @@ $ scp -r ~/my-experiments/face-swap-poc/storage nextjs@43.135.142.221:/home/next
 2. `github` -> `settings` -> `Developer Mode` -> `generate password` for `git push` (`git config --list`)
 3. change `git remote -v` from `https` to `git`, then no password prompt anymore
 
+```bash
+$ ssh -T git@github.com
+```
+
+### nginx
+
+```bash
+$ nginx -T
+$ sudo systemctl resrt nginx
+```
