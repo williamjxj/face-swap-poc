@@ -605,12 +605,6 @@ export default function FaceFusion() {
     }
   };
 
-  const handleTemplateSelect = (template) => {
-    setSelectedTemplate(template);
-    setTargetPath(template.filePath);
-    setSelectedFace(0); // Reset face selection when template changes
-  };
-
   const handleDeleteTemplate = async (id, e) => {
     e.stopPropagation(); // Prevent triggering the select handler
     try {
@@ -630,11 +624,28 @@ export default function FaceFusion() {
       if (selectedTemplate?.id === id) {
         setSelectedTemplate(null);
         setSelectedFace(null);
+        setTargetPath(null);
       }
     } catch (error) {
       console.error('Error deleting template:', error);
       setError('Failed to delete template');
     }
+  };
+
+  const handleTemplateAndSourceSelect = (template) => {
+    // Set the template as the target - this will update both the middle preview and the first circle
+    setSelectedTemplate(template);
+    setTargetPath(template.filePath);
+    
+    // We don't update the source (second circle) so it remains unchanged
+    
+    setSelectedFace(0); // Reset face selection
+  };
+
+  const handleTemplateSelect = (template) => {
+    setSelectedTemplate(template);
+    setTargetPath(template.filePath);
+    setSelectedFace(0); // Reset face selection when template changes
   };
 
   if (loading) {
@@ -670,6 +681,7 @@ export default function FaceFusion() {
             selectedTab={selectedTab}
             templates={templates}
             onSelectTemplate={handleTemplateSelect}
+            onSelectSourceForTemplate={handleTemplateAndSourceSelect}
             selectedTemplate={selectedTemplate}
             onTargetUpload={handleTargetUploadWrapper}
             onImageUpload={handleImageUploadWrapper}

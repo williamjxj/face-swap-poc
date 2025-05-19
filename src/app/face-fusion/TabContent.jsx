@@ -13,7 +13,8 @@ export default function TabContent({
   onImageUpload,
   onGifUpload,
   onMultiFaceUpload,
-  onDeleteTemplate
+  onDeleteTemplate,
+  onSelectSourceForTemplate
 }) {
   const [hoveredTemplate, setHoveredTemplate] = useState(null);
   const [deletingTemplateId, setDeletingTemplateId] = useState(null);
@@ -81,7 +82,18 @@ export default function TabContent({
           ? 'ring-2 ring-blue-500 scale-[1.02]' 
           : 'hover:scale-[1.02] hover:ring-1 hover:ring-gray-400'
       }`}
-      onClick={() => onSelectTemplate(template)}
+      onClick={() => {
+        // For image, gif, and multi-face tabs, we want to also select the source
+        if (selectedTab === 'image' || selectedTab === 'gif' || selectedTab === 'multi-face') {
+          if (onSelectSourceForTemplate) {
+            onSelectSourceForTemplate(template);
+          } else {
+            onSelectTemplate(template);
+          }
+        } else {
+          onSelectTemplate(template);
+        }
+      }}
       onMouseEnter={() => {
         tooltipTimeoutRef.current = setTimeout(() => {
           setHoveredTemplate(template);

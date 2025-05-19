@@ -60,9 +60,9 @@ export default function FaceSelection({
         <h2 className="text-lg font-bold mb-4 text-white">Face Selection</h2>
         <div className="flex gap-4 justify-center relative">
           <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-gray-600">
-            {selectedTemplate && selectedTemplate.thumbnailPath ? (
+            {selectedTemplate ? (
               <Image
-                src={selectedTemplate.thumbnailPath}
+                src={selectedTemplate.thumbnailPath || selectedTemplate.filePath}
                 alt="Template thumbnail"
                 width={96}
                 height={96}
