@@ -37,19 +37,39 @@ export async function generateWatermarkedVersion(filePath, filename) {
 
 export async function getVideoDuration(videoPath) {
   try {
+    // Check if file exists first
+    if (!fs.existsSync(videoPath)) {
+      console.warn(`Video file not found at path: ${videoPath}`);
+      return 0;
+    }
+    
     // Use ffprobe to get video duration
     const command = `ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${videoPath}"`;
     const { stdout } = await execAsync(command);
+    
+    // Handle empty output
+    if (!stdout.trim()) {
+      console.warn('Empty duration output from ffprobe, returning default 0');
+      return 0;
+    }
+    
     const duration = parseFloat(stdout);
-    return duration;
+    return isNaN(duration) ? 0 : Math.round(duration);
   } catch (error) {
     console.error('Error getting video duration:', error);
-    throw error;
+    // Return a safe default value instead of throwing
+    return 0;
   }
 }
 
 export async function video2thumbnail(videoPath, outputDir, thumbnailFilename) {
   try {
+    // Check if file exists first
+    if (!fs.existsSync(videoPath)) {
+      console.warn(`Video file not found at path: ${videoPath}`);
+      return null;
+    }
+    
     // Ensure output directory exists
     if (!fs.existsSync(outputDir)) {
       fs.mkdirSync(outputDir, { recursive: true });
@@ -57,17 +77,21 @@ export async function video2thumbnail(videoPath, outputDir, thumbnailFilename) {
 
     const thumbnailPath = path.join(outputDir, thumbnailFilename);
 
-    // Use ffmpeg to extract a frame at 1 second and convert to webp with higher quality
-    // -quality 100: Maximum quality (0-100)
-    // -compression_level 0: Best compression (0-6, where 0 is best)
-    // -lossless 1: Enable lossless compression
-    const command = `ffmpeg -i "${videoPath}" -ss 00:00:01 -vframes 1 -vf "scale=116:176:force_original_aspect_ratio=decrease,pad=116:176:(ow-iw)/2:(oh-ih)/2" -quality 100 -compression_level 0 -lossless 1 "${thumbnailPath}"`;
+    // Use a more robust ffmpeg command with error handling
+    // Add timeout to prevent hanging
+    const command = `ffmpeg -y -i "${videoPath}" -ss 00:00:01 -vframes 1 -vf "scale=116:176:force_original_aspect_ratio=decrease,pad=116:176:(ow-iw)/2:(oh-ih)/2" -quality 90 -compression_level 4 "${thumbnailPath}"`;
     
-    await execAsync(command);
+    await execAsync(command, { timeout: 30000 }); // 30 second timeout
+    
+    // Verify the thumbnail was created
+    if (!fs.existsSync(thumbnailPath)) {
+      console.warn('Thumbnail file was not created');
+      return null;
+    }
     
     return thumbnailPath;
   } catch (error) {
     console.error('Error generating thumbnail:', error);
-    throw error;
+    return null;  // Return null instead of throwing
   }
 } 

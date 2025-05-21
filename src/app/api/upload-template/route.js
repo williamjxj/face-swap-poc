@@ -1,9 +1,11 @@
 import { NextResponse } from 'next/server';
-import { writeFile, mkdir } from 'fs/promises';
+import { writeFile, mkdir, unlink } from 'fs/promises';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import db from '@/lib/db';
 import { video2thumbnail, getVideoDuration } from '@/utils/videoHelper';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/services/auth';
 
 export async function POST(request) {
   try {
@@ -46,18 +48,24 @@ export async function POST(request) {
       await mkdir(thumbnailsDir, { recursive: true });
     } catch (error) {
       console.error('Error creating directories:', error);
-      throw new Error('Failed to create required directories');
+      return NextResponse.json(
+        { error: 'Failed to create required directories' },
+        { status: 500 }
+      );
     }
 
     const filePath = path.join(videosDir, filename);
     
     try {
-      // Ensure directory exists
+      // Save the file to the filesystem
       await writeFile(filePath, Buffer.from(await file.arrayBuffer()));
       console.log('File saved successfully:', filePath);
     } catch (error) {
       console.error('Error saving file:', error);
-      throw new Error('Failed to save uploaded file');
+      return NextResponse.json(
+        { error: 'Failed to save uploaded file' },
+        { status: 500 }
+      );
     }
 
     // Generate thumbnail and get duration for video files
@@ -71,14 +79,28 @@ export async function POST(request) {
         console.log('Generated thumbnail and duration:', { thumbnailPath, duration });
       } catch (error) {
         console.error('Error processing video:', error);
-        throw new Error('Failed to process video file');
+        // Continue without failing - we'll just use null values for thumbnail and duration
+        console.log('Continuing upload process without thumbnail/duration');
       }
     }
 
     // Create database record
     if (!db) {
       console.error('Database client is not initialized');
-      throw new Error('Database client not initialized');
+      return NextResponse.json(
+        { error: 'Database client is not initialized' },
+        { status: 500 }
+      );
+    }
+    
+    console.log('Database connection check:', !!db);
+    
+    // Get session to associate template with user
+    try {
+      const session = await getServerSession(authOptions);
+      console.log('Session data for template upload:', session ? 'Session exists' : 'No session');
+    } catch (sessionError) {
+      console.error('Error getting session:', sessionError);
     }
 
     // Get template type from formData or infer it from file type
@@ -90,6 +112,19 @@ export async function POST(request) {
                     file.type === 'image/gif' ? 'gif' : 'image';
     }
     
+    console.log('Template type:', templateType);
+    
+    // Get the user session to associate with the upload
+    const session = await getServerSession(authOptions);
+    let authorId = null;
+    
+    if (session?.user?.id) {
+      authorId = session.user.id;
+      console.log('Adding author ID to template:', authorId);
+    } else {
+      console.log('No user session for template upload, template will be anonymous');
+    }
+    
     const templateData = {
       filename: filename,
       type: templateType,
@@ -98,11 +133,17 @@ export async function POST(request) {
       fileSize: BigInt(file.size),
       mimeType: file.type,
       duration: duration,
+      authorId: authorId, // Add the author ID if a user is logged in
     };
 
     console.log('Creating template record with data:', templateData);
 
     try {
+      console.log('Attempting to create template with data:', {
+        ...templateData,
+        fileSize: templateData.fileSize.toString() // Convert BigInt to string for logging
+      });
+      
       const template = await db.targetTemplate.create({
         data: templateData
       });
@@ -119,14 +160,30 @@ export async function POST(request) {
         mimeType: template.mimeType
       });
     } catch (error) {
-      console.error('Error creating database record:', error);
-      throw new Error('Failed to create database record');
+      console.error('Error creating database record:', error.message);
+      console.error('Error stack:', error.stack);
+      
+      // Return a meaningful error response instead of throwing
+      return NextResponse.json(
+        { error: `Database error: ${error.message}` },
+        { status: 500 }
+      );
     }
 
   } catch (error) {
     console.error('Error uploading template:', error);
+    console.error('Error stack:', error.stack);
+    
+    // Create a detailed error message
+    const errorMessage = error.message || 'Failed to upload template';
+    const errorDetails = error.code ? ` (Code: ${error.code})` : '';
+    
     return NextResponse.json(
-      { error: error.message || 'Failed to upload template' },
+      { 
+        error: errorMessage,
+        details: errorDetails,
+        timestamp: new Date().toISOString()
+      },
       { status: 500 }
     );
   }

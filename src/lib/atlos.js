@@ -11,6 +11,8 @@ export function formatAmount(amount) {
   return parseFloat(amount).toFixed(2);
 }
 
-export default {
+const config = {
   MERCHANT_ID
 };
+
+export default config;
