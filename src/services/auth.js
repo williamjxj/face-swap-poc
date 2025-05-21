@@ -62,7 +62,6 @@ export const authOptions = {
             name: user.name || user.account.split('@')[0]
           };
         } catch (error) {
-          console.error('Authentication error:', error);
           return null;
         }
       }
@@ -112,7 +111,7 @@ export const authOptions = {
             }
           });
         } catch (error) {
-          console.error('Error updating user in database:', error);
+          // Silently handle error but continue session
         }
       }
       
@@ -132,7 +131,6 @@ export const loginWithGoogle = async () => {
     await signIn('google')
     return { success: true }
   } catch (error) {
-    console.error('Google login error:', error)
     return { success: false, error: error.message }
   }
 }
@@ -142,7 +140,6 @@ export const loginWithMicrosoft = async () => {
     await signIn('azure-ad')
     return { success: true }
   } catch (error) {
-    console.error('Microsoft login error:', error)
     return { success: false, error: error.message }
   }
 }
@@ -152,7 +149,6 @@ export const getCurrentSession = async () => {
     const session = await getSession()
     return session
   } catch (error) {
-    console.error('Session error:', error)
     return null
   }
 }
@@ -170,7 +166,6 @@ export const logout = async () => {
           data: { lastLogout: new Date() }
         });
       } catch (error) {
-        console.error('Error updating logout time:', error);
         // Continue with logout even if the update fails
       }
     }
@@ -184,7 +179,6 @@ export const logout = async () => {
     
     return { success: true };
   } catch (error) {
-    console.error('Logout error:', error);
     return { success: false, error: error.message };
   }
 }
@@ -211,7 +205,6 @@ export const loginWithEmail = async (email, password) => {
     
     return { success: true };
   } catch (error) {
-    console.error('Email login error:', error);
     return { 
       success: false, 
       error: error.message || 'Login failed' 
@@ -238,7 +231,6 @@ export const registerUser = async (email, password, name = '') => {
     // Auto login after successful registration
     return loginWithEmail(email, password);
   } catch (error) {
-    console.error('Registration error:', error);
     return {
       success: false,
       error: error.message || 'Registration failed'

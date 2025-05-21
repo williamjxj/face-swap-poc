@@ -1,0 +1,50 @@
+/* Special form fixes to ensure inputs are editable */
+input {
+  pointer-events: auto !important;
+  user-select: auto !important;
+  -webkit-user-select: auto !important;
+  -moz-user-select: auto !important;
+  -ms-user-select: auto !important;
+  cursor: text !important;
+  opacity: 1 !important;
+  background-color: #ffffff !important;
+  color: #000000 !important;
+}
+
+input:focus {
+  outline: 2px solid rgba(59, 130, 246, 0.5) !important;
+}
+
+input:-internal-autofill-selected {
+  background-color: #ffffff !important;
+}
+
+button {
+  pointer-events: auto !important;
+  cursor: pointer !important;
+}
+
+form {
+  pointer-events: auto !important;
+}
+
+/* Remove any overlays that might block interaction */
+.formContainer::before,
+.formContainer::after,
+.form::before,
+.form::after,
+.formGroup::before,
+.formGroup::after {
+  content: none !important;
+  display: none !important;
+}
+
+/* Fix any z-index issues */
+.formContainer,
+.form,
+.formGroup,
+input,
+button {
+  z-index: auto !important;
+  position: relative !important;
+}

@@ -1,39 +1,15 @@
 'use client'
 import AuthButton from '@/components/AuthButton'
 import EmailForm from './EmailForm'
-import SimpleEmailForm from './SimpleEmailForm'
-import UncontrolledForm from './UncontrolledForm'
-import PlainForm from './PlainForm'
-import FinalEmailForm from './FinalEmailForm'
-import DomForm from './DomForm'
-import MinimalForm from './MinimalForm'
-import InputDebugger from './InputDebugger'
 import styles from './signin.module.css'
-import Image from 'next/image'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { getSession } from 'next-auth/react'
+import './form-fix.css' // Import the form fix CSS
 
 export default function SignInPage() {
   const router = useRouter()
   const [showEmailForm, setShowEmailForm] = useState(false)
-  // Form type: 0 = original EmailForm, 1 = SimpleEmailForm, 2 = UncontrolledForm, 3 = PlainForm, 
-  // 4 = FinalEmailForm, 5 = DomForm, 6 = MinimalForm
-  const [formType, setFormType] = useState(4) // Default to the final fixed form
-
-  // Get appropriate form component based on formType
-  const getFormComponent = () => {
-    switch (formType) {
-      case 0: return <EmailForm />;
-      case 1: return <SimpleEmailForm />;
-      case 2: return <UncontrolledForm />;
-      case 3: return <PlainForm />;
-      case 4: return <FinalEmailForm />;
-      case 5: return <DomForm />;
-      case 6: return <MinimalForm />;
-      default: return <FinalEmailForm />;
-    }
-  }
 
   useEffect(() => {
     const checkSession = async () => {
@@ -47,7 +23,6 @@ export default function SignInPage() {
 
   return (
     <div className={styles.container}>
-      <InputDebugger />
       <div className={styles.card}>
         <div className={styles.header}>
           <div className={styles.logoContainer}>
@@ -78,29 +53,13 @@ export default function SignInPage() {
           </div>
         ) : (
           <>
-            {getFormComponent()}
+            <EmailForm />
             <div className={styles.backLinkContainer}>
               <button 
                 onClick={() => setShowEmailForm(false)}
                 className={styles.backLink}
               >
                 ← Back to all sign in options
-              </button>
-            </div>
-            <div className={styles.backLinkContainer} style={{ marginTop: '12px' }}>
-              <button              onClick={() => setFormType((formType + 1) % 7)}
-              className={styles.backLink}
-              style={{ color: '#3b82f6' }}
-            >
-              Switch to {
-                formType === 0 ? 'Simple' : 
-                formType === 1 ? 'Uncontrolled' : 
-                formType === 2 ? 'Plain HTML' :
-                formType === 3 ? 'DOM-focused' :
-                formType === 4 ? 'Minimal' :
-                formType === 5 ? 'Original' :
-                'Final Fixed'
-              } Form
               </button>
             </div>
           </>

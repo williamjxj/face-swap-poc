@@ -5,8 +5,6 @@ import bcrypt from 'bcryptjs';
 export async function POST(request) {
   try {
     const data = await request.json();
-    console.log('Received registration data:', { ...data, password: '***' });
-    
     const { email, password, name } = data;
     
     // Basic validation
@@ -51,7 +49,6 @@ export async function POST(request) {
     }, { status: 201 });
     
   } catch (error) {
-    console.error('Registration error:', error);
     return NextResponse.json(
       { error: 'Failed to register user' },
       { status: 500 }
