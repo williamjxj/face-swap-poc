@@ -10,6 +10,8 @@ datasource db {
 model User {
   id         String    @id @default(uuid())
   account      String    @unique
+  name        String?
+  passwordHash String?   @map("password_hash")
   lastLogin  DateTime? @map("last_login")
   lastLogout DateTime? @map("last_logout")
   targetTemplates       TargetTemplate[]

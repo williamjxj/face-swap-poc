@@ -25,7 +25,7 @@ $ sudo firewall-cmd --reload
 
 $ psql -U postgres -d facefusion -f prisma/full_init_migration.sql 
 $ npx prisma init
-DATABASE_URL="postgresql://<db_user>:<password>@<host>:<port>/<db_name>"
+DATABASE_URL="postgresql://<db_user>:<password>@<host>:<port>/facefusion"
 
 $ vi /var/lib/pgsql/data/pg_hba.conf
 $ sudo systemctl restart postgresql
@@ -43,6 +43,29 @@ $ pm2 save
 $ pm2 restart face-swap-app
 $ pm2 stop face-swap-app
 $ pm2 delete face-swap-app
+```
+
+### 🥃 Neon
+
+- `Serverless PostgreSQL`: Neon offers a fully managed serverless PostgreSQL service optimized for Prisma.
+- `Free tier`: Neon has a generous free tier that includes:
+    * 1 project
+    * Up to 10 branches
+    * 3 GiB storage
+    * Shared compute with auto-scaling capabilities
+- `Seamless Prisma integration`: Neon works extremely well with Prisma
+- `Modern interface`: Easy to use web console for managing your database
+- `SQL Editor`: Built-in SQL editor for running queries directly
+- `Branching capabilities`: You can create database branches for development/testing
+
+```bash
+connecting str: postgresql://facefusion_owner:npg_qyrR70xpZhQa@ep-jolly-credit-a64vj2lz-pooler.us-west-2.aws.neon.tech/facefusion?sslmode=require
+```
+
+### 🥃 Prisma
+
+````bash
+DATABASE_URL="prisma+postgres://accelerate.prisma-data.net/?api_key=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhcGlfa2V5IjoiMDFKVlI1RU01TlowTVlCWjZGS1M1N0RYQjMiLCJ0ZW5hbnRfaWQiOiIxNTk0YWRhNzgxZjg5Y2FjOWRkOWY1Yjg4NmYwMjliMzYyNzllZDg3MmFiNTAxNDM1MmFkOGM1YzU4MTA1NjhjIiwiaW50ZXJuYWxfc2VjcmV0IjoiNTg4NmJlNTYtOGNkOS00MGViLTgwMDUtMzcwYzg2NzcwMmU0In0.39sjBPsbEmF66e71_n21wa8N5TzInQjufF16vmjeEyg"
 ```
 
 ### 🥃 Supabase

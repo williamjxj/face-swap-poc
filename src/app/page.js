@@ -13,16 +13,20 @@ export default async function Home() {
   return (
     <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
       <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
+        <div className="flex items-center gap-3">
+          <Image
+            src="/facefusion.svg"
+            alt="FaceFusion logo"
+            width={40}
+            height={40}
+            priority
+          />
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">
+            FaceFusion
+          </h1>
+        </div>
         <div className="flex flex-col items-center gap-4">
-          <h1 className="text-2xl font-bold">Welcome to Face Swap App</h1>
+          <h2 className="text-2xl font-bold">Welcome to FaceFusion</h2>
           <a
             href="/auth/signin"
             className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto"

@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Loading from "@/components/Loading"
+import VideoPlayerWithLoading from "@/components/VideoPlayerWithLoading"
 import { Download, Play, Eye, Lock } from 'lucide-react'
 import CloseButton from '@/components/CloseButton'
 
@@ -346,12 +347,17 @@ export default function GalleryPage() {
             
             <div className="p-4">
               {getMediaType(selectedMedia) === 'video' ? (
-                <video 
-                  src={selectedMedia.isPaid ? selectedMedia.filePath : selectedMedia.watermarkPath || selectedMedia.filePath} 
+                <VideoPlayerWithLoading 
+                  src={selectedMedia.filePath} 
                   controls 
                   autoPlay 
                   className="w-full max-h-[70vh] object-contain"
                   playsInline
+                  thumbnail={selectedMedia.thumbnailPath}
+                  watermarkedSrc={selectedMedia.watermarkPath}
+                  showWatermarked={!selectedMedia.isPaid}
+                  showDuration={true}
+                  optimizedLoading={true}
                 />
               ) : (
                 <div className="flex justify-center">

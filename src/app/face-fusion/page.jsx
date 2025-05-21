@@ -239,20 +239,21 @@ export default function FaceFusion() {
       return
     }
 
-    setProcessing(true)
+    setProcessing(true)      
     setProgress(0)  // Reset progress
     setError(null)
     setResult(null)
 
     try {
-      // Set up progress simulation
+      // Set up progress simulation with more realistic progression
       const progressInterval = setInterval(() => {
         setProgress(prevProgress => {
-          // Simulate progress up to 90% (the last 10% will be when we get the response)
-          const newProgress = prevProgress + (90 - prevProgress) * 0.1;
-          return Math.min(newProgress, 90);
+          // Progressive increments with slower growth as we approach 90%
+          // This gives a more realistic feeling of progress
+          const increment = Math.max(0.5, (95 - prevProgress) / 10);
+          return Math.min(prevProgress + increment, 95);
         });
-      }, 500);
+      }, 300);
 
       // Submit form data
       const response = await fetch('/api/face-fusion', {

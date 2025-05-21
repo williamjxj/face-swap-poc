@@ -1,13 +1,39 @@
 'use client'
 import AuthButton from '@/components/AuthButton'
+import EmailForm from './EmailForm'
+import SimpleEmailForm from './SimpleEmailForm'
+import UncontrolledForm from './UncontrolledForm'
+import PlainForm from './PlainForm'
+import FinalEmailForm from './FinalEmailForm'
+import DomForm from './DomForm'
+import MinimalForm from './MinimalForm'
+import InputDebugger from './InputDebugger'
 import styles from './signin.module.css'
 import Image from 'next/image'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { getSession } from 'next-auth/react'
 
 export default function SignInPage() {
   const router = useRouter()
+  const [showEmailForm, setShowEmailForm] = useState(false)
+  // Form type: 0 = original EmailForm, 1 = SimpleEmailForm, 2 = UncontrolledForm, 3 = PlainForm, 
+  // 4 = FinalEmailForm, 5 = DomForm, 6 = MinimalForm
+  const [formType, setFormType] = useState(4) // Default to the final fixed form
+
+  // Get appropriate form component based on formType
+  const getFormComponent = () => {
+    switch (formType) {
+      case 0: return <EmailForm />;
+      case 1: return <SimpleEmailForm />;
+      case 2: return <UncontrolledForm />;
+      case 3: return <PlainForm />;
+      case 4: return <FinalEmailForm />;
+      case 5: return <DomForm />;
+      case 6: return <MinimalForm />;
+      default: return <FinalEmailForm />;
+    }
+  }
 
   useEffect(() => {
     const checkSession = async () => {
@@ -21,25 +47,64 @@ export default function SignInPage() {
 
   return (
     <div className={styles.container}>
+      <InputDebugger />
       <div className={styles.card}>
         <div className={styles.header}>
-          <Image 
-            src="/next.svg" 
-            alt="Logo" 
-            className={styles.logo}
-            width={120}
-            height={24}
-            priority
-          />
+          <div className={styles.logoContainer}>
+            <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect width="32" height="32" rx="8" fill="#3B82F6"/>
+              <path d="M16 8L20 12H12L16 8Z" fill="white"/>
+              <path d="M12 12H20V20H12V12Z" fill="white"/>
+              <path d="M16 24L12 20H20L16 24Z" fill="white"/>
+            </svg>
+            <span className={styles.logoText}>FaceFusion</span>
+          </div>
           <h1 className={styles.title}>Welcome Back</h1>
           <p className={styles.subtitle}>Sign in to continue to your account</p>
         </div>
         
-        <div className={styles.providers}>
-          <AuthButton provider="google" />
-          <div className={styles.divider}>or</div>
-          <AuthButton provider="azure-ad" />
-        </div>
+        {!showEmailForm ? (
+          <div className={styles.providers}>
+            <AuthButton provider="google" />
+            <div className={styles.divider}>or</div>
+            <AuthButton provider="azure-ad" />
+            <div className={styles.divider}>or</div>
+            <button 
+              onClick={() => setShowEmailForm(true)}
+              className={styles.emailButton}
+            >
+              Continue with Email
+            </button>
+          </div>
+        ) : (
+          <>
+            {getFormComponent()}
+            <div className={styles.backLinkContainer}>
+              <button 
+                onClick={() => setShowEmailForm(false)}
+                className={styles.backLink}
+              >
+                ← Back to all sign in options
+              </button>
+            </div>
+            <div className={styles.backLinkContainer} style={{ marginTop: '12px' }}>
+              <button              onClick={() => setFormType((formType + 1) % 7)}
+              className={styles.backLink}
+              style={{ color: '#3b82f6' }}
+            >
+              Switch to {
+                formType === 0 ? 'Simple' : 
+                formType === 1 ? 'Uncontrolled' : 
+                formType === 2 ? 'Plain HTML' :
+                formType === 3 ? 'DOM-focused' :
+                formType === 4 ? 'Minimal' :
+                formType === 5 ? 'Original' :
+                'Final Fixed'
+              } Form
+              </button>
+            </div>
+          </>
+        )}
 
         <div className={styles.footer}>
           <p className={styles.terms}>

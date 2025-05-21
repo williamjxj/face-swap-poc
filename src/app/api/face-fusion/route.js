@@ -3,8 +3,10 @@ import fs from 'fs';
 import path from 'path';
 import FormData from 'form-data';
 import fetch from 'node-fetch';
-import { PrismaClient } from '@prisma/client'; // Import PrismaClient directly
+import { PrismaClient } from '@prisma/client';
 import { serializeBigInt } from '@/utils/helper';
+import { optimizeVideo, generateVideoThumbnail } from '@/utils/videoOptimizer';
+import { addTextWatermark } from '@/utils/watermarkService';
 
 // Create a direct Prisma client instance just for this route
 // This avoids triggering any middleware or global Prisma operations
@@ -19,6 +21,37 @@ const QUERY_API = process.env.MODAL_QUERY_API;
 // Maximum number of retry attempts for polling
 const MAX_RETRIES = 60; // 5 minutes maximum (5 seconds × 60)
 const POLLING_INTERVAL = 5000; // 5 seconds
+
+// Configuration for video optimization
+const VIDEO_OPTIMIZATION_ENABLED = true;  // Set to false to disable optimization
+const VIDEO_OPTIMIZATION_CONFIG = {
+  width: 720,            // Target width
+  preset: 'veryfast',    // FFmpeg preset - faster for better UX
+  crf: 23,               // Quality (lower is better)
+  keyframeInterval: 1,   // More keyframes for better seeking
+  generateThumbnail: true
+};
+
+// Configuration for video watermarking
+const VIDEO_WATERMARK_ENABLED = true;  // Set to false to disable watermarking
+const WATERMARK_CONFIG = {
+  text: 'FACE SWAP POC',  // Watermark text
+  position: 'bottomright',
+  fontSize: 24,
+  fontColor: 'white',
+  opacity: 0.7
+};
+
+// Error types for better client-side handling
+const ERROR_TYPES = {
+  VALIDATION: 'VALIDATION_ERROR',
+  PROCESSING: 'PROCESSING_ERROR',
+  API: 'API_ERROR',
+  DOWNLOAD: 'DOWNLOAD_ERROR',
+  OPTIMIZATION: 'OPTIMIZATION_ERROR',
+  DATABASE: 'DATABASE_ERROR',
+  UNKNOWN: 'UNKNOWN_ERROR'
+};
 
 export async function POST(request) {
   try {
@@ -44,7 +77,16 @@ export async function POST(request) {
       if (!fs.existsSync(sourcePath) || !fs.existsSync(targetPath)) {
         return NextResponse.json({
           status: 'error',
-          message: 'Source or target file not found'
+          errorType: ERROR_TYPES.VALIDATION,
+          message: 'Source or target file not found',
+          details: {
+            sourcePath: sourcePath,
+            targetPath: targetPath,
+            exists: {
+              source: fs.existsSync(sourcePath),
+              target: fs.existsSync(targetPath)
+            }
+          }
         }, { status: 404 });
       }
 
@@ -74,7 +116,14 @@ export async function POST(request) {
       if (!sourceFormFile || !targetFormFile) {
         return NextResponse.json({
           status: 'error',
-          message: 'Source and target files are required'
+          errorType: ERROR_TYPES.VALIDATION,
+          message: 'Source and target files are required',
+          details: {
+            received: {
+              source: !!sourceFormFile,
+              target: !!targetFormFile
+            }
+          }
         }, { status: 400 });
       }
       
@@ -94,7 +143,12 @@ export async function POST(request) {
     } else {
       return NextResponse.json({
         status: 'error',
-        message: 'Unsupported content type'
+        errorType: ERROR_TYPES.VALIDATION,
+        message: 'Unsupported content type',
+        details: {
+          receivedContentType: contentType,
+          supportedTypes: ['application/json', 'multipart/form-data']
+        }
       }, { status: 400 });
     }
 
@@ -111,9 +165,22 @@ export async function POST(request) {
     return NextResponse.json(result);
   } catch (error) {
     console.error('[API ERROR] Face fusion process failed:', error);
+    
+    // Determine error type from error message or default to UNKNOWN
+    let errorType = ERROR_TYPES.UNKNOWN;
+    if (error.message?.includes('validation')) errorType = ERROR_TYPES.VALIDATION;
+    else if (error.message?.includes('API')) errorType = ERROR_TYPES.API;
+    else if (error.message?.includes('processing')) errorType = ERROR_TYPES.PROCESSING;
+    else if (error.message?.includes('download')) errorType = ERROR_TYPES.DOWNLOAD;
+    else if (error.message?.includes('optimization')) errorType = ERROR_TYPES.OPTIMIZATION;
+    else if (error.message?.includes('database')) errorType = ERROR_TYPES.DATABASE;
+    
     return NextResponse.json({
       status: 'error',
-      message: error.message || 'An error occurred during processing'
+      errorType: errorType,
+      message: error.message || 'An error occurred during processing',
+      timestamp: new Date().toISOString(),
+      requestId: `req_${Date.now().toString(36)}`
     }, { status: 500 });
   }
 }
@@ -127,6 +194,11 @@ async function createFusionTask(sourceFile, targetFile) {
     // Create a new FormData instance for the API request
     const apiFormData = new FormData();
     
+    // Validate files
+    if (!sourceFile?.buffer || !targetFile?.buffer) {
+      throw new Error(`Validation error: Missing file buffer - source: ${!!sourceFile?.buffer}, target: ${!!targetFile?.buffer}`);
+    }
+    
     // Add files to form data
     apiFormData.append('source', sourceFile.buffer, {
       filename: sourceFile.name,
@@ -139,33 +211,58 @@ async function createFusionTask(sourceFile, targetFile) {
     });
     
     console.log('[CREATE] Sending request to API:', CREATE_API);
-
-    // Call the CREATE_API
-    const response = await fetch(CREATE_API, {
-      method: 'POST',
-      body: apiFormData,
-      headers: apiFormData.getHeaders && apiFormData.getHeaders()
-    });
-
-    // Check if the request was successful
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('[CREATE ERROR] API error:', errorText);
-      throw new Error(`Failed to create fusion task: ${response.status} - ${errorText}`);
+    
+    if (!CREATE_API) {
+      throw new Error(`API configuration error: Missing CREATE_API endpoint in environment variables`);
     }
 
-    // Extract the output_path from the response
-    const data = await response.json();
-    console.log('[CREATE] Task created successfully. Response:', data);
+    // Call the CREATE_API with timeout handling
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 30000); // 30 second timeout
     
-    if (!data.output_path) {
-      throw new Error('No output_path received from create task API');
+    try {
+      const response = await fetch(CREATE_API, {
+        method: 'POST',
+        body: apiFormData,
+        headers: apiFormData.getHeaders && apiFormData.getHeaders(),
+        signal: controller.signal
+      });
+      
+      clearTimeout(timeout);
+
+      // Check if the request was successful
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('[CREATE ERROR] API error:', errorText);
+        throw new Error(`API error: Failed to create fusion task: ${response.status} - ${errorText}`);
+      }
+
+      // Extract the output_path from the response
+      const data = await response.json();
+      console.log('[CREATE] Task created successfully. Response:', data);
+      
+      if (!data.output_path) {
+        throw new Error('API error: No output_path received from create task API');
+      }
+      
+      return data.output_path;
+    } catch (fetchError) {
+      clearTimeout(timeout);
+      if (fetchError.name === 'AbortError') {
+        throw new Error('API error: Request timed out after 30 seconds');
+      }
+      throw fetchError;
     }
-    
-    return data.output_path;
   } catch (error) {
     console.error('[CREATE ERROR] Error creating fusion task:', error);
-    throw error;
+    
+    // Enhance error with type for better client handling
+    const enhancedError = new Error(error.message);
+    enhancedError.errorType = error.message.includes('Validation') 
+      ? ERROR_TYPES.VALIDATION 
+      : ERROR_TYPES.API;
+    
+    throw enhancedError;
   }
 }
 
@@ -182,11 +279,21 @@ async function createFusionTask(sourceFile, targetFile) {
  */
 async function pollAndProcessResult(outputPath, sourceFile, targetFile) {
   let retryCount = 0;
+  let lastError = null;
+  let progressPercentage = 0;
   
   console.log(`[POLL] Starting to poll for results with outputPath: ${outputPath}`);
   console.log(`[POLL] Using QUERY_API endpoint: ${QUERY_API}`);
   
+  if (!QUERY_API) {
+    throw new Error(`API configuration error: Missing QUERY_API endpoint in environment variables`);
+  }
+  
   while (retryCount < MAX_RETRIES) {
+    // Calculate and log progress percentage
+    progressPercentage = Math.round((retryCount / MAX_RETRIES) * 100);
+    console.log(`[POLL] Progress: ${progressPercentage}% (Attempt ${retryCount + 1}/${MAX_RETRIES})`);
+    
     try {
       console.log(`[POLL] Attempt ${retryCount + 1}/${MAX_RETRIES}: Querying API with output_path: ${outputPath}`);
       
@@ -224,10 +331,26 @@ async function pollAndProcessResult(outputPath, sourceFile, targetFile) {
           return await processCompletedTask(outputUrl, sourceFile, targetFile, outputPath);
         } else if (data.status === 'failed') {
           // Task failed with an error
-          console.error('[POLL] Task failed:', data.error || 'Unknown error');
+          const errorMessage = data.error || 'Unknown processing error';
+          console.error('[POLL] Task failed:', errorMessage);
+          
+          // Try to categorize the error for better client handling
+          let errorType = ERROR_TYPES.PROCESSING;
+          if (errorMessage.toLowerCase().includes('face detection') || errorMessage.toLowerCase().includes('no faces')) {
+            errorType = ERROR_TYPES.PROCESSING;
+          }
+          
           return {
             status: 'error',
-            message: data.error || 'Task processing failed'
+            errorType: errorType,
+            message: errorMessage,
+            details: {
+              outputPath,
+              sourceFile: sourceFile.name,
+              targetFile: targetFile.name,
+              attempts: retryCount + 1,
+              timestamp: new Date().toISOString()
+            }
           };
         } else {
           // Unknown status
@@ -310,15 +433,46 @@ async function pollAndProcessResult(outputPath, sourceFile, targetFile) {
           }
         }
         
+        // For videos, apply optimization to improve loading performance
+        let finalFilePath = filePath;
+        let finalFileSize = fileSize;
+        let thumbnailPath = null;
+
+        if (fileType === 'video' && VIDEO_OPTIMIZATION_ENABLED) {
+          try {
+            console.log(`[OPTIMIZATION] Starting video optimization for: ${filePath}`);
+            
+            // Create optimized version in outputs/optimized folder
+            const optimizedResult = await optimizeVideo(filePath, {
+              ...VIDEO_OPTIMIZATION_CONFIG,
+              outputPath: path.join(outputsDir, 'optimized', outputFilename)
+            });
+            
+            console.log(`[OPTIMIZATION] Video optimized successfully: ${optimizedResult.outputPath}`);
+            
+            // Update to use the optimized version
+            finalFilePath = optimizedResult.outputPath;
+            finalFileSize = fs.statSync(finalFilePath).size;
+            thumbnailPath = optimizedResult.thumbnailPath;
+          } catch (optError) {
+            console.error(`[OPTIMIZATION ERROR] Failed to optimize video: ${optError.message}`);
+          }
+        }
+
+        // Prepare paths for database storage
+        const relativeFilePath = `/outputs/${path.basename(finalFilePath)}`;
+        const relativeThumbnailPath = thumbnailPath ? 
+          `/outputs/thumbnails/${path.basename(thumbnailPath)}` : null;
+        
         // Create database record
         const dbRecord = await prisma.generatedMedia.create({
           data: {
             name: outputFilename,
             type: fileType,
             tempPath: outputPath,
-            filePath: `/outputs/${outputFilename}`,
-            thumbnailPath: null,
-            fileSize: BigInt(fileSize),
+            filePath: relativeFilePath,
+            thumbnailPath: fileType === 'video' ? relativeThumbnailPath : null,
+            fileSize: BigInt(finalFileSize),
             mimeType: fileType === 'video' ? 'video/mp4' : 'image/jpeg',
             isPaid: false,
             faceSourceId: faceSourceId,
@@ -354,6 +508,7 @@ async function pollAndProcessResult(outputPath, sourceFile, targetFile) {
         // For other errors, fail the process
         return {
           status: 'error',
+          errorType: ERROR_TYPES.PROCESSING,
           message: `Polling error: ${error.message}`
         };
       }
@@ -364,6 +519,7 @@ async function pollAndProcessResult(outputPath, sourceFile, targetFile) {
   console.error(`[POLL ERROR] Maximum retries (${MAX_RETRIES}) reached without success`);
   return {
     status: 'error',
+    errorType: ERROR_TYPES.PROCESSING,
     message: `Task timed out after ${MAX_RETRIES * POLLING_INTERVAL / 1000} seconds`
   };
 }
@@ -422,6 +578,70 @@ async function processCompletedTask(outputUrl, sourceFile, targetFile, outputPat
     // Determine file type
     const fileType = targetFile.name.match(/\.(mp4|webm|mov)$/i) ? 'video' : 'image';
     
+    // For videos, apply optimization to improve loading performance
+    let finalFilePath = filePath;
+    let finalFileSize = fileSize;
+    let thumbnailPath = null;
+    let watermarkedPath = null;
+
+    if (fileType === 'video') {
+      // Step 1: Optimize video if enabled
+      if (VIDEO_OPTIMIZATION_ENABLED) {
+        try {
+          console.log(`[OPTIMIZATION] Starting video optimization for: ${filePath}`);
+          
+          // Create optimized version in outputs/optimized folder
+          const optimizedResult = await optimizeVideo(filePath, {
+            ...VIDEO_OPTIMIZATION_CONFIG,
+            outputPath: path.join(outputsDir, 'optimized', outputFilename)
+          });
+          
+          console.log(`[OPTIMIZATION] Video optimized successfully: ${optimizedResult.outputPath}`);
+          
+          // Update to use the optimized version
+          finalFilePath = optimizedResult.outputPath;
+          finalFileSize = fs.statSync(finalFilePath).size;
+          thumbnailPath = optimizedResult.thumbnailPath;
+        } catch (optError) {
+          console.error(`[OPTIMIZATION ERROR] Failed to optimize video: ${optError.message}`);
+          // Continue with the original video if optimization fails
+          
+          // Try to generate just a thumbnail if optimization failed
+          try {
+            thumbnailPath = await generateVideoThumbnail(filePath);
+            console.log(`[THUMBNAIL] Generated thumbnail at: ${thumbnailPath}`);
+          } catch (thumbError) {
+            console.error(`[THUMBNAIL ERROR] Failed to generate thumbnail: ${thumbError.message}`);
+          }
+        }
+      }
+      
+      // Step 2: Apply watermark if enabled
+      if (VIDEO_WATERMARK_ENABLED) {
+        try {
+          console.log(`[WATERMARK] Adding watermark to video: ${finalFilePath}`);
+          
+          // Create watermarked version in outputs/watermarked folder
+          const watermarkResult = await addTextWatermark(finalFilePath, {
+            ...WATERMARK_CONFIG,
+            outputPath: path.join(outputsDir, 'watermarked', outputFilename)
+          });
+          
+          console.log(`[WATERMARK] Video watermarked successfully: ${watermarkResult.outputPath}`);
+          
+          // Update path to use watermarked version
+          watermarkedPath = watermarkResult.outputPath;
+          
+          // Use watermarked version as final if successful
+          finalFilePath = watermarkedPath;
+          finalFileSize = fs.statSync(finalFilePath).size;
+        } catch (watermarkError) {
+          console.error(`[WATERMARK ERROR] Failed to add watermark: ${watermarkError.message}`);
+          // Continue with the non-watermarked version if watermarking fails
+        }
+      }
+    }
+    
     // Try to extract IDs from file paths
     let faceSourceId = null;
     let templateId = null;
@@ -462,16 +682,24 @@ async function processCompletedTask(outputUrl, sourceFile, targetFile, outputPat
       }
     }
     
+    // Prepare paths for database storage
+    const relativeFilePath = `/outputs/${path.basename(finalFilePath)}`;
+    const relativeThumbnailPath = thumbnailPath ? 
+      `/outputs/thumbnails/${path.basename(thumbnailPath)}` : null;
+    const relativeWatermarkPath = watermarkedPath ? 
+      `/outputs/watermarked/${path.basename(watermarkedPath)}` : null;
+    
     // Create database record
     const dbRecord = await prisma.generatedMedia.create({
       data: {
         name: outputFilename,
         type: fileType,
         tempPath: outputPath,
-        filePath: `/outputs/${outputFilename}`,
-        thumbnailPath: null,
-        fileSize: BigInt(fileSize),
-        mimeType: fileType === 'video' ? 'video/mp4' : 'image/jpeg',
+        filePath: relativeFilePath,
+        thumbnailPath: fileType === 'video' ? relativeThumbnailPath : null,
+        watermarkPath: fileType === 'video' && VIDEO_WATERMARK_ENABLED ? relativeWatermarkPath : null,
+        fileSize: BigInt(finalFileSize),
+        mimeType: contentType || (fileType === 'video' ? 'video/mp4' : 'image/jpeg'),
         isPaid: false,
         faceSourceId: faceSourceId,
         templateId: templateId
@@ -484,14 +712,19 @@ async function processCompletedTask(outputUrl, sourceFile, targetFile, outputPat
     return {
       status: 'success',
       message: 'Face fusion completed successfully',
-      filePath: `/outputs/${outputFilename}`,
-      fileSize: Number(fileSize),
-      id: dbRecord.id
+      filePath: relativeFilePath,
+      thumbnailPath: relativeThumbnailPath,
+      watermarkPath: relativeWatermarkPath,
+      fileSize: Number(finalFileSize),
+      id: dbRecord.id,
+      optimized: VIDEO_OPTIMIZATION_ENABLED && fileType === 'video',
+      watermarked: VIDEO_WATERMARK_ENABLED && fileType === 'video' && !!watermarkedPath
     };
   } catch (error) {
     console.error('[DOWNLOAD ERROR] Error processing completed task:', error);
     return {
       status: 'error',
+      errorType: ERROR_TYPES.DOWNLOAD,
       message: `Error processing completed task: ${error.message}`
     };
   }

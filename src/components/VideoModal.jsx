@@ -4,6 +4,7 @@ import { useCallback, useState } from 'react'
 import StripeCheckoutButton from './StripeCheckoutButton'
 import AtlosCheckoutButton from './AtlosCheckoutButton'
 import CloseButton from './CloseButton'
+import VideoPlayerWithLoading from './VideoPlayerWithLoading'
 
 export default function VideoModal({ video, onClose, onDownload, onDelete }) {
   const [showPaymentOptions, setShowPaymentOptions] = useState(false)
@@ -77,11 +78,16 @@ export default function VideoModal({ video, onClose, onDownload, onDelete }) {
         </div>
         
         {video.type === 'video' ? (
-          <video
+          <VideoPlayerWithLoading
             src={video.filePath}
             controls
             className="w-full rounded-lg mb-4 max-h-[70vh] object-contain"
             autoPlay
+            thumbnail={video.thumbnailPath}
+            watermarkedSrc={video.watermarkPath}
+            showWatermarked={!video.isPaid}
+            showDuration={true}
+            optimizedLoading={true}
           />
         ) : (
           <img

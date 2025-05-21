@@ -16,6 +16,8 @@ export default function Contact() {
                   id="name"
                   className="w-full px-4 py-2 border rounded-md"
                   placeholder="Your name"
+                  aria-required="true"
+                  autoComplete="name"
                 />
               </div>
               <div>
@@ -25,6 +27,8 @@ export default function Contact() {
                   id="email"
                   className="w-full px-4 py-2 border rounded-md"
                   placeholder="your@email.com"
+                  aria-required="true"
+                  autoComplete="email"
                 />
               </div>
               <div>
@@ -34,11 +38,13 @@ export default function Contact() {
                   rows={4}
                   className="w-full px-4 py-2 border rounded-md"
                   placeholder="Your message..."
+                  aria-required="true"
                 ></textarea>
               </div>
               <button
                 type="submit"
-                className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition"
+                className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                aria-label="Send contact message"
               >
                 Send Message
               </button>

@@ -1,0 +1,30 @@
+/* Input fix styles - ensure inputs are clickable and accept input */
+input {
+  pointer-events: auto !important;
+  cursor: text !important;
+  user-select: text !important;
+}
+
+button {
+  pointer-events: auto !important;
+  cursor: pointer !important;
+}
+
+/* Reset any CSS that might interfere with input functionality */
+input[type="text"],
+input[type="email"],
+input[type="password"] {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+/* Ensure no hidden overlays block input interaction */
+#__next, 
+.container, 
+.card, 
+.formContainer,
+.form,
+.formGroup {
+  pointer-events: auto !important;
+}

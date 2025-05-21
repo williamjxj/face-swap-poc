@@ -1,11 +1,33 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Script from 'next/script';
-import { CreditCard } from 'lucide-react';
-import atlos, { generateOrderId, formatAmount } from '@/lib/atlos';
+import { Bitcoin } from 'lucide-react';
+import { generateOrderId } from '@/lib/atlos';
 
-export default function AtlosCheckoutButton({ video, disabled = false }) {
+// Simplified version focusing on core functionality
+export default function AtlosCheckoutButton({ video, disabled = false, small = false }) {
+  // Pre-initialization script to patch Atlos behavior
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      // Prevent WalletConnect image loading errors by blocking certain requests
+      const originalFetch = window.fetch;
+      window.fetch = function(url, options) {
+        if (typeof url === 'string' && url.includes('walletconnect.com')) {
+          console.log('Blocked WalletConnect request:', url);
+          return Promise.resolve(new Response(JSON.stringify({ 
+            error: 'WalletConnect disabled'
+          })));
+        }
+        return originalFetch.apply(this, arguments);
+      };
+
+      // Return cleanup function
+      return () => {
+        window.fetch = originalFetch;
+      };
+    }
+  }, []);
   const [isAtlosLoaded, setIsAtlosLoaded] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [orderId] = useState(() => generateOrderId());
@@ -13,14 +35,14 @@ export default function AtlosCheckoutButton({ video, disabled = false }) {
   // Handle Atlos payment success
   const handleSuccess = (result) => {
     console.log('Atlos payment success:', result);
-    // You might want to redirect to a success page or update the UI
+    window.location.href = `/api/atlos/success?video_id=${video.id}&order_id=${orderId}&status=success`;
   };
   
   // Handle Atlos payment canceled
   const handleCanceled = (result) => {
     console.log('Atlos payment canceled:', result);
     setIsLoading(false);
-    // You might want to update the UI or redirect
+    window.location.href = `/face-fusion?tab=history&paymentFailed=true`;
   };
   
   // Initialize Atlos payment
@@ -32,23 +54,41 @@ export default function AtlosCheckoutButton({ video, disabled = false }) {
     
     setIsLoading(true);
     
-    // Default amount - you can make this dynamic
-    const amount = 20.00;
-    const formattedAmount = formatAmount(amount);
-    
-    window.atlos.Pay({
-      merchantId: atlos.MERCHANT_ID,
-      orderId: orderId,
-      orderAmount: formattedAmount,
-      orderCurrency: 'USD',
-      onSuccess: handleSuccess,
-      onCanceled: handleCanceled,
-      onCompleted: handleSuccess,
-      metadata: {
-        videoId: video.name,
-        videoPath: video.filePath
-      }
-    });
+    try {
+      const baseUrl = window.location.origin;
+      const merchantId = process.env.NEXT_PUBLIC_ATLOS_MERCHANT_ID || 'WQRZ5YBYNX';
+      
+      // BTC-only configuration to avoid WalletConnect issues
+      const paymentConfig = {
+        merchantId: merchantId,
+        orderId: orderId,
+        orderAmount: "20.00",
+        orderCurrency: "USD",
+        // BTC-only to completely avoid WalletConnect
+        acceptedCoins: ['BTC'],
+        paymentCoins: ['BTC'],
+        cryptoProtocol: 'BTC', // Force BTC protocol only
+        cryptoCurrency: 'BTC',
+        preferredCoin: 'BTC',
+        disableWalletConnect: true, // Try explicit disabling
+        useWalletConnect: false,
+        testMode: true,
+        redirectUrl: `${baseUrl}/api/atlos/success?video_id=${video.id}&order_id=${orderId}&status=success`,
+        cancelUrl: `${baseUrl}/face-fusion?tab=history&paymentFailed=true`,
+        metadata: { videoId: video.id },
+        onSuccess: handleSuccess,
+        onCanceled: handleCanceled,
+        onError: (error) => console.error('Atlos error:', error)
+      };
+      
+      console.log('Starting Atlos payment with config:', paymentConfig);
+      
+      // Initialize payment
+      window.atlos.Pay(paymentConfig);
+    } catch (error) {
+      console.error('Error initializing Atlos payment:', error);
+      setIsLoading(false);
+    }
   };
   
   // Handle script load
@@ -60,19 +100,37 @@ export default function AtlosCheckoutButton({ video, disabled = false }) {
   return (
     <div className="atlos-payment">
       <Script
-        src="https://atlos.io/packages/app/atlos.js"
+        src="https://atlos.io/packages/app/atlos.js?v=1.0.1"
         onLoad={handleScriptLoad}
         strategy="lazyOnload"
       />
       
-      <button
-        onClick={handleAtlosPayment}
-        disabled={!isAtlosLoaded || isLoading || disabled}
-        className={`flex items-center gap-2 px-3 py-2 bg-blue-500 hover:bg-blue-600 rounded-md cursor-pointer transition duration-150 ease-in-out ${(!isAtlosLoaded || isLoading || disabled) ? 'opacity-50 cursor-not-allowed' : ''}`}
-      >
-        <CreditCard className="w-4 h-4" />
-        {isLoading ? 'Processing...' : 'Pay with Crypto'}
-      </button>
+      {small ? (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            handleAtlosPayment();
+          }}
+          disabled={!isAtlosLoaded || isLoading || disabled}
+          className={`p-1 bg-green-500 hover:bg-green-600 rounded transition-colors ${
+            (!isAtlosLoaded || isLoading || disabled) ? 'opacity-50 cursor-not-allowed' : ''
+          }`}
+          title="Pay with Crypto"
+        >
+          <Bitcoin className="w-4 h-4 text-white" />
+        </button>
+      ) : (
+        <button
+          onClick={handleAtlosPayment}
+          disabled={!isAtlosLoaded || isLoading || disabled}
+          className={`flex items-center gap-2 px-3 py-2 bg-green-500 hover:bg-green-600 rounded-md cursor-pointer transition duration-150 ease-in-out ${
+            (!isAtlosLoaded || isLoading || disabled) ? 'opacity-50 cursor-not-allowed' : ''
+          }`}
+        >
+          <Bitcoin className="w-4 h-4" />
+          {isLoading ? 'Processing...' : 'Pay with Crypto'}
+        </button>
+      )}
     </div>
   );
 }

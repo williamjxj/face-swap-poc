@@ -1,0 +1,188 @@
+'use client'
+import { useState, useRef, useEffect } from 'react'
+import ProgressLoader from './ProgressLoader'
+
+export default function VideoPlayerWithLoading({ 
+  src, 
+  className,
+  autoPlay = false, 
+  loop = false, 
+  muted = false,
+  controls = true,
+  playsInline = true,
+  onLoadStart,
+  onLoadEnd,
+  preloadStrategy = 'metadata', // 'none', 'metadata', 'auto'
+  optimizedLoading = true,
+  thumbnail = null,
+  watermarkedSrc = null,
+  showWatermarked = false,
+  showDuration = false
+}) {
+  const [loading, setLoading] = useState(true)
+  const [progress, setProgress] = useState(0)
+  const [loadingError, setLoadingError] = useState(null)
+  const [duration, setDuration] = useState(0)
+  const videoRef = useRef(null)
+  const [showVideo, setShowVideo] = useState(false)
+  const [displayWatermarked, setDisplayWatermarked] = useState(showWatermarked)
+
+  // Format duration from seconds to mm:ss
+  const formatDuration = (seconds) => {
+    if (!seconds || isNaN(seconds)) return '0:00'
+    const mins = Math.floor(seconds / 60)
+    const secs = Math.floor(seconds % 60)
+    return `${mins}:${secs.toString().padStart(2, '0')}`
+  }
+
+  useEffect(() => {
+    // Reset states when src changes
+    setLoading(true)
+    setProgress(0)
+    setLoadingError(null)
+    setShowVideo(false)
+
+    if (onLoadStart) {
+      onLoadStart()
+    }
+  }, [src, onLoadStart])
+
+  // Optimize loading strategy for better performance
+  useEffect(() => {
+    if (!videoRef.current || !optimizedLoading) return
+    
+    // Using Media Source Extensions for more efficient loading 
+    // when available and appropriate for larger videos
+    if (window.MediaSource && src?.endsWith('.mp4') && videoRef.current.canPlayType('video/mp4; codecs="avc1.42E01E, mp4a.40.2"')) {
+      videoRef.current.preload = preloadStrategy
+    }
+  }, [src, preloadStrategy, optimizedLoading])
+  
+  // Effect to handle switching between watermarked and original sources
+  useEffect(() => {
+    if (videoRef.current && watermarkedSrc) {
+      const currentTime = videoRef.current.currentTime
+      const isPlaying = !videoRef.current.paused
+      
+      // Update video source
+      videoRef.current.src = displayWatermarked ? watermarkedSrc : src
+      
+      // After loading, restore playback state
+      const handleSourceChange = () => {
+        videoRef.current.currentTime = currentTime
+        if (isPlaying) {
+          videoRef.current.play()
+        }
+      }
+      
+      videoRef.current.addEventListener('loadeddata', handleSourceChange, { once: true })
+      
+      return () => {
+        videoRef.current?.removeEventListener('loadeddata', handleSourceChange)
+      }
+    }
+  }, [displayWatermarked, src, watermarkedSrc])
+
+  const handleCanPlay = () => {
+    setProgress(100)
+    setLoading(false)
+    setShowVideo(true)
+    if (onLoadEnd) {
+      onLoadEnd()
+    }
+    if (videoRef.current) {
+      setDuration(videoRef.current.duration)
+    }
+  }
+
+  const handleProgress = () => {
+    if (videoRef.current && videoRef.current.buffered.length > 0) {
+      const loadedPercentage = (videoRef.current.buffered.end(0) / videoRef.current.duration) * 100
+      setProgress(Math.min(loadedPercentage, 100))
+    }
+  }
+
+  const handleError = (e) => {
+    setLoadingError(`Video failed to load: ${e.target.error?.message || 'Unknown error'}`)
+    setLoading(false)
+  }
+
+  const handleLoadStart = () => {
+    setLoading(true)
+    setProgress(0)
+  }
+
+  return (
+    <div className="relative">
+      {loading && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/5 z-10">
+          <ProgressLoader 
+            progress={progress} 
+            isIndeterminate={progress === 0}
+            size="full"
+          />
+        </div>
+      )}
+      
+      {!showVideo && thumbnail && (
+        <div className="absolute inset-0 z-0">
+          <img 
+            src={thumbnail} 
+            alt="Video thumbnail" 
+            className="w-full h-full object-cover"
+          />
+        </div>
+      )}
+
+      {loadingError && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black/60 z-20">
+          <div className="text-white text-center p-4 max-w-sm">
+            <p className="text-red-400 font-bold mb-2">Error</p>
+            <p className="text-sm">{loadingError}</p>
+            <button 
+              className="mt-3 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm"
+              onClick={() => window.location.reload()}
+            >
+              Reload Page
+            </button>
+          </div>
+        </div>
+      )}
+
+      <video
+        ref={videoRef}
+        src={showWatermarked && watermarkedSrc ? watermarkedSrc : src}
+        className={`w-full ${className || ''}`}
+        autoPlay={autoPlay}
+        loop={loop}
+        muted={muted}
+        controls={controls}
+        playsInline={playsInline}
+        onCanPlay={handleCanPlay}
+        onProgress={handleProgress}
+        onLoadStart={handleLoadStart}
+        onError={handleError}
+        style={{ opacity: showVideo ? 1 : 0 }}
+        preload={preloadStrategy}
+      />
+      
+      {showDuration && duration > 0 && (
+        <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
+          {formatDuration(duration)}
+        </div>
+      )}
+      
+      {watermarkedSrc && (
+        <div className="absolute top-2 right-2 z-30">
+          <button 
+            className={`px-2 py-1 text-xs rounded ${displayWatermarked ? 'bg-blue-600 text-white' : 'bg-gray-700/70 text-white/90 hover:bg-gray-600'}`}
+            onClick={() => setDisplayWatermarked(!displayWatermarked)}
+            title={displayWatermarked ? "Hide watermark" : "Show watermark"}
+          >
+            {displayWatermarked ? "Watermarked" : "Show Watermark"}
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}

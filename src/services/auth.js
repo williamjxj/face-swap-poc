@@ -1,7 +1,9 @@
 import { signIn, signOut, getSession } from 'next-auth/react'
 import GoogleProvider from 'next-auth/providers/google'
 import AzureADProvider from 'next-auth/providers/azure-ad'
+import CredentialsProvider from 'next-auth/providers/credentials'
 import { db } from '@/lib/db'
+import bcrypt from 'bcryptjs'
 
 export const authOptions = {
   providers: [
@@ -14,6 +16,57 @@ export const authOptions = {
       clientSecret: process.env.AZURE_AD_CLIENT_SECRET,
       tenantId: process.env.AZURE_AD_TENANT_ID,
     }),
+    CredentialsProvider({
+      name: "Email",
+      credentials: {
+        email: { 
+          label: "Email", 
+          type: "email", 
+          placeholder: "example@example.com" 
+        },
+        password: { 
+          label: "Password", 
+          type: "password" 
+        }
+      },
+      async authorize(credentials) {
+        if (!credentials?.email || !credentials?.password) {
+          return null;
+        }
+
+        try {
+          // Find user in database
+          const user = await db.user.findUnique({
+            where: { account: credentials.email }
+          });
+
+          // If user doesn't exist or password doesn't match
+          if (!user || !user.passwordHash) {
+            return null;
+          }
+          
+          // Compare password with hash
+          const isValidPassword = await bcrypt.compare(
+            credentials.password, 
+            user.passwordHash
+          );
+          
+          if (!isValidPassword) {
+            return null;
+          }
+          
+          // Return user object that will be saved in JWT
+          return { 
+            id: user.id, 
+            email: user.account,
+            name: user.name || user.account.split('@')[0]
+          };
+        } catch (error) {
+          console.error('Authentication error:', error);
+          return null;
+        }
+      }
+    })
   ],
   session: {
     strategy: 'jwt',
@@ -139,4 +192,56 @@ export const logout = async () => {
 export const isAuthenticated = async () => {
   const session = await getCurrentSession()
   return !!session?.user
+}
+
+export const loginWithEmail = async (email, password) => {
+  try {
+    const result = await signIn('credentials', {
+      email,
+      password,
+      redirect: false
+    });
+    
+    if (result.error) {
+      return { 
+        success: false, 
+        error: 'Invalid email or password' 
+      };
+    }
+    
+    return { success: true };
+  } catch (error) {
+    console.error('Email login error:', error);
+    return { 
+      success: false, 
+      error: error.message || 'Login failed' 
+    };
+  }
+};
+
+export const registerUser = async (email, password, name = '') => {
+  try {
+    const response = await fetch('/api/auth/register', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ email, password, name })
+    });
+    
+    const data = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(data.error || 'Registration failed');
+    }
+    
+    // Auto login after successful registration
+    return loginWithEmail(email, password);
+  } catch (error) {
+    console.error('Registration error:', error);
+    return {
+      success: false,
+      error: error.message || 'Registration failed'
+    };
+  }
 }
