@@ -30,7 +30,7 @@ export default function EmailForm() {
         // Login
         const result = await loginWithEmail(email, password)
         if (!result.success) {
-          setError(result.error || 'Invalid email or password')
+          setError(result.error || 'Invalid email or password 1')
         } else {
           // Redirect on successful login
           router.push('/welcome')

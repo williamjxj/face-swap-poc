@@ -45,7 +45,7 @@ export const authOptions = {
             return null;
           }
           
-          // Compare password with hash
+          // Compare plain password with stored hash
           const isValidPassword = await bcrypt.compare(
             credentials.password, 
             user.passwordHash
@@ -117,7 +117,12 @@ export const authOptions = {
       
       return session
     },
-    async signIn({ profile }) {
+    async signIn({ profile, user }) {
+      // Allow credential authentication where user is returned from authorize callback
+      if (user) {
+        return true;
+      }
+      // Allow OAuth authentication where profile contains email
       if (profile?.email || profile?.mail) {
         return true;
       }
@@ -199,7 +204,7 @@ export const loginWithEmail = async (email, password) => {
     if (result.error) {
       return { 
         success: false, 
-        error: 'Invalid email or password' 
+        error: 'Invalid email or password 2' 
       };
     }
     

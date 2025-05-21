@@ -1,7 +1,7 @@
 import { Geist, Geist_Mono, Inter } from "next/font/google";
 import "./globals.css";
-import Header from '@/components/Header'
 import Footer from '@/components/Footer'
+import ConditionalHeader from '@/components/ConditionalHeader'
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/services/auth";
 import AuthProvider from "@/components/AuthProvider";
@@ -25,8 +25,6 @@ export const metadata = {
 
 export default async function RootLayout({ children }) {
   const session = await getServerSession(authOptions);
-  const segment = children.props.childProp?.segment;
-  const isAuthPage = segment === 'auth';
 
   return (
     <html lang="en">
@@ -34,8 +32,8 @@ export default async function RootLayout({ children }) {
         className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-screen`}
       >
         <AuthProvider session={session}>
-          {/* Show Header with Navigator whenever user is logged in, except on auth pages */}
-          {!isAuthPage && session && <Header />}
+          {/* Client-side header component that checks for auth pages */}
+          <ConditionalHeader />
           <main className={inter.className}>
             {children}
           </main>
