@@ -7,6 +7,7 @@ https://shop.ultimatech.hk/
 A Next.js application for generating images with AI and processing payments.
 
 ## Table of Contents
+
 1. [Getting Started](#getting-started)
 2. [Linux (CentOS) Deployment](#linux-centos-deployment)
 3. [File Layout](#file-layout)
@@ -19,16 +20,19 @@ A Next.js application for generating images with AI and processing payments.
 ## Getting Started
 
 ### Prerequisites
+
 - Node.js 18+
 - npm 9+
 - Environment variables (see `.env.example`)
 
 ### Installation
+
 ```bash
 npm install
 ```
 
 ### Development
+
 ```bash
 npm run dev
 ```
@@ -36,7 +40,9 @@ npm run dev
 Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ### Environment Variables
+
 Copy `.env.example` to `.env` and fill in:
+
 - `GOOGLE_CLIENT_ID` - Google OAuth client ID
 - `GOOGLE_CLIENT_SECRET` - Google OAuth client secret
 - `AZURE_AD_CLIENT_ID` - Microsoft Azure AD client ID
@@ -48,17 +54,20 @@ Copy `.env.example` to `.env` and fill in:
 ## Linux (CentOS) Deployment
 
 ### 1. Install Node.js
+
 ```bash
 curl -fsSL https://rpm.nodesource.com/setup_18.x | sudo bash -
 sudo yum install -y nodejs
 ```
 
 ### 2. Install PM2 (Process Manager)
+
 ```bash
 sudo npm install -g pm2
 ```
 
 ### 3. Build and Run
+
 ```bash
 npm install
 npm run build
@@ -66,6 +75,7 @@ pm2 start "npm run start" --name face-swap-app
 ```
 
 ### 4. Configure Nginx (Optional)
+
 ```nginx
 server {
     listen 80;
@@ -89,7 +99,6 @@ server {
 
 ## File Layout
 
-
 ## Project Structure
 
 - **Framework**: Next.js 15 with React 19
@@ -102,11 +111,13 @@ server {
 ## Application Workflow
 
 1. **Authentication**
+
    - User signs in via Google or Microsoft
    - JWT session established
    - Session persisted via cookies
 
 2. **FaceFusion Video Generation**
+
    - User provides prompt and style
    - Request sent to image generation API
    - Generated image URL returned
@@ -119,10 +130,12 @@ server {
 ## Authentication
 
 The application uses NextAuth.js with the following providers:
+
 - Google OAuth
 - Microsoft Azure AD
 
 ### Session Management
+
 - JWT strategy for sessions
 - Custom sign-in page at `/auth/signin`
 - Session utilities:
@@ -135,6 +148,7 @@ The application uses NextAuth.js with the following providers:
 ## Third Party APIs
 
 ### Payment Processing API
+
 - Endpoint: `NEXT_PUBLIC_CHECKOUT_API_URL`
 - Required parameters:
   - `imageId`: ID of image to purchase
@@ -145,28 +159,29 @@ The application uses NextAuth.js with the following providers:
 ## Notes & Tips
 
 ### Environment Setup
+
 - Always keep `.env` out of version control
 - Use `.env.example` as a template for required variables
 
 ### Customization
+
 - Add more auth providers by editing `src/services/auth.js`
 - Modify session callback behavior in auth options
 
 ### API Integration
+
 - Standardize API responses with:
   - Success: `{ data }`
   - Error: `{ error }` with status code
 
 ### Development
+
 - Use `npm run lint` to check code quality
 - Enable Turbopack for faster dev server (`npm run dev --turbo`)
 
-
 ### Checkout
 
-点击 Checkout 发起支付流程
-3. 测试支付：卡号输入 4242 4242 4242 4242，Expiry date 输入任意未来的 MM/YY，cvc 输入任意三位数字
-4. 完成支付后跳转回 Success page，可以下载图片
+点击 Checkout 发起支付流程 3. 测试支付：卡号输入 4242 4242 4242 4242，Expiry date 输入任意未来的 MM/YY，cvc 输入任意三位数字 4. 完成支付后跳转回 Success page，可以下载图片
 
 ### CSS
 

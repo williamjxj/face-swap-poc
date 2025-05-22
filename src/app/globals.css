@@ -1,4 +1,4 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 :root {
   --foreground-rgb: 255, 255, 255;
@@ -8,7 +8,8 @@
 
 body {
   color: rgb(var(--foreground-rgb));
-  background: linear-gradient(to bottom, transparent, rgb(var(--background-end-rgb))) rgb(var(--background-start-rgb));
+  background: linear-gradient(to bottom, transparent, rgb(var(--background-end-rgb)))
+    rgb(var(--background-start-rgb));
 }
 
 @layer utilities {
@@ -21,7 +22,7 @@ body {
     height: 176px;
     object-fit: cover;
   }
-  
+
   .video-dimensions {
     width: 116px;
     height: 176px;

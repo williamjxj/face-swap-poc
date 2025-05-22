@@ -17,15 +17,15 @@ curl --location 'https://aceswap--facefusion-agent-facefusionagent-download-file
 ## Fake test file metadata object
 
 ```js
-  const videoTargets = [
-    { 
-      id: 1, 
-      videoPath: '/videos/1.mp4', 
-      thumbnail: '/thumbnails/1_thumbnail.webp',
-      duration: '0:05',
-      author: 'demo'
-    },
-  ]
+const videoTargets = [
+  {
+    id: 1,
+    videoPath: '/videos/1.mp4',
+    thumbnail: '/thumbnails/1_thumbnail.webp',
+    duration: '0:05',
+    author: 'demo',
+  },
+]
 ```
 
 ## Payment - Stripe

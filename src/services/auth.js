@@ -17,55 +17,52 @@ export const authOptions = {
       tenantId: process.env.AZURE_AD_TENANT_ID,
     }),
     CredentialsProvider({
-      name: "Email",
+      name: 'Email',
       credentials: {
-        email: { 
-          label: "Email", 
-          type: "email", 
-          placeholder: "example@example.com" 
+        email: {
+          label: 'Email',
+          type: 'email',
+          placeholder: 'example@example.com',
         },
-        password: { 
-          label: "Password", 
-          type: "password" 
-        }
+        password: {
+          label: 'Password',
+          type: 'password',
+        },
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
-          return null;
+          return null
         }
 
         try {
           // Find user in database
           const user = await db.user.findUnique({
-            where: { account: credentials.email }
-          });
+            where: { account: credentials.email },
+          })
 
           // If user doesn't exist or password doesn't match
           if (!user || !user.passwordHash) {
-            return null;
+            return null
           }
-          
+
           // Compare plain password with stored hash
-          const isValidPassword = await bcrypt.compare(
-            credentials.password, 
-            user.passwordHash
-          );
-          
+          const isValidPassword = await bcrypt.compare(credentials.password, user.passwordHash)
+
           if (!isValidPassword) {
-            return null;
+            return null
           }
-          
+
           // Return user object that will be saved in JWT
-          return { 
-            id: user.id, 
+          return {
+            id: user.id,
             email: user.account,
-            name: user.name || user.account.split('@')[0]
-          };
+            name: user.name || user.account.split('@')[0],
+          }
         } catch (error) {
-          return null;
+          return null
         }
-      }
-    })
+      },
+    }),
   ],
   session: {
     strategy: 'jwt',
@@ -97,7 +94,7 @@ export const authOptions = {
     async session({ session, token }) {
       // Pass user ID to the client session
       session.user.id = token.id
-      
+
       // If we have an email, ensure the user exists in the database
       if (session?.user?.email) {
         try {
@@ -107,27 +104,27 @@ export const authOptions = {
             update: { lastLogin: new Date() },
             create: {
               account: session.user.email,
-              lastLogin: new Date()
-            }
-          });
+              lastLogin: new Date(),
+            },
+          })
         } catch (error) {
           // Silently handle error but continue session
         }
       }
-      
+
       return session
     },
     async signIn({ profile, user }) {
       // Allow credential authentication where user is returned from authorize callback
       if (user) {
-        return true;
+        return true
       }
       // Allow OAuth authentication where profile contains email
       if (profile?.email || profile?.mail) {
-        return true;
+        return true
       }
-      return false;
-    }
+      return false
+    },
   },
 }
 
@@ -161,30 +158,30 @@ export const getCurrentSession = async () => {
 export const logout = async () => {
   try {
     // Get current session to know which user is logging out
-    const session = await getSession();
-    
+    const session = await getSession()
+
     // If we have an email, update the logout time
     if (session?.user?.email) {
       try {
         await db.user.update({
           where: { account: session.user.email },
-          data: { lastLogout: new Date() }
-        });
+          data: { lastLogout: new Date() },
+        })
       } catch (error) {
         // Continue with logout even if the update fails
       }
     }
-    
+
     // Clear client-side storage
-    window.localStorage.removeItem('nextauth.message');
-    window.sessionStorage.clear();
-    
+    window.localStorage.removeItem('nextauth.message')
+    window.sessionStorage.clear()
+
     // Sign out via NextAuth
-    await signOut({ callbackUrl: '/' });
-    
-    return { success: true };
+    await signOut({ callbackUrl: '/' })
+
+    return { success: true }
   } catch (error) {
-    return { success: false, error: error.message };
+    return { success: false, error: error.message }
   }
 }
 
@@ -198,47 +195,47 @@ export const loginWithEmail = async (email, password) => {
     const result = await signIn('credentials', {
       email,
       password,
-      redirect: false
-    });
-    
+      redirect: false,
+    })
+
     if (result.error) {
-      return { 
-        success: false, 
-        error: 'Invalid email or password 2' 
-      };
+      return {
+        success: false,
+        error: 'Invalid email or password 2',
+      }
     }
-    
-    return { success: true };
+
+    return { success: true }
   } catch (error) {
-    return { 
-      success: false, 
-      error: error.message || 'Login failed' 
-    };
+    return {
+      success: false,
+      error: error.message || 'Login failed',
+    }
   }
-};
+}
 
 export const registerUser = async (email, password, name = '') => {
   try {
     const response = await fetch('/api/auth/register', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ email, password, name })
-    });
-    
-    const data = await response.json();
-    
+      body: JSON.stringify({ email, password, name }),
+    })
+
+    const data = await response.json()
+
     if (!response.ok) {
-      throw new Error(data.error || 'Registration failed');
+      throw new Error(data.error || 'Registration failed')
     }
-    
+
     // Auto login after successful registration
-    return loginWithEmail(email, password);
+    return loginWithEmail(email, password)
   } catch (error) {
     return {
       success: false,
-      error: error.message || 'Registration failed'
-    };
+      error: error.message || 'Registration failed',
+    }
   }
 }

@@ -23,7 +23,7 @@ $ psql
 $ sudo firewall-cmd --add-service=postgresql --permanent
 $ sudo firewall-cmd --reload
 
-$ psql -U postgres -d facefusion -f prisma/full_init_migration.sql 
+$ psql -U postgres -d facefusion -f prisma/full_init_migration.sql
 $ npx prisma init
 DATABASE_URL="postgresql://<db_user>:<password>@<host>:<port>/facefusion"
 
@@ -49,10 +49,10 @@ $ pm2 delete face-swap-app
 
 - `Serverless PostgreSQL`: Neon offers a fully managed serverless PostgreSQL service optimized for Prisma.
 - `Free tier`: Neon has a generous free tier that includes:
-    * 1 project
-    * Up to 10 branches
-    * 3 GiB storage
-    * Shared compute with auto-scaling capabilities
+  - 1 project
+  - Up to 10 branches
+  - 3 GiB storage
+  - Shared compute with auto-scaling capabilities
 - `Seamless Prisma integration`: Neon works extremely well with Prisma
 - `Modern interface`: Easy to use web console for managing your database
 - `SQL Editor`: Built-in SQL editor for running queries directly
@@ -94,3 +94,4 @@ $ ssh -T git@github.com
 $ nginx -T
 $ sudo systemctl resrt nginx
 ```
+````

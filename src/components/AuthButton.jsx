@@ -1,7 +1,9 @@
 'use client'
 import dynamic from 'next/dynamic'
 const FcGoogle = dynamic(() => import('react-icons/fc').then(mod => mod.FcGoogle), { ssr: false })
-const FaMicrosoft = dynamic(() => import('react-icons/fa6').then(mod => mod.FaMicrosoft), { ssr: false })
+const FaMicrosoft = dynamic(() => import('react-icons/fa6').then(mod => mod.FaMicrosoft), {
+  ssr: false,
+})
 
 import { signIn } from 'next-auth/react'
 
@@ -14,7 +16,7 @@ export default function AuthButton({ provider }) {
       bgColor: 'bg-white',
       textColor: 'text-gray-800',
       borderColor: 'border-gray-300',
-      hoverBg: 'hover:bg-gray-50'
+      hoverBg: 'hover:bg-gray-50',
     },
     'azure-ad': {
       name: 'Microsoft',
@@ -22,8 +24,8 @@ export default function AuthButton({ provider }) {
       bgColor: 'bg-white',
       textColor: 'text-gray-800',
       borderColor: 'border-gray-300',
-      hoverBg: 'hover:bg-gray-50'
-    }
+      hoverBg: 'hover:bg-gray-50',
+    },
   }
 
   const { name, icon, bgColor, textColor, borderColor, hoverBg } = providers[provider]

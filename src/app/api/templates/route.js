@@ -1,15 +1,15 @@
-import { NextResponse } from 'next/server';
-import db from '@/lib/db';
-import { serializeBigInt } from '@/utils/helper';
+import { NextResponse } from 'next/server'
+import db from '@/lib/db'
+import { serializeBigInt } from '@/utils/helper'
 
 // GET all templates
 export async function GET() {
   try {
     if (!db) {
-      throw new Error('Database client is not initialized');
+      throw new Error('Database client is not initialized')
     }
 
-    console.log('Fetching templates...');
+    console.log('Fetching templates...')
     const templates = await db.targetTemplate.findMany({
       where: {
         isActive: true,
@@ -17,28 +17,28 @@ export async function GET() {
       orderBy: {
         createdAt: 'desc',
       },
-    });
+    })
 
-    console.log(`Found ${templates.length} templates`);
+    console.log(`Found ${templates.length} templates`)
     // Serialize BigInt fields before returning
-    const serializedTemplates = serializeBigInt(templates);
-    return NextResponse.json({ templates: serializedTemplates });
+    const serializedTemplates = serializeBigInt(templates)
+    return NextResponse.json({ templates: serializedTemplates })
   } catch (error) {
-    console.error('Error fetching templates:', error);
+    console.error('Error fetching templates:', error)
     return NextResponse.json(
-      { 
+      {
         error: error.message || 'Failed to fetch templates',
-        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
       },
       { status: 500 }
-    );
+    )
   }
 }
 
 // POST new template
 export async function POST(request) {
   try {
-    const data = await request.json();
+    const data = await request.json()
     const template = await db.targetTemplate.create({
       data: {
         name: data.name,
@@ -49,10 +49,10 @@ export async function POST(request) {
         duration: data.duration,
         mimeType: data.mimeType,
         authorId: data.authorId,
-      }
-    });
-    return NextResponse.json(template, { status: 201 });
+      },
+    })
+    return NextResponse.json(template, { status: 201 })
   } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }

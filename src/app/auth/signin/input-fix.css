@@ -11,18 +11,18 @@ button {
 }
 
 /* Reset any CSS that might interfere with input functionality */
-input[type="text"],
-input[type="email"],
-input[type="password"] {
+input[type='text'],
+input[type='email'],
+input[type='password'] {
   -webkit-appearance: none;
   -moz-appearance: none;
   appearance: none;
 }
 
 /* Ensure no hidden overlays block input interaction */
-#__next, 
-.container, 
-.card, 
+#__next,
+.container,
+.card,
 .formContainer,
 .form,
 .formGroup {

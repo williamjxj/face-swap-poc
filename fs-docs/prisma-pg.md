@@ -12,15 +12,14 @@
 ### 🥒 video2thumbnail
 
 ```html
-<Image src="video2thumbnail.png" alt="video2thumbnail" width={116} height={176} />
+<image src="video2thumbnail.png" alt="video2thumbnail" width="{116}" height="{176}" />
 ```
 
-### 🌶  npx prisma db push
+### 🌶 npx prisma db push
 
 - Directly applies schema changes to the database
 - Does not generate migration files
 - Ideal for rapid iteration in non-production environments
-
 
 ### 🌽 npx prisma migrate deploy
 
@@ -30,15 +29,12 @@
 - Applies changes to the database
 - Generates/updates Prisma Client
 
-
 ### Prisma
 
-| Step | Command/Action | 
-| --- | --- |
-| Run SQL initialization | `psql -U postgres -d facefusion -f init.sql` |
-| Initialize Prisma | `npx prisma init`: prisma/schema.prisma, .env |
-| configure | DATABASE_URL="postgresql://<db_user>:<password>@<host>:<port>/<db_name>" |
-| Introspect db | `npx prisma db pull` |
-| Generate client | `npx prisma generate` (sync schema) |
-
-
+| Step                   | Command/Action                                                           |
+| ---------------------- | ------------------------------------------------------------------------ |
+| Run SQL initialization | `psql -U postgres -d facefusion -f init.sql`                             |
+| Initialize Prisma      | `npx prisma init`: prisma/schema.prisma, .env                            |
+| configure              | DATABASE_URL="postgresql://<db_user>:<password>@<host>:<port>/<db_name>" |
+| Introspect db          | `npx prisma db pull`                                                     |
+| Generate client        | `npx prisma generate` (sync schema)                                      |

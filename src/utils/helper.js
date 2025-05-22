@@ -5,31 +5,31 @@
  */
 export function serializeBigInt(data) {
   if (data === null || data === undefined) {
-    return data;
+    return data
   }
 
   if (typeof data === 'bigint') {
-    return data.toString();
+    return data.toString()
   }
 
   if (Array.isArray(data)) {
-    return data.map(serializeBigInt);
+    return data.map(serializeBigInt)
   }
 
   if (typeof data === 'object') {
-    const result = {};
+    const result = {}
     for (const key in data) {
-      result[key] = serializeBigInt(data[key]);
+      result[key] = serializeBigInt(data[key])
     }
-    return result;
+    return result
   }
 
-  return data;
-} 
+  return data
+}
 
 export function formatDuration(seconds) {
-  if (!seconds && seconds !== 0) return '00:00';
-  const minutes = Math.floor(seconds / 60);
-  const remainingSeconds = Math.floor(seconds % 60);
-  return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+  if (!seconds && seconds !== 0) return '00:00'
+  const minutes = Math.floor(seconds / 60)
+  const remainingSeconds = Math.floor(seconds % 60)
+  return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`
 }

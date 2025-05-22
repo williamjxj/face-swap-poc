@@ -27,17 +27,15 @@ export default function WelcomePage() {
       <h1 className="text-3xl font-extrabold text-gray-900 sm:text-4xl">
         Welcome to Face Swap Generator
       </h1>
-      
+
       {session?.user?.email && (
-        <p className="mt-4 text-xl font-medium text-blue-600">
-          Logged in as: {session.user.email}
-        </p>
+        <p className="mt-4 text-xl font-medium text-blue-600">Logged in as: {session.user.email}</p>
       )}
-      
+
       <p className="mt-4 text-lg leading-6 text-gray-600">
         You have successfully logged in. Click below to start generating images.
       </p>
-      
+
       <div className="mt-10 flex flex-col sm:flex-row gap-4 items-center justify-center">
         <button
           onClick={() => router.push('/face-fusion')}
@@ -45,7 +43,7 @@ export default function WelcomePage() {
         >
           Start Face Swapping
         </button>
-        
+
         <button
           onClick={() => router.push('/gallery')}
           className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-500 hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-400"

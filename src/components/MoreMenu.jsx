@@ -1,12 +1,12 @@
 'use client'
 import { Menu, Transition } from '@headlessui/react'
 import Link from 'next/link'
-import { 
+import {
   FaInfoCircle,
   FaQuestionCircle,
   FaEnvelope,
   FaShieldAlt,
-  FaFileContract 
+  FaFileContract,
 } from 'react-icons/fa'
 
 export default function MoreMenu() {
@@ -15,7 +15,7 @@ export default function MoreMenu() {
       <Menu.Button className="text-gray-400 hover:text-white hover:bg-[#2a2d34] rounded-lg p-2 flex items-center gap-2">
         <FaInfoCircle size={16} />
         <span>More</span>
-        <svg 
+        <svg
           className="w-4 h-4 transition-transform ui-open:rotate-180"
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 0 20 20"

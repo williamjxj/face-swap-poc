@@ -1,20 +1,19 @@
 ## Module & Purpose
 
-| Module              | Purpose                                                                                      |
-|---------------------|----------------------------------------------------------------------------------------------|
-| formidable          | Parse incoming form data and file uploads in Node.js                                        |
-| framer-motion       | React animation library for declarative, complex animations                                 |
-| form-data           | Create and handle multipart/form-data streams for HTTP requests                             |
-| lucide-react        | React icon library providing customizable SVG icons                                        |
-| pg                  | PostgreSQL client for Node.js to interact with databases                                   |
-| tailwindcss-animate | Tailwind CSS plugin adding CSS animation utilities                                         |
-| postcss             | Tool for transforming CSS with JavaScript plugins                                          |
-| @tailwindcss/postcss| Official Tailwind CSS PostCSS plugin to integrate Tailwind with PostCSS                    |
-| headlessui/react    | Unstyled, accessible UI components for React, designed to integrate with Tailwind CSS      |
-| prisma/client       | Auto-generated Prisma Client for database access in Node.js and TypeScript/JavaScript apps |
-| prisma              | Next-generation ORM for Node.js and TypeScript, used to define and manage database schema  |
-| sharp | convert, Resize, crop, and rotate images|
-
+| Module               | Purpose                                                                                    |
+| -------------------- | ------------------------------------------------------------------------------------------ |
+| formidable           | Parse incoming form data and file uploads in Node.js                                       |
+| framer-motion        | React animation library for declarative, complex animations                                |
+| form-data            | Create and handle multipart/form-data streams for HTTP requests                            |
+| lucide-react         | React icon library providing customizable SVG icons                                        |
+| pg                   | PostgreSQL client for Node.js to interact with databases                                   |
+| tailwindcss-animate  | Tailwind CSS plugin adding CSS animation utilities                                         |
+| postcss              | Tool for transforming CSS with JavaScript plugins                                          |
+| @tailwindcss/postcss | Official Tailwind CSS PostCSS plugin to integrate Tailwind with PostCSS                    |
+| headlessui/react     | Unstyled, accessible UI components for React, designed to integrate with Tailwind CSS      |
+| prisma/client        | Auto-generated Prisma Client for database access in Node.js and TypeScript/JavaScript apps |
+| prisma               | Next-generation ORM for Node.js and TypeScript, used to define and manage database schema  |
+| sharp                | convert, Resize, crop, and rotate images                                                   |
 
 ## DB Table Based APIs
 
@@ -71,11 +70,9 @@
     └── route.js (POST - process swap)
 ```
 
-
-### 🌶  identity
+### 🌶 identity
 
 - `identify` file size (file)
-
 
 ### 🌽 sharp npm module
 
@@ -90,12 +87,12 @@ sharp('input.jpg')
   .resize(200, 200)
   .toFile('output.webp', (err, info) => {
     // Processed image saved as output.webp
-  });
+  })
 ```
 
-### 🌽 
+### 🌽
 
-### 🌽 
+### 🌽
 
 ### 🌽 video
 
@@ -109,11 +106,29 @@ sharp('input.jpg')
 
 ### 🥕 Claude, Gemini, o4-mini, GPT-4o, o4-mini (preview)
 
-| Model                 | Coding Strengths & Benchmarks                                                                                                  | Notable Weaknesses/Notes                |
-|-----------------------|-------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------|
-| **GPT-4.1**           | Top performer: 54.6% on SWE-bench Verified (real-world coding tasks), excels at code diffs, multi-step instructions, and context retention. | Best for complex, large-scale coding.   |
-| **Claude 3.7 Sonnet** | State-of-the-art on TAU-bench; praised by users for generating complete, high-quality, modern JS code in one go.         | No major weaknesses noted.              |
-| **Claude 3.5 Sonnet** | 49% on SWE-bench Verified; strong at agentic coding, tool use, and multi-step development.                                 | Slightly behind GPT-4.1 and 3.7 Sonnet. |
-| **Gemini 2.5 Pro**    | #1 on WebDev Arena leaderboard; excels at web app development, code transformation, and editing.                        | Especially strong for web-focused tasks.|
-| **GPT-4o**            | Fast, good for boilerplate and syntax, but scores much lower (33.2% SWE-bench), often oversimplifies and requires more debugging. | Weaker for complex coding.              |
-| **o4-mini (preview)** | Competitive on Python (99.5% AIME), strong for fast, cost-efficient coding, especially in high-throughput scenarios.        | Smaller size, not as strong as GPT-4.1. |
+| Model                 | Coding Strengths & Benchmarks                                                                                                               | Notable Weaknesses/Notes                 |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------- |
+| **GPT-4.1**           | Top performer: 54.6% on SWE-bench Verified (real-world coding tasks), excels at code diffs, multi-step instructions, and context retention. | Best for complex, large-scale coding.    |
+| **Claude 3.7 Sonnet** | State-of-the-art on TAU-bench; praised by users for generating complete, high-quality, modern JS code in one go.                            | No major weaknesses noted.               |
+| **Claude 3.5 Sonnet** | 49% on SWE-bench Verified; strong at agentic coding, tool use, and multi-step development.                                                  | Slightly behind GPT-4.1 and 3.7 Sonnet.  |
+| **Gemini 2.5 Pro**    | #1 on WebDev Arena leaderboard; excels at web app development, code transformation, and editing.                                            | Especially strong for web-focused tasks. |
+| **GPT-4o**            | Fast, good for boilerplate and syntax, but scores much lower (33.2% SWE-bench), often oversimplifies and requires more debugging.           | Weaker for complex coding.               |
+| **o4-mini (preview)** | Competitive on Python (99.5% AIME), strong for fast, cost-efficient coding, especially in high-throughput scenarios.                        | Smaller size, not as strong as GPT-4.1.  |
+
+## Coding Styles
+
+- `ESLint` for code quality checks and unused imports detection - configured via `.eslintrc.js` and `eslint.config.mjs`
+- `Prettier` for consistent code formatting - configured via `.prettierrc`
+- `EditorConfig` for consistent editor settings - configured via `.editorconfig`
+- `VS Code Integration` - configured via `settings.json`
+
+
+## Clean up codes.
+
+```bash
+# Install dependency-cruiser for analyzing code dependencies
+$ npm install --save-dev dependency-cruiser
+
+# Install npm-check for finding unused dependencies
+$ npm install --save-dev npm-check
+```

@@ -1,70 +1,70 @@
 'use client'
 
-import Image from "next/image"
-import { Info, ArrowLeftRight, Download, Lock } from "lucide-react"
-import FaceSelection from "./FaceSelection"
-import { useState, useEffect } from "react"
-import VideoModal from "@/components/VideoModal"
-import GuidelineModal from "@/components/GuidelineModal"
-import Loading from "@/components/Loading"
-import TabContent from "./TabContent"
-import CloseButton from "@/components/CloseButton"
-import StripeCheckoutButton from "@/components/StripeCheckoutButton"
+import Image from 'next/image'
+import { Info, ArrowLeftRight, Download, Lock } from 'lucide-react'
+import FaceSelection from './FaceSelection'
+import { useState, useEffect } from 'react'
+import VideoModal from '@/components/VideoModal'
+import GuidelineModal from '@/components/GuidelineModal'
+import Loading from '@/components/Loading'
+import TabContent from './TabContent'
+import CloseButton from '@/components/CloseButton'
+import StripeCheckoutButton from '@/components/StripeCheckoutButton'
 
 export default function FaceFusion() {
   const [selectedTab, setSelectedTab] = useState('video')
   const [rightSideTab, setRightSideTab] = useState('face-swap')
   const [paymentSuccessId, setPaymentSuccessId] = useState(null)
-  
+
   // Handle URL query parameters
   useEffect(() => {
-    const searchParams = new URLSearchParams(window.location.search);
-    const tab = searchParams.get('tab');
-    const paymentSuccess = searchParams.get('paymentSuccess');
-    
+    const searchParams = new URLSearchParams(window.location.search)
+    const tab = searchParams.get('tab')
+    const paymentSuccess = searchParams.get('paymentSuccess')
+
     if (tab === 'history') {
-      setRightSideTab('history');
+      setRightSideTab('history')
     }
-    
+
     if (paymentSuccess) {
-      setPaymentSuccessId(paymentSuccess);
-      
+      setPaymentSuccessId(paymentSuccess)
+
       // Immediately refresh the videos list to get updated payment status
       const refreshVideos = async () => {
         try {
-          const response = await fetch('/api/generated-media');
+          const response = await fetch('/api/generated-media')
           if (response.ok) {
-            const data = await response.json();
+            const data = await response.json()
             if (data.files) {
               // Convert strings back to BigInt if needed
               const videos = data.files.map(video => ({
                 ...video,
                 fileSize: BigInt(video.fileSize || 0),
-              }));
-              setGeneratedVideos(videos);
+              }))
+              setGeneratedVideos(videos)
             }
           }
         } catch (error) {
-          console.error('Error refreshing videos after payment:', error);
+          console.error('Error refreshing videos after payment:', error)
         }
-      };
-      
-      refreshVideos();
-      
+      }
+
+      refreshVideos()
+
       // Clear payment success parameter from URL after 5 seconds
       setTimeout(() => {
-        const newUrl = new URL(window.location.href);
-        newUrl.searchParams.delete('paymentSuccess');
-        window.history.replaceState({}, '', newUrl);
-        
+        const newUrl = new URL(window.location.href)
+        newUrl.searchParams.delete('paymentSuccess')
+        window.history.replaceState({}, '', newUrl)
+
         // Keep success message for a bit longer than URL param
         setTimeout(() => {
-          setPaymentSuccessId(null);
-          
+          setPaymentSuccessId(null)
+
           // Refresh videos list again after success message disappears
-          refreshVideos();
-        }, 3000);
-      }, 2000);
+          refreshVideos()
+        }, 3000)
+      }, 2000)
     }
   }, [])
   // Store just the paths as strings for form data
@@ -91,61 +91,61 @@ export default function FaceFusion() {
     { id: 'video', label: 'Video' },
     { id: 'image', label: 'Image' },
     { id: 'gif', label: 'GIF' },
-    { id: 'multi-face', label: 'Multi-face' }
+    { id: 'multi-face', label: 'Multi-face' },
   ]
 
   // Load templates from database
   useEffect(() => {
     const loadTemplates = async () => {
       try {
-        const response = await fetch('/api/templates');
+        const response = await fetch('/api/templates')
         if (!response.ok) {
-          throw new Error('Failed to load templates');
+          throw new Error('Failed to load templates')
         }
-        const data = await response.json();
-        console.log('Loaded templates from server:', data.templates);
-        setVideoTargets(data.templates);
-        setTemplates(data.templates);
+        const data = await response.json()
+        console.log('Loaded templates from server:', data.templates)
+        setVideoTargets(data.templates)
+        setTemplates(data.templates)
         // Do not auto-select first template on initial load
         // Template will be selected when user clicks on it
       } catch (error) {
-        console.error('Error loading templates:', error);
-        setError('Failed to load templates');
+        console.error('Error loading templates:', error)
+        setError('Failed to load templates')
       } finally {
-        setLoading(false);
+        setLoading(false)
       }
-    };
+    }
 
-    loadTemplates();
-  }, []);    // Load generated videos when component mounts
+    loadTemplates()
+  }, []) // Load generated videos when component mounts
   useEffect(() => {
     const loadGeneratedVideos = async () => {
       try {
-        const response = await fetch('/api/generated-media');
+        const response = await fetch('/api/generated-media')
         if (!response.ok) {
-          throw new Error('Failed to load generated videos');
+          throw new Error('Failed to load generated videos')
         }
-        const data = await response.json();
-        
+        const data = await response.json()
+
         if (data.files) {
           // Convert strings back to BigInt if needed
           const videos = data.files.map(video => ({
             ...video,
             fileSize: BigInt(video.fileSize || 0), // Convert back to BigInt
-          }));
-          setGeneratedVideos(videos);
+          }))
+          setGeneratedVideos(videos)
         }
       } catch (error) {
-        console.error('Error loading generated videos:', error);
-        setError('Failed to load generated videos');
+        console.error('Error loading generated videos:', error)
+        setError('Failed to load generated videos')
       }
-    };
+    }
 
-    loadGeneratedVideos();
-  }, [result]); // Reload when new video is generated
+    loadGeneratedVideos()
+  }, [result]) // Reload when new video is generated
 
-   // Load image sources from API
-   useEffect(() => {
+  // Load image sources from API
+  useEffect(() => {
     const loadImageSources = async () => {
       try {
         const response = await fetch('/api/face-sources')
@@ -157,7 +157,7 @@ export default function FaceFusion() {
               id: file.id,
               name: file.filename,
               imagePath: file.filePath,
-              createdAt: file.createdAt || 0
+              createdAt: file.createdAt || 0,
             }))
             .sort((a, b) => b.createdAt - a.createdAt) // Sort by creation time descending
           setImageSources(sources)
@@ -170,77 +170,76 @@ export default function FaceFusion() {
     loadImageSources()
   }, [])
 
-
-  const handleTargetSelect = (target) => {
+  const handleTargetSelect = target => {
     setSelectedTarget(target)
     setTargetPath(target.filePath)
   }
 
-  const handleSourceUpload = async (e) => {
-    const file = e.target.files?.[0];
+  const handleSourceUpload = async e => {
+    const file = e.target.files?.[0]
     if (file) {
       try {
-        setProcessing(true);
-        setError(null);
-        
-        const formData = new FormData();
-        formData.append('file', file);
+        setProcessing(true)
+        setError(null)
+
+        const formData = new FormData()
+        formData.append('file', file)
 
         const response = await fetch('/api/upload-source', {
           method: 'POST',
           body: formData,
-        });
+        })
 
         if (!response.ok) {
-          throw new Error('Upload failed');
+          throw new Error('Upload failed')
         }
 
-        const data = await response.json();
-        const sourcePath = `/sources/${data.filename}`;
-        
+        const data = await response.json()
+        const sourcePath = `/sources/${data.filename}`
+
         // Update both selected source and source path
         const newSource = {
           preview: sourcePath,
-          name: data.filename
-        };
-        setSelectedSource(newSource);
-        setSourcePath(sourcePath);
+          name: data.filename,
+        }
+        setSelectedSource(newSource)
+        setSourcePath(sourcePath)
 
         // Add the new image to the beginning of imageSources
         const newImage = {
           id: Date.now(), // Use timestamp as temporary id
           name: data.filename,
           imagePath: sourcePath,
-          createdAt: Date.now()
-        };
-        
-        setImageSources(prev => [newImage, ...prev]);
+          createdAt: Date.now(),
+        }
+
+        setImageSources(prev => [newImage, ...prev])
       } catch (error) {
-        console.error('Error uploading file:', error);
-        setError('Failed to upload image');
+        console.error('Error uploading file:', error)
+        setError('Failed to upload image')
       } finally {
-        setProcessing(false);
+        setProcessing(false)
       }
     }
-  };
+  }
 
-  const handleSourceSelect = (image) => {
+  const handleSourceSelect = image => {
     setSelectedSource({
       preview: image.imagePath,
-      name: image.name
-    });
-    setSourcePath(image.imagePath);
-  };
+      name: image.name,
+    })
+    setSourcePath(image.imagePath)
+  }
 
   const handleSubmit = async () => {
     console.log('handleSubmit: ', sourcePath, targetPath)
-    
+
     if (!sourcePath || !targetPath) {
       return
     }
 
-    setProcessing(true)      
-    setProgress(0)  // Reset progress
+    setProcessing(true)
+    setProgress(0) // Reset progress
     setError(null)
     setResult(null)
 
@@ -250,10 +249,10 @@ export default function FaceFusion() {
         setProgress(prevProgress => {
           // Progressive increments with slower growth as we approach 90%
           // This gives a more realistic feeling of progress
-          const increment = Math.max(0.5, (95 - prevProgress) / 10);
-          return Math.min(prevProgress + increment, 95);
-        });
-      }, 300);
+          const increment = Math.max(0.5, (95 - prevProgress) / 10)
+          return Math.min(prevProgress + increment, 95)
+        })
+      }, 300)
 
       // Submit form data
       const response = await fetch('/api/face-fusion', {
@@ -263,11 +262,11 @@ export default function FaceFusion() {
         },
         body: JSON.stringify({
           source: sourcePath,
-          target: targetPath
-        })
+          target: targetPath,
+        }),
       })
 
-      clearInterval(progressInterval);  // Clean up interval
+      clearInterval(progressInterval) // Clean up interval
 
       if (!response.ok) {
         const error = await response.text()
@@ -275,60 +274,60 @@ export default function FaceFusion() {
       }
 
       // Set progress to 100% when complete
-      setProgress(100);
-      
+      setProgress(100)
+
       const generatedVideo = await response.json()
       setResult(generatedVideo)
       setRightSideTab('history') // Switch to history tab after successful generation
     } catch (error) {
       console.error('Face swap error:', error)
       setError(error.message)
-      setProgress(0)  // Reset progress on error
+      setProgress(0) // Reset progress on error
     } finally {
       setTimeout(() => {
         setProcessing(false)
-      }, 500); // Slight delay to show 100% progress
+      }, 500) // Slight delay to show 100% progress
     }
   }
 
-  const handleVideoClick = (video) => {
+  const handleVideoClick = video => {
     setSelectedVideo(video)
   }
 
   // Note: Delete functionality is now handled only in the admin area, not in user-facing UI
-  
+
   // Handle download of video
-  const handleDownload = async (video) => {
+  const handleDownload = async video => {
     if (!video.isPaid) {
-      setError('Please purchase the video to download');
-      
+      setError('Please purchase the video to download')
+
       // Open the video modal for payment
-      setSelectedVideo(video);
-      return;
+      setSelectedVideo(video)
+      return
     }
-    
+
     try {
-      const response = await fetch(`/api/download-media?filename=${video.name}`);
+      const response = await fetch(`/api/download-media?filename=${video.name}`)
       if (!response.ok) {
         // Check if it's a payment issue
         if (response.status === 403) {
-          setError('Please purchase the video to download');
-          setSelectedVideo(video); // Open the modal for payment
-          return;
+          setError('Please purchase the video to download')
+          setSelectedVideo(video) // Open the modal for payment
+          return
         }
-        throw new Error('Failed to download video');
+        throw new Error('Failed to download video')
       }
-      
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = video.name;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-      
+
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = video.name
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
+
       // Update download count
       try {
         await fetch(`/api/generated-media/${video.id}`, {
@@ -337,24 +336,24 @@ export default function FaceFusion() {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            downloadCount: video.downloadCount ? video.downloadCount + 1 : 1
-          })
-        });
+            downloadCount: video.downloadCount ? video.downloadCount + 1 : 1,
+          }),
+        })
       } catch (err) {
-        console.error('Error updating download count:', err);
+        console.error('Error updating download count:', err)
       }
     } catch (error) {
-      console.error('Error downloading video:', error);
-      setError('Failed to download video');
+      console.error('Error downloading video:', error)
+      setError('Failed to download video')
     }
   }
-  
+
   // Handle deletion of video
-  const handleDelete = (video) => {
+  const handleDelete = video => {
     // Update the UI by removing the video from generatedVideos
-    setGeneratedVideos((prev) => prev.filter((item) => item.id !== video.id));
+    setGeneratedVideos(prev => prev.filter(item => item.id !== video.id))
     // Close the modal
-    setSelectedVideo(null);
+    setSelectedVideo(null)
   }
 
   const handleSourceDelete = async (image, e) => {
@@ -363,7 +362,7 @@ export default function FaceFusion() {
       const response = await fetch('/api/face-sources', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ filename: image.name })
+        body: JSON.stringify({ filename: image.name }),
       })
 
       if (response.ok) {
@@ -380,40 +379,40 @@ export default function FaceFusion() {
     }
   }
 
-  const handleTargetUploadWrapper = async (e) => {
-    const file = e.target.files?.[0];
+  const handleTargetUploadWrapper = async e => {
+    const file = e.target.files?.[0]
     if (file) {
       try {
         // Check file size (500MB limit)
         if (file.size > 150 * 1024 * 1024) {
-          setError('File size exceeds 150MB limit');
-          return;
+          setError('File size exceeds 150MB limit')
+          return
         }
 
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('templateType', 'video');
+        const formData = new FormData()
+        formData.append('file', file)
+        formData.append('templateType', 'video')
 
         console.log('Uploading file:', {
           name: file.name,
           type: file.type,
-          size: file.size
-        });
+          size: file.size,
+        })
 
         const response = await fetch('/api/upload-template', {
           method: 'POST',
           body: formData,
-        });
+        })
 
         if (!response.ok) {
-          const errorData = await response.text();
-          console.error('Upload failed with status:', response.status, 'Error:', errorData);
-          throw new Error(`Upload failed: ${errorData}`);
+          const errorData = await response.text()
+          console.error('Upload failed with status:', response.status, 'Error:', errorData)
+          throw new Error(`Upload failed: ${errorData}`)
         }
 
-        const data = await response.json();
-        console.log('Upload response:', data);
-        
+        const data = await response.json()
+        console.log('Upload response:', data)
+
         // Create a new template object matching the database schema
         const newTemplate = {
           id: data.id,
@@ -423,52 +422,52 @@ export default function FaceFusion() {
           thumbnailPath: data.thumbnailPath,
           duration: data.duration,
           fileSize: BigInt(data.fileSize), // Convert string back to BigInt
-          mimeType: data.mimeType
-        };
+          mimeType: data.mimeType,
+        }
 
-        console.log('Created template object:', newTemplate);
+        console.log('Created template object:', newTemplate)
 
         // Update both templates and videoTargets
-        setTemplates(prev => [newTemplate, ...prev]);
-        setVideoTargets(prev => [newTemplate, ...prev]);
-        
+        setTemplates(prev => [newTemplate, ...prev])
+        setVideoTargets(prev => [newTemplate, ...prev])
+
         // Select the new template - this will update both the middle preview and the face selection circle
-        setSelectedTemplate(newTemplate);
-        setSelectedFace(0); // Reset face selection
-        setTargetPath(newTemplate.filePath); // Ensure target path is updated
+        setSelectedTemplate(newTemplate)
+        setSelectedFace(0) // Reset face selection
+        setTargetPath(newTemplate.filePath) // Ensure target path is updated
       } catch (error) {
-        console.error('Error uploading template:', error);
-        setError(error.message || 'Failed to upload template');
+        console.error('Error uploading template:', error)
+        setError(error.message || 'Failed to upload template')
       }
     }
-  };
+  }
 
-  const handleImageUploadWrapper = async (e) => {
-    const file = e.target.files?.[0];
+  const handleImageUploadWrapper = async e => {
+    const file = e.target.files?.[0]
     if (file) {
       try {
         // Check file size (10MB limit)
         if (file.size > 10 * 1024 * 1024) {
-          setError('File size exceeds 10MB limit');
-          return;
+          setError('File size exceeds 10MB limit')
+          return
         }
 
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('templateType', 'image');
+        const formData = new FormData()
+        formData.append('file', file)
+        formData.append('templateType', 'image')
 
         const response = await fetch('/api/upload-template', {
           method: 'POST',
           body: formData,
-        });
+        })
 
         if (!response.ok) {
-          const errorData = await response.text();
-          throw new Error(`Upload failed: ${errorData}`);
+          const errorData = await response.text()
+          throw new Error(`Upload failed: ${errorData}`)
         }
 
-        const data = await response.json();
-        
+        const data = await response.json()
+
         // Create a new template object
         const newTemplate = {
           id: data.id,
@@ -478,50 +477,50 @@ export default function FaceFusion() {
           thumbnailPath: data.thumbnailPath,
           duration: data.duration,
           fileSize: BigInt(data.fileSize),
-          mimeType: data.mimeType
-        };
+          mimeType: data.mimeType,
+        }
 
         // Update both templates and videoTargets
-        setTemplates(prev => [newTemplate, ...prev]);
-        setVideoTargets(prev => [newTemplate, ...prev]);
-        
+        setTemplates(prev => [newTemplate, ...prev])
+        setVideoTargets(prev => [newTemplate, ...prev])
+
         // Select the new template
-        setSelectedTemplate(newTemplate);
-        setSelectedFace(0);
-        setTargetPath(newTemplate.filePath); // Ensure target path is updated
+        setSelectedTemplate(newTemplate)
+        setSelectedFace(0)
+        setTargetPath(newTemplate.filePath) // Ensure target path is updated
       } catch (error) {
-        console.error('Error uploading image:', error);
-        setError(error.message || 'Failed to upload image');
+        console.error('Error uploading image:', error)
+        setError(error.message || 'Failed to upload image')
       }
     }
-  };
+  }
 
-  const handleGifUploadWrapper = async (e) => {
-    const file = e.target.files?.[0];
+  const handleGifUploadWrapper = async e => {
+    const file = e.target.files?.[0]
     if (file) {
       try {
         // Check file size (50MB limit)
         if (file.size > 50 * 1024 * 1024) {
-          setError('File size exceeds 50MB limit');
-          return;
+          setError('File size exceeds 50MB limit')
+          return
         }
 
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('templateType', 'gif');
+        const formData = new FormData()
+        formData.append('file', file)
+        formData.append('templateType', 'gif')
 
         const response = await fetch('/api/upload-template', {
           method: 'POST',
           body: formData,
-        });
+        })
 
         if (!response.ok) {
-          const errorData = await response.text();
-          throw new Error(`Upload failed: ${errorData}`);
+          const errorData = await response.text()
+          throw new Error(`Upload failed: ${errorData}`)
         }
 
-        const data = await response.json();
-        
+        const data = await response.json()
+
         // Create a new template object
         const newTemplate = {
           id: data.id,
@@ -531,53 +530,53 @@ export default function FaceFusion() {
           thumbnailPath: data.thumbnailPath,
           duration: data.duration,
           fileSize: BigInt(data.fileSize),
-          mimeType: data.mimeType
-        };
+          mimeType: data.mimeType,
+        }
 
         // Update both templates and videoTargets
-        setTemplates(prev => [newTemplate, ...prev]);
-        setVideoTargets(prev => [newTemplate, ...prev]);
-        
+        setTemplates(prev => [newTemplate, ...prev])
+        setVideoTargets(prev => [newTemplate, ...prev])
+
         // Select the new template
-        setSelectedTemplate(newTemplate);
-        setSelectedFace(0);
-        setTargetPath(newTemplate.filePath); // Ensure target path is updated
+        setSelectedTemplate(newTemplate)
+        setSelectedFace(0)
+        setTargetPath(newTemplate.filePath) // Ensure target path is updated
       } catch (error) {
-        console.error('Error uploading GIF:', error);
-        setError(error.message || 'Failed to upload GIF');
+        console.error('Error uploading GIF:', error)
+        setError(error.message || 'Failed to upload GIF')
       }
     }
-  };
+  }
 
-  const handleMultiFaceUploadWrapper = async (e) => {
-    const files = Array.from(e.target.files);
+  const handleMultiFaceUploadWrapper = async e => {
+    const files = Array.from(e.target.files)
     if (files.length > 0) {
       try {
         // Check if any file exceeds 10MB
-        const oversizedFiles = files.filter(file => file.size > 10 * 1024 * 1024);
+        const oversizedFiles = files.filter(file => file.size > 10 * 1024 * 1024)
         if (oversizedFiles.length > 0) {
-          setError('Some files exceed 10MB limit');
-          return;
+          setError('Some files exceed 10MB limit')
+          return
         }
 
         // Upload each file
         for (const file of files) {
-          const formData = new FormData();
-          formData.append('file', file);
-          formData.append('templateType', 'multi-face');
+          const formData = new FormData()
+          formData.append('file', file)
+          formData.append('templateType', 'multi-face')
 
           const response = await fetch('/api/upload-template', {
             method: 'POST',
             body: formData,
-          });
+          })
 
           if (!response.ok) {
-            const errorData = await response.text();
-            throw new Error(`Upload failed: ${errorData}`);
+            const errorData = await response.text()
+            throw new Error(`Upload failed: ${errorData}`)
           }
 
-          const data = await response.json();
-          
+          const data = await response.json()
+
           // Create a new template object
           const newTemplate = {
             id: data.id,
@@ -587,70 +586,70 @@ export default function FaceFusion() {
             thumbnailPath: data.thumbnailPath,
             duration: data.duration,
             fileSize: BigInt(data.fileSize),
-            mimeType: data.mimeType
-          };
+            mimeType: data.mimeType,
+          }
 
           // Update both templates and videoTargets
-          setTemplates(prev => [newTemplate, ...prev]);
-          setVideoTargets(prev => [newTemplate, ...prev]);
-          
+          setTemplates(prev => [newTemplate, ...prev])
+          setVideoTargets(prev => [newTemplate, ...prev])
+
           // For multi-face upload, also select the template after upload
-          setSelectedTemplate(newTemplate);
-          setSelectedFace(0);
-          setTargetPath(newTemplate.filePath); // Ensure target path is updated
+          setSelectedTemplate(newTemplate)
+          setSelectedFace(0)
+          setTargetPath(newTemplate.filePath) // Ensure target path is updated
         }
       } catch (error) {
-        console.error('Error uploading multi-face images:', error);
-        setError(error.message || 'Failed to upload multi-face images');
+        console.error('Error uploading multi-face images:', error)
+        setError(error.message || 'Failed to upload multi-face images')
       }
     }
-  };
+  }
 
   const handleDeleteTemplate = async (id, e) => {
-    e.stopPropagation(); // Prevent triggering the select handler
+    e.stopPropagation() // Prevent triggering the select handler
     try {
       const response = await fetch(`/api/delete-template?id=${id}`, {
         method: 'DELETE',
-      });
+      })
 
       if (!response.ok) {
-        throw new Error('Failed to delete template');
+        throw new Error('Failed to delete template')
       }
 
       // Remove from both templates and videoTargets
-      setTemplates(prev => prev.filter(template => template.id !== id));
-      setVideoTargets(prev => prev.filter(template => template.id !== id));
-      
+      setTemplates(prev => prev.filter(template => template.id !== id))
+      setVideoTargets(prev => prev.filter(template => template.id !== id))
+
       // If the deleted template was selected, clear the selection
       if (selectedTemplate?.id === id) {
-        setSelectedTemplate(null);
-        setSelectedFace(null);
-        setTargetPath(null);
+        setSelectedTemplate(null)
+        setSelectedFace(null)
+        setTargetPath(null)
       }
     } catch (error) {
-      console.error('Error deleting template:', error);
-      setError('Failed to delete template');
+      console.error('Error deleting template:', error)
+      setError('Failed to delete template')
     }
-  };
+  }
 
-  const handleTemplateAndSourceSelect = (template) => {
+  const handleTemplateAndSourceSelect = template => {
     // Set the template as the target - this will update both the middle preview and the first circle
-    setSelectedTemplate(template);
-    setTargetPath(template.filePath);
-    
-    // We don't update the source (second circle) so it remains unchanged
-    
-    setSelectedFace(0); // Reset face selection
-  };
+    setSelectedTemplate(template)
+    setTargetPath(template.filePath)
 
-  const handleTemplateSelect = (template) => {
-    setSelectedTemplate(template);
-    setTargetPath(template.filePath);
-    setSelectedFace(0); // Reset face selection when template changes
-  };
+    // We don't update the source (second circle) so it remains unchanged
+
+    setSelectedFace(0) // Reset face selection
+  }
+
+  const handleTemplateSelect = template => {
+    setSelectedTemplate(template)
+    setTargetPath(template.filePath)
+    setSelectedFace(0) // Reset face selection when template changes
+  }
 
   if (loading) {
-    return <div className="flex items-center justify-center h-screen">Loading...</div>;
+    return <div className="flex items-center justify-center h-screen">Loading...</div>
   }
 
   return (
@@ -660,7 +659,7 @@ export default function FaceFusion() {
         {/* Tab Navigation */}
         <div className="p-2 border-b border-gray-800">
           <div className="flex space-x-2">
-            {tabOptions.map((tab) => (
+            {tabOptions.map(tab => (
               <button
                 key={tab.id}
                 onClick={() => setSelectedTab(tab.id)}
@@ -675,7 +674,7 @@ export default function FaceFusion() {
             ))}
           </div>
         </div>
-        
+
         {/* Tab Content */}
         <div className="flex-1 overflow-y-auto">
           <TabContent
@@ -698,21 +697,24 @@ export default function FaceFusion() {
         <div className="flex items-center justify-center gap-3">
           <div className="w-12 h-12 relative overflow-hidden">
             <div className="absolute inset-0 w-full h-full overflow-hidden">
-              <div className="absolute inset-0 animate-pulse" style={{ 
-                background: 'linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%)',
-                opacity: 0.85,
-                mixBlendMode: 'color',
-                zIndex: 10 
-              }}></div>
+              <div
+                className="absolute inset-0 animate-pulse"
+                style={{
+                  background: 'linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%)',
+                  opacity: 0.85,
+                  mixBlendMode: 'color',
+                  zIndex: 10,
+                }}
+              ></div>
             </div>
             <Image
               src={'/face.webp'}
               alt="Face Changing"
               fill
               className="object-contain"
-              style={{ 
+              style={{
                 zIndex: 5,
-                filter: 'contrast(1.2) brightness(1.1)'
+                filter: 'contrast(1.2) brightness(1.1)',
               }}
               priority
             />
@@ -726,18 +728,16 @@ export default function FaceFusion() {
         </div>
 
         {selectedTemplate ? (
-          <div 
-            className="w-[calc(100%-160px)] h-[calc(100vh-240px)] max-h-[480px] bg-[#2a2832] rounded-[20px] border-2 border-dashed border-white/70 relative mt-3 flex items-center justify-center"
-          >
+          <div className="w-[calc(100%-160px)] h-[calc(100vh-240px)] max-h-[480px] bg-[#2a2832] rounded-[20px] border-2 border-dashed border-white/70 relative mt-3 flex items-center justify-center">
             {/* Close button for clearing selection */}
             <div className="absolute top-2 right-2 z-10">
-              <CloseButton 
+              <CloseButton
                 onClick={() => {
-                  setSelectedTemplate(null);
-                  setTargetPath(null);
-                  setSelectedFace(null);
-                  setSelectedSource(null);
-                  setSourcePath(null);
+                  setSelectedTemplate(null)
+                  setTargetPath(null)
+                  setSelectedFace(null)
+                  setSelectedSource(null)
+                  setSourcePath(null)
                 }}
                 variant="dark"
               />
@@ -751,23 +751,28 @@ export default function FaceFusion() {
                   poster={selectedTemplate.thumbnailPath}
                 />
               ) : (
-                <img
+                <Image
                   src={selectedTemplate.filePath}
                   alt={selectedTemplate.filename}
-                  className="w-full h-full object-contain rounded-lg"
+                  className="object-contain rounded-lg"
+                  width={800}
+                  height={600}
+                  style={{ width: '100%', height: '100%' }}
                 />
               )}
             </div>
           </div>
         ) : (
-          <div 
-            className="w-[calc(100%-160px)] h-[calc(100vh-240px)] max-h-[480px] bg-[#2a2832] rounded-[20px] border-2 border-dashed border-white/70 relative mt-3 flex items-center justify-center"
-          >
+          <div className="w-[calc(100%-160px)] h-[calc(100vh-240px)] max-h-[480px] bg-[#2a2832] rounded-[20px] border-2 border-dashed border-white/70 relative mt-3 flex items-center justify-center">
             <div className="text-center p-12 space-y-6">
               <div className="flex flex-col items-center space-y-4">
                 <ArrowLeftRight className="w-12 h-12 text-blue-500 mb-2" />
-                <p className="text-xl text-gray-300 font-medium">Step 1: Select a template to preview</p>
-                <p className="text-xl text-gray-300 font-medium">Step 2: Add a face from the right panel, then generate</p>
+                <p className="text-xl text-gray-300 font-medium">
+                  Step 1: Select a template to preview
+                </p>
+                <p className="text-xl text-gray-300 font-medium">
+                  Step 2: Add a face from the right panel, then generate
+                </p>
               </div>
             </div>
           </div>
@@ -789,9 +794,9 @@ export default function FaceFusion() {
             >
               Face Swap
               <span className="text-gray-400 ml-0">
-                <Info 
-                  className="inline-block ml-1 w-4 h-4 text-gray-400 cursor-pointer hover:text-gray-300" 
-                  onClick={() => setIsModalOpen(true)} 
+                <Info
+                  className="inline-block ml-1 w-4 h-4 text-gray-400 cursor-pointer hover:text-gray-300"
+                  onClick={() => setIsModalOpen(true)}
                 />
               </span>
             </button>
@@ -845,8 +850,8 @@ export default function FaceFusion() {
 
               {processing && (
                 <div className="w-full bg-gray-700 rounded-full h-2.5 mt-4">
-                  <div 
-                    className="bg-blue-500 h-2.5 rounded-full" 
+                  <div
+                    className="bg-blue-500 h-2.5 rounded-full"
                     style={{ width: `${progress}%` }}
                   ></div>
                 </div>
@@ -868,8 +873,8 @@ export default function FaceFusion() {
             <div className="p-4">
               <h2 className="text-lg font-bold mb-4 text-white">Generated Media</h2>
               <div className="grid grid-cols-2 gap-4">
-                {generatedVideos.map((media) => (
-                  <div 
+                {generatedVideos.map(media => (
+                  <div
                     key={media.id}
                     className="bg-[#2a2d34] p-3 rounded-lg cursor-pointer hover:bg-[#3a3d44] transition-colors"
                     onClick={() => handleVideoClick(media)}
@@ -877,12 +882,14 @@ export default function FaceFusion() {
                     {media.type === 'video' ? (
                       <div className="relative">
                         <video
-                          src={media.isPaid ? media.filePath : media.watermarkPath || media.filePath}
+                          src={
+                            media.isPaid ? media.filePath : media.watermarkPath || media.filePath
+                          }
                           className="w-full h-32 rounded-lg mb-2"
                           autoPlay
                           loop
                           muted
-                          style={{ "borderRadius": "8px", objectFit: "cover" }}
+                          style={{ borderRadius: '8px', objectFit: 'cover' }}
                         />
                         {!media.isPaid && (
                           <div className="absolute inset-0 flex items-center justify-center bg-black/30">
@@ -899,11 +906,20 @@ export default function FaceFusion() {
                       </div>
                     ) : (
                       <div className="relative">
-                        <img
-                          src={media.isPaid ? media.filePath : media.watermarkPath || media.filePath}
+                        <Image
+                          src={
+                            media.isPaid ? media.filePath : media.watermarkPath || media.filePath
+                          }
                           alt={media.name}
-                          className="w-full h-32 rounded-lg mb-2"
-                          style={{ "borderRadius": "8px", objectFit: "cover" }}
+                          width={300}
+                          height={128}
+                          className="rounded-lg mb-2"
+                          style={{
+                            width: '100%',
+                            height: '8rem',
+                            objectFit: 'cover',
+                            borderRadius: '8px',
+                          }}
                         />
                         {!media.isPaid && (
                           <div className="absolute inset-0 flex items-center justify-center bg-black/30">
@@ -920,15 +936,13 @@ export default function FaceFusion() {
                       </div>
                     )}
                     <div className="flex justify-between items-center">
-                      <div className="text-sm text-gray-400">
-                        {media.name}
-                      </div>
+                      <div className="text-sm text-gray-400">{media.name}</div>
                       <div className="flex gap-1">
                         {media.isPaid ? (
                           <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDownload(media);
+                            onClick={e => {
+                              e.stopPropagation()
+                              handleDownload(media)
                             }}
                             className="p-1 hover:bg-blue-500/20 rounded"
                             title="Download"
@@ -936,11 +950,7 @@ export default function FaceFusion() {
                             <Download className="w-4 h-4 text-blue-500" />
                           </button>
                         ) : (
-                          <StripeCheckoutButton 
-                            video={media} 
-                            disabled={false} 
-                            small={true} 
-                          />
+                          <StripeCheckoutButton video={media} disabled={false} small={true} />
                         )}
                       </div>
                     </div>
@@ -964,12 +974,7 @@ export default function FaceFusion() {
         />
       )}
 
-      {isModalOpen && (
-        <GuidelineModal 
-          isOpen={isModalOpen} 
-          onClose={() => setIsModalOpen(false)} 
-        />
-      )}
+      {isModalOpen && <GuidelineModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />}
     </div>
   )
 }

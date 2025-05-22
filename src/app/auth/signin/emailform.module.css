@@ -48,7 +48,9 @@
   border: 1px solid #e2e8f0;
   border-radius: 0.5rem;
   background-color: #f8fafc;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .input:hover {
@@ -61,11 +63,11 @@
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
 }
 
-.input[aria-invalid="true"] {
+.input[aria-invalid='true'] {
   border-color: #ef4444;
 }
 
-.input[aria-invalid="true"]:focus {
+.input[aria-invalid='true']:focus {
   box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
 }
 
@@ -163,7 +165,9 @@
   cursor: pointer;
   padding: 0.25rem 0.5rem;
   border-radius: 0.25rem;
-  transition: color 0.2s ease, background-color 0.2s ease;
+  transition:
+    color 0.2s ease,
+    background-color 0.2s ease;
 }
 
 .forgotLink:hover {

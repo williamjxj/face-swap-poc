@@ -4,9 +4,11 @@ import { PrismaClient } from '@prisma/client'
 const globalForPrisma = global || globalThis
 
 // Initialize PrismaClient
-export const db = globalForPrisma.prisma || new PrismaClient({
-  log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
-})
+export const db =
+  globalForPrisma.prisma ||
+  new PrismaClient({
+    log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
+  })
 
 // Set the global prisma instance in development
 if (process.env.NODE_ENV !== 'production') {

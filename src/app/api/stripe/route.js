@@ -1,25 +1,22 @@
-import { NextResponse } from 'next/server';
-import stripe from '@/lib/stripe';
+import { NextResponse } from 'next/server'
+import stripe from '@/lib/stripe'
 
 export async function POST(request) {
   try {
-    const { name, description, amount, currency, imageId, videoId } = await request.json();
+    const { name, description, amount, currency, imageId, videoId } = await request.json()
 
     if (!name || !description || !amount || !currency) {
-      return NextResponse.json(
-        { error: 'Missing required session details' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Missing required session details' }, { status: 400 })
     }
 
     // Get the base URL from environment variables
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
-    
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL
+
     if (!baseUrl) {
       return NextResponse.json(
         { error: 'Missing NEXT_PUBLIC_BASE_URL environment variable' },
         { status: 500 }
-      );
+      )
     }
 
     const session = await stripe.checkout.sessions.create({
@@ -45,14 +42,14 @@ export async function POST(request) {
         imageId: imageId || '',
         videoId: videoId || '',
       },
-    });
+    })
 
-    return NextResponse.json({ sessionId: session.id });
+    return NextResponse.json({ sessionId: session.id })
   } catch (error) {
-    console.error('Stripe API Error:', error);
+    console.error('Stripe API Error:', error)
     return NextResponse.json(
       { error: error.message || 'Failed to create Stripe session' },
       { status: 500 }
-    );
+    )
   }
 }

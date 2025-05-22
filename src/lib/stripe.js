@@ -1,7 +1,7 @@
-import Stripe from "stripe";
+import Stripe from 'stripe'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: "2023-10-16", // Updated to a more recent API version
+  apiVersion: '2023-10-16', // Updated to a more recent API version
   typescript: true,
-});
-export default stripe;
+})
+export default stripe

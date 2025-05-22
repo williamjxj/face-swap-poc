@@ -1,6 +1,6 @@
 export async function GET() {
-  return Response.json({ 
+  return Response.json({
     message: 'Gallery API endpoint',
-    images: []
+    images: [],
   })
 }

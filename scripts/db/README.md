@@ -35,11 +35,13 @@ The original script for checking local database statistics.
 Your application has three database connections configured:
 
 1. **Local Database**
+
    - Connection string: `LOCAL_DATABASE_URL`
    - Used for local development
    - PostgreSQL running on localhost
 
 2. **Neon Cloud Database**
+
    - Connection string: `DATABASE_URL` and `NEON_DATABASE_URL`
    - Serverless PostgreSQL hosted in the cloud
    - Production-ready with automatic scaling

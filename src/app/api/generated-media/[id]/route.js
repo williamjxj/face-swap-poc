@@ -1,96 +1,96 @@
-import { NextResponse } from 'next/server';
-import prisma from '@/lib/db';
+import { NextResponse } from 'next/server'
+import prisma from '@/lib/db'
 
 // GET single generated media
 export async function GET(request, { params }) {
   try {
-    const { id } = params;
+    const { id } = params
     const generatedMedia = await prisma.generatedMedia.findUnique({
       where: { id },
       include: {
         author: true,
         targetTemplate: true,
-        faceSource: true
-      }
-    });
-    
+        faceSource: true,
+      },
+    })
+
     if (!generatedMedia) {
-      return NextResponse.json({ error: 'Generated media not found' }, { status: 404 });
+      return NextResponse.json({ error: 'Generated media not found' }, { status: 404 })
     }
-    
-    return NextResponse.json(generatedMedia);
+
+    return NextResponse.json(generatedMedia)
   } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }
 
 // PUT (update) generated media
 export async function PUT(request, { params }) {
   try {
-    const { id } = params;
-    const data = await request.json();
-    
+    const { id } = params
+    const data = await request.json()
+
     // Get the existing media item first
     const existingMedia = await prisma.generatedMedia.findUnique({
-      where: { id }
-    });
-    
+      where: { id },
+    })
+
     if (!existingMedia) {
-      return NextResponse.json({ error: 'Media not found' }, { status: 404 });
+      return NextResponse.json({ error: 'Media not found' }, { status: 404 })
     }
-    
+
     // Only update fields that were provided in the request
-    const updateData = {};
-    
-    if (data.name !== undefined) updateData.name = data.name;
-    if (data.type !== undefined) updateData.type = data.type;
-    if (data.tempPath !== undefined) updateData.tempPath = data.tempPath;
-    if (data.filePath !== undefined) updateData.filePath = data.filePath;
-    if (data.thumbnailPath !== undefined) updateData.thumbnailPath = data.thumbnailPath;
-    if (data.fileSize !== undefined) updateData.fileSize = data.fileSize;
-    if (data.isPaid !== undefined) updateData.isPaid = data.isPaid;
-    if (data.isActive !== undefined) updateData.isActive = data.isActive;
-    
+    const updateData = {}
+
+    if (data.name !== undefined) updateData.name = data.name
+    if (data.type !== undefined) updateData.type = data.type
+    if (data.tempPath !== undefined) updateData.tempPath = data.tempPath
+    if (data.filePath !== undefined) updateData.filePath = data.filePath
+    if (data.thumbnailPath !== undefined) updateData.thumbnailPath = data.thumbnailPath
+    if (data.fileSize !== undefined) updateData.fileSize = data.fileSize
+    if (data.isPaid !== undefined) updateData.isPaid = data.isPaid
+    if (data.isActive !== undefined) updateData.isActive = data.isActive
+
     // Special handling for counters - increment instead of replace if they're set
     if (data.playCount !== undefined) {
-      updateData.playCount = existingMedia.playCount + 1;
+      updateData.playCount = existingMedia.playCount + 1
     }
-    
+
     if (data.downloadCount !== undefined) {
-      updateData.downloadCount = existingMedia.downloadCount + 1;
+      updateData.downloadCount = existingMedia.downloadCount + 1
     }
-    
+
     const updatedGeneratedMedia = await prisma.generatedMedia.update({
       where: { id },
-      data: updateData
-    });
-    
+      data: updateData,
+    })
+
     // Convert BigInt to string for response
     const serializedMedia = {
       ...updatedGeneratedMedia,
-      fileSize: updatedGeneratedMedia.fileSize.toString()
-    };
-    
-    return NextResponse.json(serializedMedia);
+      fileSize: updatedGeneratedMedia.fileSize.toString(),
+    }
+
+    return NextResponse.json(serializedMedia)
   } catch (error) {
-    console.error('Error updating generated media:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error('Error updating generated media:', error)
+    return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }
 
 // DELETE generated media
 export async function DELETE(request, { params }) {
   try {
-    const { id } = params;
-    
+    const { id } = params
+
     // Soft delete by setting isActive to false
     const deletedGeneratedMedia = await prisma.generatedMedia.update({
       where: { id },
-      data: { isActive: false }
-    });
-    
-    return NextResponse.json(deletedGeneratedMedia);
+      data: { isActive: false },
+    })
+
+    return NextResponse.json(deletedGeneratedMedia)
   } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }

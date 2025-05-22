@@ -1,37 +1,37 @@
-import Image from 'next/image';
-import { Plus } from 'lucide-react';
-import styles from './page.module.css';
-import { useState, useRef, useEffect } from 'react';
+import Image from 'next/image'
+import { Plus } from 'lucide-react'
+import styles from './page.module.css'
+import { useState, useRef, useEffect } from 'react'
 
-import Loading from '@/components/Loading';
+import Loading from '@/components/Loading'
 
 export default function FaceSelection({
   selectedTemplate,
-  selectedFace, 
-  onFaceSelect, 
-  imageSources, 
+  selectedFace,
+  onFaceSelect,
+  imageSources,
   selectedSource,
   onSourceSelect,
   onSourceUpload,
   onSourceDelete,
-  processing 
+  processing,
 }) {
   // State to manage tooltip
-  const [tooltip, setTooltip] = useState({ visible: false, content: '', position: { x: 0, y: 0 } });
-  const tooltipTimeoutRef = useRef(null);
-  
+  const [tooltip, setTooltip] = useState({ visible: false, content: '', position: { x: 0, y: 0 } })
+  const tooltipTimeoutRef = useRef(null)
+
   // Clear tooltip timeout when component unmounts
   useEffect(() => {
     return () => {
       if (tooltipTimeoutRef.current) {
-        clearTimeout(tooltipTimeoutRef.current);
+        clearTimeout(tooltipTimeoutRef.current)
       }
-    };
-  }, []);
+    }
+  }, [])
 
   // Handler for mouse enter event
   const handleMouseEnter = (image, e) => {
-    const rect = e.currentTarget.getBoundingClientRect();
+    const rect = e.currentTarget.getBoundingClientRect()
     // Set a 2-second timeout before showing the tooltip
     tooltipTimeoutRef.current = setTimeout(() => {
       setTooltip({
@@ -39,19 +39,19 @@ export default function FaceSelection({
         content: image.name || `Source ${image.id}`,
         position: {
           x: rect.left + rect.width / 2,
-          y: rect.top - 10
-        }
-      });
-    }, 2000); // 2000ms = 2 seconds
-  };
+          y: rect.top - 10,
+        },
+      })
+    }, 2000) // 2000ms = 2 seconds
+  }
 
   // Handler for mouse leave event
   const handleMouseLeave = () => {
     if (tooltipTimeoutRef.current) {
-      clearTimeout(tooltipTimeoutRef.current);
+      clearTimeout(tooltipTimeoutRef.current)
     }
-    setTooltip({ ...tooltip, visible: false });
-  };
+    setTooltip({ ...tooltip, visible: false })
+  }
 
   return (
     <div className="p-4">
@@ -98,7 +98,7 @@ export default function FaceSelection({
         <h2 className="text-lg font-bold mb-4 text-white">Source Images</h2>
         <div className="grid grid-cols-3 gap-2">
           {/* Upload button */}
-          <label 
+          <label
             className={`w-20 h-20 rounded-full border-2 border-dashed border-gray-600 flex items-center justify-center cursor-pointer hover:bg-[#2a2d34] transition-colors ${
               processing ? 'opacity-50 pointer-events-none' : ''
             }`}
@@ -110,30 +110,23 @@ export default function FaceSelection({
               onChange={onSourceUpload}
               disabled={processing}
             />
-            {processing ? (
-              <Loading />
-            ) : (
-              <Plus className="w-6 h-6 text-gray-400" />
-            )}
+            {processing ? <Loading /> : <Plus className="w-6 h-6 text-gray-400" />}
           </label>
-          
+
           {/* Source images */}
-          {imageSources.map((image) => (
-            <div 
-              key={image.id}
-              className="relative"
-            >
+          {imageSources.map(image => (
+            <div key={image.id} className="relative">
               <div
                 className={`w-20 h-20 rounded-full overflow-hidden cursor-pointer border-2 transition-all duration-200 ${
-                  selectedSource?.name === image.name 
-                    ? 'ring-2 ring-blue-500 scale-[1.02]' 
+                  selectedSource?.name === image.name
+                    ? 'ring-2 ring-blue-500 scale-[1.02]'
                     : 'hover:scale-[1.02] hover:ring-1 hover:ring-gray-400'
                 }`}
                 onClick={() => onSourceSelect(image)}
-                onMouseEnter={(e) => handleMouseEnter(image, e)}
+                onMouseEnter={e => handleMouseEnter(image, e)}
                 onMouseLeave={handleMouseLeave}
               >
-                <Image 
+                <Image
                   src={image.imagePath}
                   alt={`Source ${image.id}`}
                   width={80}
@@ -142,7 +135,7 @@ export default function FaceSelection({
                 />
               </div>
               <button
-                onClick={(e) => onSourceDelete(image, e)}
+                onClick={e => onSourceDelete(image, e)}
                 className="absolute top-1 right-1 bg-gray-800/80 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-gray-700/80 cursor-pointer"
               >
                 ×
@@ -154,13 +147,13 @@ export default function FaceSelection({
 
       {/* Tooltip component */}
       {tooltip.visible && (
-        <div 
+        <div
           className="fixed px-2 py-1 bg-gray-800 text-white text-xs rounded shadow-lg z-50 whitespace-nowrap transform -translate-x-1/2 -translate-y-full pointer-events-none"
-          style={{ 
-            left: `${tooltip.position.x}px`, 
+          style={{
+            left: `${tooltip.position.x}px`,
             top: `${tooltip.position.y}px`,
             opacity: tooltip.visible ? 1 : 0,
-            transition: 'opacity 0.2s ease-in-out'
+            transition: 'opacity 0.2s ease-in-out',
           }}
         >
           {tooltip.content}
@@ -168,5 +161,5 @@ export default function FaceSelection({
         </div>
       )}
     </div>
-  );
+  )
 }
