@@ -1,3 +1,5 @@
+# Tech Stack
+
 ## Module & Purpose
 
 | Module               | Purpose                                                                                    |
@@ -122,8 +124,13 @@ sharp('input.jpg')
 - `EditorConfig` for consistent editor settings - configured via `.editorconfig`
 - `VS Code Integration` - configured via `settings.json`
 
+## Cleanup codes
 
-## Clean up codes.
+```text
+For a Next.js (v15.2.4) app with AI features, how can I clean up the project before deploying to production? Specifically, how do I remove unused, unnecessary, or deprecated code and files?
+
+please do whatever you can do upon your best knowledges and experiences, help me cleanup codes, and merge codes/functions if they are similar.
+```
 
 ```bash
 # Install dependency-cruiser for analyzing code dependencies

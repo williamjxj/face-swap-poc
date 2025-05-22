@@ -1,7 +1,71 @@
 'use client'
 import { useState, useRef, useEffect } from 'react'
 import Image from 'next/image'
-import ProgressLoader from './ProgressLoader'
+import { formatDuration } from '@/utils/helper'
+
+// Inline ProgressLoader component (previously a separate component)
+function ProgressLoader({ progress, isIndeterminate = false, size = 'medium', color = 'blue' }) {
+  const [dots, setDots] = useState('.')
+
+  // For the animated dots when in indeterminate mode
+  useEffect(() => {
+    if (!isIndeterminate) return
+
+    const interval = setInterval(() => {
+      setDots(prev => {
+        if (prev === '...') return '.'
+        return prev + '.'
+      })
+    }, 500)
+
+    return () => clearInterval(interval)
+  }, [isIndeterminate])
+
+  // Size variants
+  const sizeClasses = {
+    small: 'w-16 h-1',
+    medium: 'w-32 h-2',
+    large: 'w-48 h-3',
+    full: 'w-full h-2',
+  }
+
+  // Color variants
+  const colorClasses = {
+    blue: 'bg-blue-600',
+    green: 'bg-green-600',
+    purple: 'bg-purple-600',
+    orange: 'bg-orange-600',
+    yellow: 'bg-yellow-500',
+    red: 'bg-red-600',
+    gray: 'bg-gray-600',
+  }
+
+  // Get appropriate classes
+  const containerClass = sizeClasses[size] || sizeClasses.medium
+  const barColorClass = colorClasses[color] || colorClasses.blue
+
+  return (
+    <div className="flex flex-col items-center space-y-1">
+      <div className={`${containerClass} bg-gray-200 rounded-full overflow-hidden`}>
+        {!isIndeterminate ? (
+          <div
+            className={`h-full ${barColorClass} rounded-full transition-all duration-300 ease-out`}
+            style={{ width: `${Math.max(1, Math.min(100, progress))}%` }}
+          ></div>
+        ) : (
+          <div
+            className={`h-full ${barColorClass} rounded-full animate-pulse`}
+            style={{ width: '30%', transform: 'translateX(-5%) translateX(10%)' }}
+          ></div>
+        )}
+      </div>
+      {isIndeterminate && <div className="text-xs text-gray-600 font-medium">Loading{dots}</div>}
+      {!isIndeterminate && progress > 0 && (
+        <div className="text-xs text-gray-600 font-medium">{progress}%</div>
+      )}
+    </div>
+  )
+}
 
 export default function VideoPlayerWithLoading({
   src,
@@ -27,14 +91,6 @@ export default function VideoPlayerWithLoading({
   const videoRef = useRef(null)
   const [showVideo, setShowVideo] = useState(false)
   const [displayWatermarked, setDisplayWatermarked] = useState(showWatermarked)
-
-  // Format duration from seconds to mm:ss
-  const formatDuration = seconds => {
-    if (!seconds || isNaN(seconds)) return '0:00'
-    const mins = Math.floor(seconds / 60)
-    const secs = Math.floor(seconds % 60)
-    return `${mins}:${secs.toString().padStart(2, '0')}`
-  }
 
   useEffect(() => {
     // Reset states when src changes

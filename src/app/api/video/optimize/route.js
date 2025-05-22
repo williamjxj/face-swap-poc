@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { optimizeVideo, analyzeVideo } from '@/utils/videoOptimizer'
+import { optimizeVideo, getVideoInfo } from '@/utils/videoUtils'
 import path from 'path'
 import fs from 'fs'
 import { getServerSession } from 'next-auth'
@@ -44,7 +44,7 @@ export async function POST(request) {
     }
 
     // Analyze video first
-    const videoInfo = await analyzeVideo(fullVideoPath)
+    const videoInfo = await getVideoInfo(fullVideoPath)
 
     // Set up optimization options
     const defaultOptions = {
@@ -84,7 +84,7 @@ export async function POST(request) {
       : null
 
     // Analyze optimized video to get statistics
-    const optimizedInfo = await analyzeVideo(result.outputPath)
+    const optimizedInfo = await getVideoInfo(result.outputPath)
 
     // Calculate size reduction percentage
     const originalSize = videoInfo.size

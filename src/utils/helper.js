@@ -1,8 +1,3 @@
-/**
- * Serializes BigInt fields in an object or array of objects.
- * @param {Object|Array} data - The object or array of objects to serialize.
- * @returns {Object|Array} - The serialized object or array.
- */
 export function serializeBigInt(data) {
   if (data === null || data === undefined) {
     return data

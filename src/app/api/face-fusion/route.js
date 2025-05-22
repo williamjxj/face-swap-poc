@@ -5,8 +5,7 @@ import FormData from 'form-data'
 import fetch from 'node-fetch'
 import { PrismaClient } from '@prisma/client'
 import { serializeBigInt } from '@/utils/helper'
-import { optimizeVideo, generateVideoThumbnail } from '@/utils/videoOptimizer'
-import { addTextWatermark } from '@/utils/watermarkService'
+import { optimizeVideo, generateVideoThumbnail, addTextWatermark } from '@/utils/videoUtils'
 
 // Create a direct Prisma client instance just for this route
 // This avoids triggering any middleware or global Prisma operations
@@ -198,9 +197,7 @@ export async function POST(request) {
   }
 }
 
-/**
- * Create a face fusion task by uploading source and target files
- */
+// Create a face fusion task by uploading source and target files
 async function createFusionTask(sourceFile, targetFile) {
   try {
     console.log('[CREATE] Creating fusion task with source and target files')
@@ -289,13 +286,6 @@ async function createFusionTask(sourceFile, targetFile) {
 
 // pollForResults function has been replaced by functionality in pollAndProcessResult
 
-/**
- * Poll for results and process them - handles polling, downloading, saving to database
- * @param {string} outputPath - The path to the generated media from create API
- * @param {object} sourceFile - The source file object
- * @param {object} targetFile - The target file object
- * @returns {Promise<object>} - Response object with status and file information
- */
 async function pollAndProcessResult(outputPath, sourceFile, targetFile) {
   let retryCount = 0
   let lastError = null
@@ -555,9 +545,7 @@ async function pollAndProcessResult(outputPath, sourceFile, targetFile) {
   }
 }
 
-/**
- * Process a completed task by downloading and saving the generated media
- */
+// Process a completed task by downloading and saving the generated media
 async function processCompletedTask(outputUrl, sourceFile, targetFile, outputPath) {
   try {
     // Create full URL if needed
@@ -764,9 +752,7 @@ async function processCompletedTask(outputUrl, sourceFile, targetFile, outputPat
   }
 }
 
-/**
- * Helper function to determine file extension from content-type
- */
+// Helper function to determine file extension from content-type
 function getFileExtensionFromContentType(contentType) {
   if (!contentType) return '.mp4' // Default to mp4
 
@@ -811,9 +797,7 @@ function getMimeTypeFromExtension(extension) {
   }
 }
 
-/**
- * Helper function to check if content is a binary media file by looking for common signatures
- */
+// Helper function to check if content is a binary media file by looking for common signatures
 function isBinaryMediaFile(content) {
   if (!content) return false
 

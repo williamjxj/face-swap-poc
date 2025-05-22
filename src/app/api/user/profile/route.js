@@ -3,11 +3,6 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/services/auth'
 import { NextResponse } from 'next/server'
 
-/**
- * API endpoint to get user profile data
- * @param {Request} request - The request object
- * @returns {NextResponse} JSON response with user data or error
- */
 export async function GET(request) {
   try {
     // Get the current session to verify authentication

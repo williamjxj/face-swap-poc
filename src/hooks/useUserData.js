@@ -2,10 +2,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useSession } from 'next-auth/react'
 
-/**
- * Custom hook to fetch and provide the user's data from the database
- * @returns {Object} Object containing user data, loading state, and error
- */
 export const useUserData = () => {
   const { data: session, status } = useSession()
   const [userData, setUserData] = useState(null)
