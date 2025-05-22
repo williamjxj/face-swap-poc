@@ -3,7 +3,7 @@ import { PrismaClient } from '@prisma/client'
 import fs from 'fs/promises'
 import path from 'path'
 
-const prisma = new PrismaClient()
+const prisma = new PrismaClient({ log: ['error'] })
 
 // GET a single face source by ID
 export async function GET(request, { params }) {

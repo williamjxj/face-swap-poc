@@ -8,7 +8,9 @@ import sharp from 'sharp'
 import db from '@/lib/db'
 import { serializeBigInt } from '@/utils/helper'
 
-const prisma = new PrismaClient()
+const prisma = new PrismaClient({
+  log: ['error'],
+})
 
 // Helper function to handle BigInt serialization
 const sanitizeBigInt = data => {
