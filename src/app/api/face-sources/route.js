@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
 import { PrismaClient } from '@prisma/client'
-import { writeFile } from 'fs/promises'
 import fs from 'fs/promises'
 import path from 'path'
 import { v4 as uuidv4 } from 'uuid'
@@ -127,11 +126,14 @@ export async function DELETE(request) {
       },
     })
 
-    // Delete physical file
+    // Delete physical file if it exists
     const filePath = path.join(process.cwd(), 'public', faceSource.filePath)
     try {
+      // Check if file exists before attempting to delete
+      await fs.access(filePath)
       await fs.unlink(filePath)
     } catch (error) {
+      // File doesn't exist or can't be deleted, continue with the DB operation
       console.warn('Warning: Could not delete physical file:', error)
     }
 

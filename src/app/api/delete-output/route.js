@@ -12,13 +12,17 @@ export async function DELETE(request) {
 
     const filePath = path.join(process.cwd(), 'public', 'outputs', filename)
 
-    // Check if file exists
-    if (!fs.existsSync(filePath)) {
-      return NextResponse.json({ error: 'File not found' }, { status: 404 })
+    try {
+      // Check if file exists before deleting
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath)
+      } else {
+        console.warn(`Warning: File not found for deletion: ${filePath}`)
+      }
+    } catch (error) {
+      console.warn('Warning: Could not delete output file:', error)
+      // Continue with operation even if file deletion fails
     }
-
-    // Delete the file
-    fs.unlinkSync(filePath)
 
     return NextResponse.json({ success: true })
   } catch (error) {
