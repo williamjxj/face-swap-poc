@@ -87,6 +87,12 @@ export default function FaceFusion() {
   const [selectedFace, setSelectedFace] = useState(null)
   const [loading, setLoading] = useState(true)
 
+  // Loading states for different upload types
+  const [videoUploadLoading, setVideoUploadLoading] = useState(false)
+  const [imageUploadLoading, setImageUploadLoading] = useState(false)
+  const [gifUploadLoading, setGifUploadLoading] = useState(false)
+  const [multiFaceUploadLoading, setMultiFaceUploadLoading] = useState(false)
+
   const tabOptions = [
     { id: 'video', label: 'Video' },
     { id: 'image', label: 'Image' },
@@ -195,24 +201,56 @@ export default function FaceFusion() {
         }
 
         const data = await response.json()
-        const sourcePath = `/sources/${data.filename}`
 
-        // Update both selected source and source path
-        const newSource = {
-          preview: sourcePath,
-          name: data.filename,
+        // Check if we got a partial success (file saved but database record not created)
+        let newImage
+        if (response.status === 207 && data.success && data.error) {
+          // This means the file was saved but database record wasn't created
+          console.warn('Partial success:', data.error)
+
+          const sourcePath = `/sources/${data.filename}`
+
+          // Update selected source and path
+          const newSource = {
+            preview: sourcePath,
+            name: data.filename,
+            // Add a flag to indicate this is a file-only source (not in database)
+            fileOnly: true,
+          }
+          setSelectedSource(newSource)
+          setSourcePath(sourcePath)
+
+          // Add to imageSources with fileOnly flag
+          newImage = {
+            id: Date.now(), // Use timestamp as temporary id
+            name: data.filename,
+            imagePath: sourcePath,
+            createdAt: Date.now(),
+            fileOnly: true, // Flag to indicate this isn't in the database
+          }
+        } else {
+          // Normal success - database record was created
+          const sourcePath = `/sources/${data.filename}`
+
+          // Update selected source and path
+          const newSource = {
+            preview: sourcePath,
+            name: data.filename,
+            id: data.id,
+          }
+          setSelectedSource(newSource)
+          setSourcePath(sourcePath)
+
+          // Add to imageSources with database ID
+          newImage = {
+            id: data.id, // Use the real database ID
+            name: data.filename,
+            imagePath: sourcePath,
+            createdAt: Date.now(),
+          }
         }
-        setSelectedSource(newSource)
-        setSourcePath(sourcePath)
 
         // Add the new image to the beginning of imageSources
-        const newImage = {
-          id: Date.now(), // Use timestamp as temporary id
-          name: data.filename,
-          imagePath: sourcePath,
-          createdAt: Date.now(),
-        }
-
         setImageSources(prev => [newImage, ...prev])
       } catch (error) {
         console.error('Error uploading file:', error)
@@ -359,20 +397,43 @@ export default function FaceFusion() {
   const handleSourceDelete = async (image, e) => {
     e.stopPropagation() // Prevent triggering image selection
     try {
-      const response = await fetch('/api/face-sources', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ filename: image.name }),
-      })
+      console.log('Deleting face source:', image.name)
 
-      if (response.ok) {
-        // Remove from imageSources array
+      // Check if this is a file-only source (not in database)
+      if (image.fileOnly) {
+        console.log('This is a file-only source, skipping database delete')
+        // Just remove from UI without hitting the API
         setImageSources(sources => sources.filter(src => src.name !== image.name))
+
         // Clear selection if deleted image was selected
         if (selectedSource?.name === image.name) {
           setSelectedSource(null)
           setSourcePath(null)
         }
+        return
+      }
+
+      // Normal case - delete from database
+      const response = await fetch('/api/face-sources', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ filename: image.name }),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        console.error('Delete face source failed:', errorData)
+        throw new Error(errorData.error || 'Failed to delete face source')
+      }
+
+      // Remove from imageSources array
+      setImageSources(sources => sources.filter(src => src.name !== image.name))
+      // Clear selection if deleted image was selected
+      if (selectedSource?.name === image.name) {
+        setSelectedSource(null)
+        setSourcePath(null)
       }
     } catch (error) {
       console.error('Error deleting source image:', error)
@@ -383,9 +444,13 @@ export default function FaceFusion() {
     const file = e.target.files?.[0]
     if (file) {
       try {
+        // Set loading state
+        setVideoUploadLoading(true)
+
         // Check file size (500MB limit)
         if (file.size > 150 * 1024 * 1024) {
           setError('File size exceeds 150MB limit')
+          setVideoUploadLoading(false)
           return
         }
 
@@ -438,6 +503,9 @@ export default function FaceFusion() {
       } catch (error) {
         console.error('Error uploading template:', error)
         setError(error.message || 'Failed to upload template')
+      } finally {
+        // Reset loading state
+        setVideoUploadLoading(false)
       }
     }
   }
@@ -446,9 +514,13 @@ export default function FaceFusion() {
     const file = e.target.files?.[0]
     if (file) {
       try {
+        // Set loading state
+        setImageUploadLoading(true)
+
         // Check file size (10MB limit)
         if (file.size > 10 * 1024 * 1024) {
           setError('File size exceeds 10MB limit')
+          setImageUploadLoading(false)
           return
         }
 
@@ -491,6 +563,9 @@ export default function FaceFusion() {
       } catch (error) {
         console.error('Error uploading image:', error)
         setError(error.message || 'Failed to upload image')
+      } finally {
+        // Reset loading state
+        setImageUploadLoading(false)
       }
     }
   }
@@ -499,9 +574,13 @@ export default function FaceFusion() {
     const file = e.target.files?.[0]
     if (file) {
       try {
+        // Set loading state
+        setGifUploadLoading(true)
+
         // Check file size (50MB limit)
         if (file.size > 50 * 1024 * 1024) {
           setError('File size exceeds 50MB limit')
+          setGifUploadLoading(false)
           return
         }
 
@@ -544,6 +623,9 @@ export default function FaceFusion() {
       } catch (error) {
         console.error('Error uploading GIF:', error)
         setError(error.message || 'Failed to upload GIF')
+      } finally {
+        // Reset loading state
+        setGifUploadLoading(false)
       }
     }
   }
@@ -552,10 +634,14 @@ export default function FaceFusion() {
     const files = Array.from(e.target.files)
     if (files.length > 0) {
       try {
+        // Set loading state
+        setMultiFaceUploadLoading(true)
+
         // Check if any file exceeds 10MB
         const oversizedFiles = files.filter(file => file.size > 10 * 1024 * 1024)
         if (oversizedFiles.length > 0) {
           setError('Some files exceed 10MB limit')
+          setMultiFaceUploadLoading(false)
           return
         }
 
@@ -601,6 +687,9 @@ export default function FaceFusion() {
       } catch (error) {
         console.error('Error uploading multi-face images:', error)
         setError(error.message || 'Failed to upload multi-face images')
+      } finally {
+        // Reset loading state
+        setMultiFaceUploadLoading(false)
       }
     }
   }
@@ -688,6 +777,10 @@ export default function FaceFusion() {
             onGifUpload={handleGifUploadWrapper}
             onMultiFaceUpload={handleMultiFaceUploadWrapper}
             onDeleteTemplate={handleDeleteTemplate}
+            videoUploadLoading={videoUploadLoading}
+            imageUploadLoading={imageUploadLoading}
+            gifUploadLoading={gifUploadLoading}
+            multiFaceUploadLoading={multiFaceUploadLoading}
           />
         </div>
       </div>

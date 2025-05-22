@@ -77,8 +77,24 @@ export async function POST(request) {
     const session = await getServerSession(authOptions)
     let authorId = null
     if (session?.user?.id) {
-      authorId = session.user.id
-      console.log('Associating face source with user:', session.user.email)
+      // Verify that the user exists in the database before using the ID
+      try {
+        const userExists = await db.user.findUnique({
+          where: { id: session.user.id },
+          select: { id: true },
+        })
+
+        if (userExists) {
+          authorId = session.user.id
+          console.log('Associating face source with user:', session.user.email)
+        } else {
+          console.log('User ID from session not found in database:', session.user.id)
+          console.log('Will create face source without author ID')
+        }
+      } catch (userCheckError) {
+        console.error('Error checking user existence:', userCheckError)
+        console.log('Will create face source without author ID')
+      }
     }
 
     // Create database record

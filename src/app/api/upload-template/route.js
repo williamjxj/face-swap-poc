@@ -117,8 +117,24 @@ export async function POST(request) {
     let authorId = null
 
     if (session?.user?.id) {
-      authorId = session.user.id
-      console.log('Adding author ID to template:', authorId)
+      // Verify that the user exists in the database before using the ID
+      try {
+        const userExists = await db.user.findUnique({
+          where: { id: session.user.id },
+          select: { id: true },
+        })
+
+        if (userExists) {
+          authorId = session.user.id
+          console.log('Adding author ID to template:', authorId)
+        } else {
+          console.log('User ID from session not found in database:', session.user.id)
+          console.log('Will create template without author ID')
+        }
+      } catch (userCheckError) {
+        console.error('Error checking user existence:', userCheckError)
+        console.log('Will create template without author ID')
+      }
     } else {
       console.log('No user session for template upload, template will be anonymous')
     }

@@ -1,4 +1,5 @@
 import { Plus } from 'lucide-react'
+import Loading from '@/components/Loading'
 
 export default function UploadBox({
   type,
@@ -7,6 +8,7 @@ export default function UploadBox({
   title,
   description,
   aspectRatio = 'aspect-[116/176]',
+  loading = false,
 }) {
   return (
     <div
@@ -23,10 +25,17 @@ export default function UploadBox({
           accept={accept}
           onChange={onUpload}
           aria-label={`Upload ${title}`}
+          disabled={loading}
         />
-        <Plus className="w-8 h-8 text-gray-400 mb-2" aria-hidden="true" />
+        {loading ? (
+          <div className="w-8 h-8 flex items-center justify-center mb-2">
+            <Loading />
+          </div>
+        ) : (
+          <Plus className="w-8 h-8 text-gray-400 mb-2" aria-hidden="true" />
+        )}
         <div className="text-center">
-          <span className="text-sm text-gray-400 block">{title}</span>
+          <span className="text-sm text-gray-400 block">{loading ? 'Uploading...' : title}</span>
           <span className="text-xs text-gray-500 block mt-1">{description}</span>
         </div>
       </label>

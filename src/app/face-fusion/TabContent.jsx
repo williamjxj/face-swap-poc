@@ -15,6 +15,10 @@ export default function TabContent({
   onMultiFaceUpload,
   onDeleteTemplate,
   onSelectSourceForTemplate,
+  videoUploadLoading,
+  imageUploadLoading,
+  gifUploadLoading,
+  multiFaceUploadLoading,
 }) {
   const [hoveredTemplate, setHoveredTemplate] = useState(null)
   const [deletingTemplateId, setDeletingTemplateId] = useState(null)
@@ -165,6 +169,7 @@ export default function TabContent({
             title="Custom Video"
             description="Video: Max 150MB/3mins"
             className="w-full h-full"
+            loading={videoUploadLoading}
           />
         </div>
         {filteredTemplates.map(renderTemplateCard)}
@@ -183,6 +188,7 @@ export default function TabContent({
             title="Upload Image"
             description="PNG, JPEG up to 10MB"
             className="w-full h-full"
+            loading={imageUploadLoading}
           />
         </div>
         {filteredTemplates.map(renderTemplateCard)}
@@ -201,6 +207,7 @@ export default function TabContent({
             title="Upload GIF"
             description="GIF up to 50MB"
             className="w-full h-full"
+            loading={gifUploadLoading}
           />
         </div>
         {filteredTemplates.map(renderTemplateCard)}
@@ -219,6 +226,7 @@ export default function TabContent({
             title="Multi-face Upload"
             description="Upload multiple faces (PNG, JPEG)"
             className="w-full h-full"
+            loading={multiFaceUploadLoading}
           />
         </div>
         {filteredTemplates.map(renderTemplateCard)}

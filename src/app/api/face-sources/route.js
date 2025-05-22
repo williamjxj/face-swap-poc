@@ -1,15 +1,12 @@
 import { NextResponse } from 'next/server'
-import { PrismaClient } from '@prisma/client'
 import fs from 'fs/promises'
 import path from 'path'
-import { v4 as uuidv4 } from 'uuid'
-import sharp from 'sharp'
 import db from '@/lib/db'
 import { serializeBigInt } from '@/utils/helper'
-
-const prisma = new PrismaClient({
-  log: ['error'],
-})
+import { v4 as uuidv4 } from 'uuid'
+import sharp from 'sharp'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/services/auth'
 
 // Helper function to handle BigInt serialization
 const sanitizeBigInt = data => {
@@ -64,17 +61,48 @@ export async function POST(request) {
     const fileSize = file.size
     const mimeType = file.type
 
-    // Create record in database
-    const faceSource = await prisma.faceSource.create({
-      data: {
-        filename,
-        filePath,
-        fileSize: BigInt(fileSize),
-        mimeType,
-        width: metadata.width || 0,
-        height: metadata.height || 0,
-        isActive: true,
-      },
+    // Get current user session - null user is allowed
+    const session = await getServerSession(authOptions)
+    let authorId = null
+
+    if (session?.user?.id) {
+      // Verify that the user exists in the database before using the ID
+      try {
+        const userExists = await db.user.findUnique({
+          where: { id: session.user.id },
+          select: { id: true },
+        })
+
+        if (userExists) {
+          authorId = session.user.id
+          console.log('Associating face source with user:', session.user.email)
+        } else {
+          console.log('User ID from session not found in database:', session.user.id)
+          console.log('Will create face source without author ID')
+        }
+      } catch (userCheckError) {
+        console.error('Error checking user existence:', userCheckError)
+        console.log('Will create face source without author ID')
+      }
+    } else {
+      console.log('No user session, creating face source without author ID')
+    }
+
+    // Create record in database with or without authorId
+    const faceSourceData = {
+      filename,
+      filePath,
+      fileSize: BigInt(fileSize),
+      mimeType,
+      width: metadata.width || 0,
+      height: metadata.height || 0,
+      isActive: true,
+      authorId, // This can be null
+    }
+
+    console.log('Creating face source record with data:', {
+      ...faceSourceData,
+      fileSize: faceSourceData.fileSize.toString(), // Convert BigInt to string for logging
     })
 
     const sanitizedSource = sanitizeBigInt(faceSource)
