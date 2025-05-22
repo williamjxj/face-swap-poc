@@ -92,7 +92,11 @@ sharp('input.jpg')
   })
 ```
 
-### 🌽
+### 🌽 CORS
+
+- Using `middleware` to add `CORS` headers
+- Configuring `CORS` for API routes in `next.config.js`
+
 
 ### 🌽
 
