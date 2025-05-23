@@ -6,7 +6,7 @@ if ! command -v ffprobe &> /dev/null; then
     exit 1
 fi
 
-source "$(dirname "$0")/../config.sh"
+source "$(dirname "$0")/config.sh"
 
 
 # Check if directory exists

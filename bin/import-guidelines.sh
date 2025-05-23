@@ -1,6 +1,6 @@
 #!/bin/bash
 
-source "$(dirname "$0")/../config.sh"
+source "$(dirname "$0")/config.sh"
 
 # Directory containing the PNG files
 GUIDELINES_DIR="${PUBLIC_DIR}/guidelines"
