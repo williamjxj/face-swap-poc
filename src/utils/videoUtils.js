@@ -63,25 +63,6 @@ async function runFfmpeg(args, options = {}) {
   })
 }
 
-export async function addSimpleWatermark(inputPath, outputPath, watermarkText = 'Preview') {
-  try {
-    // Ensure the output directory exists
-    const outputDir = path.dirname(outputPath)
-    if (!fs.existsSync(outputDir)) {
-      await fs.mkdir(outputDir, { recursive: true })
-    }
-
-    // FFmpeg command to add watermark text
-    const command = `ffmpeg -i "${inputPath}" -vf "drawtext=text='${watermarkText}':fontcolor=white:fontsize=24:box=1:boxcolor=black@0.5:boxborderw=5:x=(w-text_w)/2:y=(h-text_h)/2" -codec:a copy "${outputPath}"`
-
-    await execAsync(command)
-    return true
-  } catch (error) {
-    console.error('Error adding watermark:', error)
-    return false
-  }
-}
-
 export async function addTextWatermark(
   inputPath,
   {
