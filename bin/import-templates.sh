@@ -7,6 +7,7 @@ if ! command -v ffprobe &> /dev/null; then
 fi
 
 source "$(dirname "$0")/config.sh"
+
 # Check if directories exist
 if [ ! -d "$VIDEOS_DIR" ]; then
     echo "Error: Directory $VIDEOS_DIR does not exist"

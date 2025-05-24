@@ -2,9 +2,6 @@
 
 source "$(dirname "$0")/config.sh"
 
-# Directory containing the PNG files
-GUIDELINES_DIR="${PUBLIC_DIR}/guidelines"
-
 # Check if directory exists
 if [ ! -d "$GUIDELINES_DIR" ]; then
     echo "Error: Directory $GUIDELINES_DIR does not exist"
