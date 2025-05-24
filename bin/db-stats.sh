@@ -24,5 +24,6 @@ execute_query "TargetTemplate"
 execute_query "FaceSource"
 execute_query "GeneratedMedia"
 execute_query "Guideline"
+execute_query "Payment"
 
 echo "Query completed."

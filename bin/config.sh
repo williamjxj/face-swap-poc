@@ -2,7 +2,6 @@
 
 # Base directories
 APP_DIR=${HOME}/face-swap-poc
-ASSET_DIR=${APP_DIR}/storage/assets
 DOWNLOAD_DIR=${APP_DIR}/storage/downloads
 
 PUBLIC_DIR=${APP_DIR}/public
