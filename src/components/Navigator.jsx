@@ -72,26 +72,6 @@ export default function Navigator() {
         )
       )}
 
-      {session?.user?.email && (
-        <div className="relative group">
-          <div
-            className="h-8 w-8 rounded-full flex items-center justify-center cursor-pointer text-white font-medium text-sm"
-            style={{ backgroundColor: getAvatarColor(session.user.email) }}
-          >
-            {getInitials(session.user.email)}
-          </div>
-
-          {/* Tooltip that appears on hover */}
-          <div className="absolute right-0 mt-2 w-48 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform scale-95 group-hover:scale-100 z-10">
-            <div className="bg-gray-800 text-white text-sm rounded-lg shadow-lg px-4 py-3">
-              <p className="font-medium">Logged in as:</p>
-              <p className="truncate mt-1">{session.user.email}</p>
-            </div>
-            <div className="h-2 w-2 bg-gray-800 rotate-45 absolute -top-1 right-3"></div>
-          </div>
-        </div>
-      )}
-
       <MoreMenu />
       <button
         onClick={handleLogout}
@@ -107,6 +87,27 @@ export default function Navigator() {
           </>
         )}
       </button>
+
+      {/* Avatar moved to end of nav */}
+      {session?.user?.email && (
+        <div className="relative group ml-1">
+          <div
+            className="h-8 w-8 rounded-full flex items-center justify-center cursor-pointer text-white font-medium text-sm"
+            style={{ backgroundColor: getAvatarColor(session.user.email) }}
+          >
+            {getInitials(session.user.email)}
+          </div>
+
+          {/* Tooltip that appears on hover */}
+          <div className="absolute right-0 mt-2 w-48 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform scale-95 group-hover:scale-100 z-50">
+            <div className="bg-gray-800 text-white text-sm rounded-lg shadow-lg px-4 py-3">
+              <p className="font-medium">Logged in as:</p>
+              <p className="truncate mt-1">{session.user.email}</p>
+            </div>
+            <div className="h-2 w-2 bg-gray-800 rotate-45 absolute -top-1 right-3"></div>
+          </div>
+        </div>
+      )}
     </nav>
   )
 }
