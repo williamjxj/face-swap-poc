@@ -192,6 +192,10 @@ export default function VideoPlayerWithLoading({
             fill
             sizes="100vw"
             priority
+            onError={e => {
+              // Handle loading error for thumbnail by using a default placeholder
+              e.target.src = '/placeholder-thumbnail.svg'
+            }}
           />
         </div>
       )}

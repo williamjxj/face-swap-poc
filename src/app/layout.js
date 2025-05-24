@@ -30,6 +30,7 @@ export default async function RootLayout({ children }) {
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-screen`}
+        suppressHydrationWarning
       >
         <AuthProvider session={session}>
           {/* Client-side header component that checks for auth pages */}

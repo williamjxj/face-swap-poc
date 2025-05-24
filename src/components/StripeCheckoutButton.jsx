@@ -26,6 +26,9 @@ export default function StripeCheckoutButton({ video, disabled = false, small = 
         headers: {
           'Content-Type': 'application/json',
         },
+        // body: JSON.stringify({
+        //   priceId: 'price_1RSDO9PQv7UPATi3uiGKigiD',
+        // }),
         body: JSON.stringify({
           name: `Video: ${video.name}`,
           description: 'Purchase video content',

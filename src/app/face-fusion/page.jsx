@@ -10,67 +10,16 @@ import Loading from '@/components/Loading'
 import TabContent from './TabContent'
 import CloseButton from '@/components/CloseButton'
 import StripeCheckoutButton from '@/components/StripeCheckoutButton'
+import VideoPlayerWithLoading from '@/components/VideoPlayerWithLoading'
 
 export default function FaceFusion() {
+  // State declarations
   const [selectedTab, setSelectedTab] = useState('video')
   const [rightSideTab, setRightSideTab] = useState('face-swap')
+  const [isLoading, setIsLoading] = useState(false)
   const [paymentSuccessId, setPaymentSuccessId] = useState(null)
-
-  // Handle URL query parameters
-  useEffect(() => {
-    const searchParams = new URLSearchParams(window.location.search)
-    const tab = searchParams.get('tab')
-    const paymentSuccess = searchParams.get('paymentSuccess')
-
-    if (tab === 'history') {
-      setRightSideTab('history')
-    }
-
-    if (paymentSuccess) {
-      setPaymentSuccessId(paymentSuccess)
-
-      // Immediately refresh the videos list to get updated payment status
-      const refreshVideos = async () => {
-        try {
-          const response = await fetch('/api/generated-media')
-          if (response.ok) {
-            const data = await response.json()
-            if (data.files) {
-              // Convert strings back to BigInt if needed
-              const videos = data.files.map(video => ({
-                ...video,
-                fileSize: BigInt(video.fileSize || 0),
-              }))
-              setGeneratedVideos(videos)
-            }
-          }
-        } catch (error) {
-          console.error('Error refreshing videos after payment:', error)
-        }
-      }
-
-      refreshVideos()
-
-      // Clear payment success parameter from URL after 5 seconds
-      setTimeout(() => {
-        const newUrl = new URL(window.location.href)
-        newUrl.searchParams.delete('paymentSuccess')
-        window.history.replaceState({}, '', newUrl)
-
-        // Keep success message for a bit longer than URL param
-        setTimeout(() => {
-          setPaymentSuccessId(null)
-
-          // Refresh videos list again after success message disappears
-          refreshVideos()
-        }, 3000)
-      }, 2000)
-    }
-  }, [])
-  // Store just the paths as strings for form data
   const [targetPath, setTargetPath] = useState(null)
   const [sourcePath, setSourcePath] = useState(null)
-  // Keep preview states separate for UI
   const [selectedTarget, setSelectedTarget] = useState(null)
   const [selectedSource, setSelectedSource] = useState(null)
   const [processing, setProcessing] = useState(false)
@@ -86,19 +35,74 @@ export default function FaceFusion() {
   const [selectedTemplate, setSelectedTemplate] = useState(null)
   const [selectedFace, setSelectedFace] = useState(null)
   const [loading, setLoading] = useState(true)
-
-  // Loading states for different upload types
   const [videoUploadLoading, setVideoUploadLoading] = useState(false)
   const [imageUploadLoading, setImageUploadLoading] = useState(false)
   const [gifUploadLoading, setGifUploadLoading] = useState(false)
   const [multiFaceUploadLoading, setMultiFaceUploadLoading] = useState(false)
 
+  // Constants
   const tabOptions = [
     { id: 'video', label: 'Video' },
     { id: 'image', label: 'Image' },
     { id: 'gif', label: 'GIF' },
     { id: 'multi-face', label: 'Multi-face' },
   ]
+
+  // Effects
+  useEffect(() => {
+    if (rightSideTab === 'history') {
+      setIsLoading(true)
+      fetchVideos()
+    } else {
+      setIsLoading(false)
+      setGeneratedVideos([])
+    }
+  }, [rightSideTab])
+
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search)
+    const tab = searchParams.get('tab')
+    const paymentSuccess = searchParams.get('paymentSuccess')
+
+    if (tab === 'history') {
+      setRightSideTab('history')
+    }
+
+    if (paymentSuccess) {
+      setPaymentSuccessId(paymentSuccess)
+
+      const refreshVideos = async () => {
+        try {
+          const response = await fetch('/api/generated-media')
+          if (response.ok) {
+            const data = await response.json()
+            if (data.files) {
+              const videos = data.files.map(video => ({
+                ...video,
+                fileSize: BigInt(video.fileSize || 0),
+              }))
+              setGeneratedVideos(videos)
+            }
+          }
+        } catch (error) {
+          console.error('Error refreshing videos after payment:', error)
+        }
+      }
+
+      refreshVideos()
+
+      setTimeout(() => {
+        const newUrl = new URL(window.location.href)
+        newUrl.searchParams.delete('paymentSuccess')
+        window.history.replaceState({}, '', newUrl)
+
+        setTimeout(() => {
+          setPaymentSuccessId(null)
+          refreshVideos()
+        }, 3000)
+      }, 2000)
+    }
+  }, [])
 
   // Load templates from database
   useEffect(() => {
@@ -123,7 +127,7 @@ export default function FaceFusion() {
     }
 
     loadTemplates()
-  }, []) // Load generated videos when component mounts
+  }, [])
   useEffect(() => {
     const loadGeneratedVideos = async () => {
       try {
@@ -440,6 +444,54 @@ export default function FaceFusion() {
     }
   }
 
+  const handleTemplateSelect = template => {
+    setSelectedTemplate(template)
+    setSelectedFace(0) // Reset face selection index
+    setTargetPath(template.filePath)
+  }
+
+  const handleTemplateAndSourceSelect = (template, sourceImage) => {
+    // Select the template
+    setSelectedTemplate(template)
+    setTargetPath(template.filePath)
+
+    // Select the source image if provided
+    if (sourceImage) {
+      setSelectedSource({
+        preview: sourceImage.imagePath,
+        name: sourceImage.name,
+      })
+      setSourcePath(sourceImage.imagePath)
+    }
+  }
+
+  const handleDeleteTemplate = async templateId => {
+    try {
+      // Call API to delete template
+      const response = await fetch(`/api/templates/${templateId}`, {
+        method: 'DELETE',
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to delete template')
+      }
+
+      // Update UI by removing the template from state
+      setTemplates(prev => prev.filter(template => template.id !== templateId))
+      setVideoTargets(prev => prev.filter(template => template.id !== templateId))
+
+      // Clear selection if this was the selected template
+      if (selectedTemplate?.id === templateId) {
+        setSelectedTemplate(null)
+        setTargetPath(null)
+        setSelectedFace(null)
+      }
+    } catch (error) {
+      console.error('Error deleting template:', error)
+      setError('Failed to delete template')
+    }
+  }
+
   const handleTargetUploadWrapper = async e => {
     const file = e.target.files?.[0]
     if (file) {
@@ -679,14 +731,14 @@ export default function FaceFusion() {
           setTemplates(prev => [newTemplate, ...prev])
           setVideoTargets(prev => [newTemplate, ...prev])
 
-          // For multi-face upload, also select the template after upload
+          // Select the new template
           setSelectedTemplate(newTemplate)
           setSelectedFace(0)
           setTargetPath(newTemplate.filePath) // Ensure target path is updated
         }
       } catch (error) {
-        console.error('Error uploading multi-face images:', error)
-        setError(error.message || 'Failed to upload multi-face images')
+        console.error('Error uploading multi-face templates:', error)
+        setError(error.message || 'Failed to upload multi-face templates')
       } finally {
         // Reset loading state
         setMultiFaceUploadLoading(false)
@@ -694,65 +746,43 @@ export default function FaceFusion() {
     }
   }
 
-  const handleDeleteTemplate = async (id, e) => {
-    e.stopPropagation() // Prevent triggering the select handler
+  // Functions
+  const fetchVideos = async () => {
     try {
-      const response = await fetch(`/api/delete-template?id=${id}`, {
-        method: 'DELETE',
-      })
-
+      const response = await fetch('/api/generated-media')
       if (!response.ok) {
-        throw new Error('Failed to delete template')
+        throw new Error('Failed to load generated videos')
       }
+      const data = await response.json()
 
-      // Remove from both templates and videoTargets
-      setTemplates(prev => prev.filter(template => template.id !== id))
-      setVideoTargets(prev => prev.filter(template => template.id !== id))
-
-      // If the deleted template was selected, clear the selection
-      if (selectedTemplate?.id === id) {
-        setSelectedTemplate(null)
-        setSelectedFace(null)
-        setTargetPath(null)
+      if (data.files) {
+        // Convert strings back to BigInt if needed
+        const videos = data.files.map(video => ({
+          ...video,
+          fileSize: BigInt(video.fileSize || 0), // Convert back to BigInt
+        }))
+        setGeneratedVideos(videos)
       }
     } catch (error) {
-      console.error('Error deleting template:', error)
-      setError('Failed to delete template')
+      console.error('Error loading videos:', error)
+      setError('Failed to load videos')
+    } finally {
+      setIsLoading(false)
     }
   }
 
-  const handleTemplateAndSourceSelect = template => {
-    // Set the template as the target - this will update both the middle preview and the first circle
-    setSelectedTemplate(template)
-    setTargetPath(template.filePath)
-
-    // We don't update the source (second circle) so it remains unchanged
-
-    setSelectedFace(0) // Reset face selection
-  }
-
-  const handleTemplateSelect = template => {
-    setSelectedTemplate(template)
-    setTargetPath(template.filePath)
-    setSelectedFace(0) // Reset face selection when template changes
-  }
-
-  if (loading) {
-    return <div className="flex items-center justify-center h-screen">Loading...</div>
-  }
-
   return (
-    <div className="flex h-screen gap-4 bg-[#0e1117] text-white">
-      {/* Left side - Video Templates */}
+    <div className="flex gap-4 h-[calc(100vh-4rem)]">
+      {/* Left side - Tab navigation */}
       <div className="w-1/4 bg-[#1a1d24] rounded-lg flex flex-col">
         {/* Tab Navigation */}
-        <div className="p-2 border-b border-gray-800">
+        <div className="p-4 border-b border-gray-800">
           <div className="flex space-x-2">
             {tabOptions.map(tab => (
               <button
                 key={tab.id}
                 onClick={() => setSelectedTab(tab.id)}
-                className={`px-3 py-2 rounded-lg text-sm cursor-pointer ${
+                className={`px-3 py-2 rounded-lg text-sm ${
                   selectedTab === tab.id
                     ? 'bg-blue-500 text-white'
                     : 'text-gray-400 hover:bg-[#2a2d34]'
@@ -965,94 +995,155 @@ export default function FaceFusion() {
           ) : (
             <div className="p-4">
               <h2 className="text-lg font-bold mb-4 text-white">Generated Media</h2>
-              <div className="grid grid-cols-2 gap-4">
-                {generatedVideos.map(media => (
-                  <div
-                    key={media.id}
-                    className="bg-[#2a2d34] p-3 rounded-lg cursor-pointer hover:bg-[#3a3d44] transition-colors"
-                    onClick={() => handleVideoClick(media)}
-                  >
-                    {media.type === 'video' ? (
+              {isLoading ? (
+                <div className="grid grid-cols-2 gap-4">
+                  {Array.from({ length: 4 }).map((_, i) => (
+                    <div
+                      key={i}
+                      className="bg-[#2a2d34] p-3 rounded-lg cursor-default transition-colors relative overflow-hidden"
+                    >
                       <div className="relative">
-                        <video
-                          src={
-                            media.isPaid ? media.filePath : media.watermarkPath || media.filePath
-                          }
-                          className="w-full h-32 rounded-lg mb-2"
-                          autoPlay
-                          loop
-                          muted
-                          style={{ borderRadius: '8px', objectFit: 'cover' }}
-                        />
-                        {!media.isPaid && (
-                          <div className="absolute inset-0 flex items-center justify-center bg-black/30">
-                            <Lock className="w-8 h-8 text-white" />
+                        {/* Enhanced gradient background with better shimmer */}
+                        <div className="w-full h-32 rounded-lg mb-2 relative overflow-hidden">
+                          <div className="absolute inset-0 bg-gradient-to-r from-[#2a2d34] via-[#3a3d44] to-[#2a2d34] bg-[length:400%_100%] animate-shimmer" />
+                        </div>
+                        {/* Improved loading animation */}
+                        <div className="flex flex-col items-center justify-center h-12 gap-2">
+                          <div className="flex items-center gap-2">
+                            {[0, 1, 2].map(dot => (
+                              <div
+                                key={dot}
+                                className="w-2 h-2 rounded-full bg-blue-400 animate-bounce-delay"
+                                style={{ animationDelay: `${dot * 150}ms` }}
+                              />
+                            ))}
                           </div>
-                        )}
-                        {paymentSuccessId === media.id && (
-                          <div className="absolute inset-0 flex items-center justify-center bg-green-500/30 animate-pulse">
-                            <div className="bg-green-500 text-white px-3 py-2 rounded-md font-medium">
-                              Payment Successful!
-                            </div>
+                          <div className="flex items-center gap-1 mt-2">
+                            <span className="text-sm text-gray-300 font-medium animate-pulse-opacity">
+                              Loading your videos...
+                            </span>
                           </div>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="relative">
-                        <Image
-                          src={
-                            media.isPaid ? media.filePath : media.watermarkPath || media.filePath
-                          }
-                          alt={media.name}
-                          width={300}
-                          height={128}
-                          className="rounded-lg mb-2"
-                          style={{
-                            width: '100%',
-                            height: '8rem',
-                            objectFit: 'cover',
-                            borderRadius: '8px',
-                          }}
-                        />
-                        {!media.isPaid && (
-                          <div className="absolute inset-0 flex items-center justify-center bg-black/30">
-                            <Lock className="w-8 h-8 text-white" />
-                          </div>
-                        )}
-                        {paymentSuccessId === media.id && (
-                          <div className="absolute inset-0 flex items-center justify-center bg-green-500/30 animate-pulse">
-                            <div className="bg-green-500 text-white px-3 py-2 rounded-md font-medium">
-                              Payment Successful!
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                    <div className="flex justify-between items-center">
-                      <div className="text-sm text-gray-400">{media.name}</div>
-                      <div className="flex gap-1">
-                        {media.isPaid ? (
-                          <button
-                            onClick={e => {
-                              e.stopPropagation()
-                              handleDownload(media)
-                            }}
-                            className="p-1 hover:bg-blue-500/20 rounded"
-                            title="Download"
-                          >
-                            <Download className="w-4 h-4 text-blue-500" />
-                          </button>
-                        ) : (
-                          <StripeCheckoutButton video={media} disabled={false} small={true} />
-                        )}
+                        </div>
                       </div>
                     </div>
-                    <div className="text-xs text-gray-500">
-                      {new Date(media.createdAt).toLocaleString()}
+                  ))}
+                </div>
+              ) : (
+                <>
+                  {generatedVideos.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center p-6 bg-[#2a2d34] rounded-lg">
+                      <div className="w-16 h-16 mb-4 text-gray-400 flex items-center justify-center rounded-full bg-[#3a3d44]">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="24"
+                          height="24"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <polygon points="23 7 16 12 23 17 23 7" />
+                          <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
+                        </svg>
+                      </div>
+                      <h3 className="text-lg font-medium text-white mb-2">No videos yet</h3>
+                      <p className="text-gray-400 text-center mb-4">
+                        Create your first face swap by selecting a target video and your face image
+                      </p>
+                      <button
+                        onClick={() => setRightSideTab('face-swap')}
+                        className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors"
+                      >
+                        Create Your First Swap
+                      </button>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-4">
+                      {generatedVideos.map(media => (
+                        <div
+                          key={media.id}
+                          className="bg-[#2a2d34] p-3 rounded-lg cursor-pointer hover:bg-[#3a3d44] transition-colors relative"
+                          onClick={() => handleVideoClick(media)}
+                        >
+                          <div className="relative">
+                            {media.type === 'video' ? (
+                              <VideoPlayerWithLoading
+                                src={
+                                  media.isPaid
+                                    ? media.filePath
+                                    : media.watermarkPath || media.filePath
+                                }
+                                className="w-full h-32 rounded-lg mb-2"
+                                autoPlay={true}
+                                loop={true}
+                                muted={true}
+                                optimizedLoading={true}
+                                thumbnail={media.thumbnailPath}
+                              />
+                            ) : (
+                              <Image
+                                src={
+                                  media.isPaid
+                                    ? media.filePath
+                                    : media.watermarkPath || media.filePath
+                                }
+                                alt={media.name}
+                                width={300}
+                                height={128}
+                                className="rounded-lg mb-2"
+                                style={{
+                                  width: '100%',
+                                  height: '8rem',
+                                  objectFit: 'cover',
+                                  borderRadius: '8px',
+                                }}
+                              />
+                            )}
+                            {!media.isPaid && (
+                              <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                                <Lock className="w-8 h-8 text-white" />
+                              </div>
+                            )}
+                            {paymentSuccessId === media.id && (
+                              <div className="absolute inset-0 flex items-center justify-center bg-green-500/30 animate-pulse">
+                                <div className="bg-green-500 text-white px-3 py-2 rounded-md font-medium">
+                                  Payment Successful!
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm text-white">{media.name}</span>
+                              <span className="text-xs text-gray-400">
+                                {new Date(media.createdAt).toLocaleString()}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {media.isPaid ? (
+                                <button
+                                  onClick={e => {
+                                    e.stopPropagation()
+                                    handleDownload(media)
+                                  }}
+                                  className="p-1 hover:bg-blue-500/20 rounded"
+                                  title="Download"
+                                >
+                                  <Download className="w-4 h-4 text-blue-500" />
+                                </button>
+                              ) : (
+                                <StripeCheckoutButton video={media} disabled={false} small={true} />
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
             </div>
           )}
         </div>

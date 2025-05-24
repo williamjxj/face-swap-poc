@@ -70,4 +70,20 @@ body {
     font-size: 12px;
     z-index: 10;
   }
+
+  /* Shimmer animation for skeletons */
+  @keyframes shimmer {
+    0% {
+      background-position: 200% 0;
+    }
+    100% {
+      background-position: -200% 0;
+    }
+  }
+
+  .animate-shimmer {
+    animation: shimmer 1.5s infinite linear;
+    background: linear-gradient(to right, #2a2d34 8%, #3a3d44 18%, #2a2d34 33%);
+    background-size: 200% 100%;
+  }
 }

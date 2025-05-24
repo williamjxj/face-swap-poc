@@ -18,7 +18,14 @@ export async function GET(request, { params }) {
       return NextResponse.json({ error: 'Generated media not found' }, { status: 404 })
     }
 
-    return NextResponse.json(generatedMedia)
+    // Ensure thumbnailPath has a fallback value
+    const responseData = {
+      ...generatedMedia,
+      fileSize: generatedMedia.fileSize.toString(),
+      thumbnailPath: generatedMedia.thumbnailPath || '/placeholder-thumbnail.svg',
+    }
+
+    return NextResponse.json(responseData)
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }

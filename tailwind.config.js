@@ -54,9 +54,24 @@ const config = {
           '50%': { transform: 'translateX(0%)' },
           '100%': { transform: 'translateX(100%)' },
         },
+        shimmer: {
+          '0%': { backgroundPosition: '200% 0' },
+          '100%': { backgroundPosition: '-200% 0' },
+        },
+        'pulse-opacity': {
+          '0%, 100%': { opacity: 0.4 },
+          '50%': { opacity: 0.8 },
+        },
+        'bounce-delay': {
+          '0%, 100%': { transform: 'translateY(0)' },
+          '50%': { transform: 'translateY(-8px)' },
+        },
       },
       animation: {
         'indeterminate-progress': 'indeterminate-progress 1.5s infinite ease-in-out',
+        shimmer: 'shimmer 1.5s infinite linear',
+        'pulse-opacity': 'pulse-opacity 2s infinite ease-in-out',
+        'bounce-delay': 'bounce-delay 1.2s infinite ease-in-out',
       },
     },
   },
