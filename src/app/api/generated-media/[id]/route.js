@@ -58,10 +58,6 @@ export async function PUT(request, { params }) {
     if (data.isPaid !== undefined) updateData.isPaid = data.isPaid
     if (data.isActive !== undefined) updateData.isActive = data.isActive
 
-    // Special handling for counters - increment instead of replace if they're set
-    if (data.playCount !== undefined) {
-      updateData.playCount = existingMedia.playCount + 1
-    }
 
     if (data.downloadCount !== undefined) {
       updateData.downloadCount = existingMedia.downloadCount + 1

@@ -67,7 +67,8 @@ for img in "$GUIDELINES_DIR"/*.png; do
                         height: $height,
                         fileType: '${file_type}',
                         filePath: '${file_path}',
-                        fileSize: BigInt('${filesize}')
+                        fileSize: BigInt('${filesize}'),
+                        isAllowed: !'$filename'.startsWith('f')
                     }
                 });
                 console.log('Created guideline record for $filename');

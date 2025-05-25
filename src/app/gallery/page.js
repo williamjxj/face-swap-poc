@@ -185,34 +185,6 @@ export default function GalleryPage() {
     }
   }
 
-  // Handle play count increment when viewing media
-  const incrementPlayCount = media => {
-    if (contentType === 'generatedMedia') {
-      fetch(`/api/generated-media/${media.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...media,
-          playCount: (media.playCount || 0) + 1,
-        }),
-      })
-    } else if (contentType === 'targetTemplates') {
-      fetch(`/api/templates/${media.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...media,
-          usageCount: (media.usageCount || 0) + 1,
-          lastUsedAt: new Date().toISOString(),
-        }),
-      }).catch(err => console.error('Error updating template usage count:', err))
-    }
-  }
-
   // Toggle content type dropdown
   const toggleContentTypeDropdown = () => {
     setContentTypeDropdownOpen(!contentTypeDropdownOpen)
@@ -415,7 +387,6 @@ export default function GalleryPage() {
                   className="group relative bg-[#1a1d24] rounded-xl overflow-hidden cursor-pointer hover:transform hover:scale-[1.02] transition-all duration-200"
                   onClick={() => {
                     handleMediaClick(item)
-                    incrementPlayCount(item)
                   }}
                 >
                   <div className="relative aspect-[116/176] overflow-hidden">
@@ -509,7 +480,7 @@ export default function GalleryPage() {
                         {contentType === 'generatedMedia' && (
                           <div className="flex items-center">
                             <Eye size={14} className="mr-1" />
-                            <span>{item.playCount || 0}</span>
+                            <span>{item.downloadCount || 0}</span>
                           </div>
                         )}
                         {contentType === 'targetTemplates' && (

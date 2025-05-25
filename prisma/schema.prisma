@@ -29,11 +29,11 @@ model TargetTemplate {
   fileSize      BigInt    @map("file_size")
   duration      Int?
   mimeType      String?   @map("mime_type")
-  createdAt     DateTime  @default(now()) @map("created_at")
-  authorId      String?   @map("author_id")
   usageCount    Int       @default(0) @map("usage_count")
+  createdAt     DateTime  @default(now()) @map("created_at")
   lastUsedAt    DateTime? @map("last_used_at")
   isActive      Boolean   @default(true) @map("is_active")
+  authorId      String?   @map("author_id")
   author        User?     @relation(fields: [authorId], references: [id])
   generatedMedia GeneratedMedia[]
 }
@@ -48,9 +48,9 @@ model FaceSource {
   mimeType    String    @map("mime_type")
   createdAt   DateTime  @default(now()) @map("created_at")
   lastUsedAt  DateTime? @map("last_used_at")
-  authorId    String?   @map("author_id")
   usageCount  Int       @default(0) @map("usage_count")
   isActive    Boolean   @default(true) @map("is_active")
+  authorId    String?   @map("author_id")
   author      User?     @relation(fields: [authorId], references: [id])
   generatedMedia GeneratedMedia[]
 }
@@ -61,21 +61,18 @@ model GeneratedMedia {
   type          String    // ENUM('video', 'image')
   tempPath      String?   @map("temp_path")
   filePath      String    @map("file_path")
-  thumbnailPath String?   @map("thumbnail_path")
   fileSize      BigInt    @map("file_size")
   mimeType    String    @map("mime_type")
   createdAt     DateTime  @default(now()) @map("created_at")
-  authorId      String?   @map("author_id")
-  playCount     Int       @default(0) @map("play_count")
   downloadCount Int       @default(0) @map("download_count")
+  isPaid        Boolean   @default(false)
   isActive      Boolean   @default(true) @map("is_active")
+  authorId      String?   @map("author_id")
   templateId    String?   @map("template_id")
   faceSourceId  String?   @map("face_source_id")
   author        User?     @relation(fields: [authorId], references: [id])
   targetTemplate TargetTemplate? @relation(fields: [templateId], references: [id])
   faceSource    FaceSource? @relation(fields: [faceSourceId], references: [id])
-  isPaid        Boolean   @default(false)
-  watermarkPath String?
 }
 
 model Guideline {
@@ -86,9 +83,9 @@ model Guideline {
   fileType      String   @map("file_type")
   fileSize      BigInt   @map("file_size")
   filePath      String    @map("file_path")
+  isAllowed     Boolean  @default(true) @map("is_allowed")
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @updatedAt @map("updated_at")
-  isAllowed     Boolean  @default(true) @map("is_allowed")
 }
 
 model Payment {

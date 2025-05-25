@@ -110,10 +110,24 @@ sharp('input.jpg')
 
 ### 🌽 video
 
-```jsx
+```html
 <video width="320" height="240" controls preload="none">
   <source src="/path/to/video.mp4" type="video/mp4" />
   <track src="/path/to/captions.vtt" kind="subtitles" srcLang="en" label="English" />
+  Your browser does not support the video tag.
+</video>
+```
+
+```html
+<video
+  src="/videos/example.mp4"
+  controls
+  autoPlay={false}
+  muted={false}
+  loop={false}
+  style={{ width: '100%', height: 'auto' }}
+  aria-label="Example video"
+>
   Your browser does not support the video tag.
 </video>
 ```

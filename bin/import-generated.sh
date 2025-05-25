@@ -8,7 +8,6 @@ fi
 
 source "$(dirname "$0")/config.sh"
 
-
 # Check if directory exists
 if [ ! -d "$OUTPUT_DIR" ]; then
     echo "Error: Directory $OUTPUT_DIR does not exist"
@@ -86,9 +85,8 @@ for media in "$OUTPUT_DIR"/*.{mp4,jpg,jpeg,png}; do
                         filePath: '$file_path',
                         fileSize: BigInt('$filesize'),
                         mimeType: '$mime_type',
-                        isActive: true,
-                        playCount: 0,
                         downloadCount: 0,
+                        isActive: true,
                         isPaid: false
                     }
                 });
