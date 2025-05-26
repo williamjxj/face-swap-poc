@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import stripe from '@/lib/stripe'
 import prisma from '@/lib/db'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/services/auth'
 
 export async function GET(request) {
   const searchParams = request.nextUrl.searchParams
@@ -15,6 +17,9 @@ export async function GET(request) {
   }
 
   try {
+    // Get current user session
+    const userSession = await getServerSession(authOptions)
+    const currentUserId = userSession?.user?.id
     // Retrieve the session from Stripe to verify payment
     console.log('Retrieving session from Stripe')
     const session = await stripe.checkout.sessions.retrieve(sessionId)
@@ -61,17 +66,27 @@ export async function GET(request) {
                 })
 
                 if (!existingPayment) {
-                  await prisma.payment.create({
-                    data: {
+                  // Determine which user ID to use (current user takes priority over video author)
+                  const userId = currentUserId || video.authorId
+
+                  if (userId) {
+                    // Common payment data
+                    const paymentData = {
                       amount: parseFloat(session.amount_total) / 100,
                       currency: session.currency.toUpperCase(),
                       status: 'completed',
                       type: 'fiat',
-                      userId: video.authorId || '00000000-0000-0000-0000-000000000000',
+                      userId,
                       generatedMediaId: videoId,
-                    },
-                  })
-                  console.log('Fallback: Created payment record')
+                    }
+
+                    await prisma.payment.create({ data: paymentData })
+
+                    const userSource = currentUserId ? 'current user' : 'video author'
+                    console.log(`Fallback: Created payment record for ${userSource}: ${userId}`)
+                  } else {
+                    console.log('Cannot create payment record: No valid user ID found')
+                  }
                 }
               } catch (paymentError) {
                 console.error('Error handling payment record:', paymentError.message)

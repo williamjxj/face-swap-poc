@@ -6,6 +6,8 @@ import fetch from 'node-fetch'
 import { PrismaClient } from '@prisma/client'
 import { serializeBigInt } from '@/utils/helper'
 import { optimizeVideo, generateVideoThumbnail, addTextWatermark } from '@/utils/videoUtils'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/services/auth'
 
 // Create a direct Prisma client instance just for this route
 // This avoids triggering any middleware or global Prisma operations
@@ -54,6 +56,27 @@ const ERROR_TYPES = {
 
 export async function POST(request) {
   try {
+    // Get user session
+    const session = await getServerSession(authOptions)
+    const userId = session?.user?.id
+
+    // Verify the user exists in the database
+    let validUserId = null
+    if (userId) {
+      try {
+        const userExists = await prisma.user.findUnique({
+          where: { id: userId },
+          select: { id: true },
+        })
+        if (userExists) {
+          validUserId = userId
+          console.log('[AUTH] Using validated user ID:', validUserId)
+        }
+      } catch (err) {
+        console.error('[AUTH ERROR] Error validating user ID:', err.message)
+      }
+    }
+
     let sourceFile, targetFile
     const contentType = request.headers.get('content-type')
 
@@ -168,7 +191,7 @@ export async function POST(request) {
     console.log('[API] Fusion task created with output path:', outputPath)
 
     // Step 2: Poll for results and handle the completed task
-    const result = await pollAndProcessResult(outputPath, sourceFile, targetFile)
+    const result = await pollAndProcessResult(outputPath, sourceFile, targetFile, { validUserId })
 
     // Return the result to the client
     return NextResponse.json(result)
@@ -286,7 +309,7 @@ async function createFusionTask(sourceFile, targetFile) {
 
 // pollForResults function has been replaced by functionality in pollAndProcessResult
 
-async function pollAndProcessResult(outputPath, sourceFile, targetFile) {
+async function pollAndProcessResult(outputPath, sourceFile, targetFile, request = {}) {
   let retryCount = 0
   let lastError = null
   let progressPercentage = 0
@@ -343,7 +366,15 @@ async function pollAndProcessResult(outputPath, sourceFile, targetFile) {
 
           // Start download process with the output_url from the response
           const outputUrl = data.output_url || outputPath
-          return await processCompletedTask(outputUrl, sourceFile, targetFile, outputPath)
+          // Get user ID from parent scope
+          const validUserId = request.validUserId
+          return await processCompletedTask(
+            outputUrl,
+            sourceFile,
+            targetFile,
+            outputPath,
+            validUserId
+          )
         } else if (data.status === 'failed') {
           // Task failed with an error
           const errorMessage = data.error || 'Unknown processing error'
@@ -498,6 +529,7 @@ async function pollAndProcessResult(outputPath, sourceFile, targetFile) {
             isPaid: false,
             faceSourceId: faceSourceId,
             templateId: templateId,
+            authorId: request.validUserId, // Set the author ID from the logged-in user
           },
         })
 
@@ -546,7 +578,7 @@ async function pollAndProcessResult(outputPath, sourceFile, targetFile) {
 }
 
 // Process a completed task by downloading and saving the generated media
-async function processCompletedTask(outputUrl, sourceFile, targetFile, outputPath) {
+async function processCompletedTask(outputUrl, sourceFile, targetFile, outputPath, userId = null) {
   try {
     // Create full URL if needed
     const fullUrl = outputUrl.startsWith('http')
@@ -725,6 +757,7 @@ async function processCompletedTask(outputUrl, sourceFile, targetFile, outputPat
         isPaid: false,
         faceSourceId: faceSourceId,
         templateId: templateId,
+        authorId: userId, // Set the author ID from the logged-in user
       },
     })
 

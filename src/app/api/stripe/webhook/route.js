@@ -79,17 +79,23 @@ export async function POST(req) {
           // Skip payment creation if there's no Payment model available
           if (prisma.payment) {
             try {
-              await prisma.payment.create({
-                data: {
+              // Only try to create a payment record if we have a valid author ID
+              if (updatedVideo.authorId) {
+                // Common payment data
+                const paymentData = {
                   amount: parseFloat(session.amount_total) / 100,
                   currency: session.currency.toUpperCase(),
                   status: 'completed',
                   type: 'fiat',
-                  userId: updatedVideo.authorId || '00000000-0000-0000-0000-000000000000', // Use default if no author
+                  userId: updatedVideo.authorId,
                   generatedMediaId: videoId,
-                },
-              })
-              console.log(`Payment record created successfully`)
+                }
+
+                await prisma.payment.create({ data: paymentData })
+                console.log(`Payment record created successfully`)
+              } else {
+                console.log('Cannot create payment record: No valid authorId found for video')
+              }
             } catch (paymentError) {
               // Don't fail the whole process if payment record creation fails
               console.error(`Error creating payment record: ${paymentError.message}`)
