@@ -1070,11 +1070,7 @@ export default function FaceFusion() {
                           <div className="relative">
                             {media.type === 'video' ? (
                               <VideoPlayerWithLoading
-                                src={
-                                  media.isPaid
-                                    ? media.filePath
-                                    : media.watermarkPath || media.filePath
-                                }
+                                src={media.filePath}
                                 className="w-full h-32 rounded-lg mb-2"
                                 autoPlay={true}
                                 loop={true}
@@ -1084,11 +1080,7 @@ export default function FaceFusion() {
                               />
                             ) : (
                               <Image
-                                src={
-                                  media.isPaid
-                                    ? media.filePath
-                                    : media.watermarkPath || media.filePath
-                                }
+                                src={media.filePath}
                                 alt={media.name}
                                 width={300}
                                 height={128}

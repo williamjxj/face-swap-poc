@@ -5,7 +5,7 @@ import FormData from 'form-data'
 import fetch from 'node-fetch'
 import { PrismaClient } from '@prisma/client'
 import { serializeBigInt } from '@/utils/helper'
-import { optimizeVideo, generateVideoThumbnail, addTextWatermark } from '@/utils/videoUtils'
+import { optimizeVideo, generateVideoThumbnail } from '@/utils/videoUtils'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/services/auth'
 
@@ -31,16 +31,6 @@ const VIDEO_OPTIMIZATION_CONFIG = {
   crf: 23, // Quality (lower is better)
   keyframeInterval: 1, // More keyframes for better seeking
   generateThumbnail: true,
-}
-
-// Configuration for video watermarking
-const VIDEO_WATERMARK_ENABLED = true // Set to false to disable watermarking
-const WATERMARK_CONFIG = {
-  text: 'FACE SWAP POC', // Watermark text
-  position: 'bottomright',
-  fontSize: 24,
-  fontColor: 'white',
-  opacity: 0.7,
 }
 
 // Error types for better client-side handling
@@ -487,59 +477,54 @@ async function pollAndProcessResult(outputPath, sourceFile, targetFile, request 
         let finalFileSize = fileSize
         let thumbnailPath = null
 
-        if (fileType === 'video' && VIDEO_OPTIMIZATION_ENABLED) {
-          try {
-            console.log(`[OPTIMIZATION] Starting video optimization for: ${filePath}`)
+        if (fileType === 'video') {
+          // Step 1: Optimize video if enabled
+          if (VIDEO_OPTIMIZATION_ENABLED) {
+            try {
+              console.log(`[OPTIMIZATION] Starting video optimization for: ${filePath}`)
 
-            // Create optimized version in outputs/optimized folder
-            const optimizedResult = await optimizeVideo(filePath, {
-              ...VIDEO_OPTIMIZATION_CONFIG,
-              outputPath: path.join(outputsDir, 'optimized', outputFilename),
-            })
+              // Create optimized version in outputs/optimized folder
+              const optimizedResult = await optimizeVideo(filePath, {
+                ...VIDEO_OPTIMIZATION_CONFIG,
+                outputPath: path.join(outputsDir, 'optimized', outputFilename),
+              })
 
-            console.log(
-              `[OPTIMIZATION] Video optimized successfully: ${optimizedResult.outputPath}`
-            )
+              console.log(
+                `[OPTIMIZATION] Video optimized successfully: ${optimizedResult.outputPath}`
+              )
 
-            // Update to use the optimized version
-            finalFilePath = optimizedResult.outputPath
-            finalFileSize = fs.statSync(finalFilePath).size
-            thumbnailPath = optimizedResult.thumbnailPath
-          } catch (optError) {
-            console.error(`[OPTIMIZATION ERROR] Failed to optimize video: ${optError.message}`)
+              // Update to use the optimized version
+              finalFilePath = optimizedResult.outputPath
+              finalFileSize = fs.statSync(finalFilePath).size
+              thumbnailPath = optimizedResult.thumbnailPath
+            } catch (optError) {
+              console.error(`[OPTIMIZATION ERROR] Failed to optimize video: ${optError.message}`)
+            }
           }
         }
 
-        // Prepare paths for database storage
-        const relativeFilePath = `/outputs/${path.basename(finalFilePath)}`
-        const relativeThumbnailPath = thumbnailPath
-          ? `/outputs/thumbnails/${path.basename(thumbnailPath)}`
-          : null
-
-        // Create database record
-        const dbRecord = await prisma.generatedMedia.create({
-          data: {
-            name: outputFilename,
-            type: fileType,
-            tempPath: outputPath,
-            filePath: relativeFilePath,
-            thumbnailPath: fileType === 'video' ? relativeThumbnailPath : null,
-            fileSize: BigInt(finalFileSize),
-            mimeType: fileType === 'video' ? 'video/mp4' : 'image/jpeg',
-            isPaid: false,
-            faceSourceId: faceSourceId,
-            templateId: templateId,
-            authorId: request.validUserId, // Set the author ID from the logged-in user
-          },
+        // Create database record using helper function
+        const dbRecord = await createGeneratedMediaRecord({
+          outputFilename,
+          fileType,
+          outputPath,
+          finalFilePath,
+          thumbnailPath,
+          finalFileSize,
+          contentType: null, // No content type in this case
+          faceSourceId,
+          templateId,
+          userId: request.validUserId,
         })
-
-        console.log('[DB] Database record created:', serializeBigInt(dbRecord))
 
         // Return success response
         return {
           status: 'success',
           message: 'Face fusion completed successfully',
-          filePath: `/outputs/${outputFilename}`,
+          filePath: `/outputs/${path.basename(finalFilePath)}`,
+          thumbnailPath: thumbnailPath
+            ? `/outputs/thumbnails/${path.basename(thumbnailPath)}`
+            : null,
           fileSize: Number(fileSize),
           id: dbRecord.id,
         }
@@ -605,35 +590,23 @@ async function processCompletedTask(outputUrl, sourceFile, targetFile, outputPat
 
     // Ensure outputs directory exists
     const outputsDir = path.join(process.cwd(), 'public', 'outputs')
-    if (!fs.existsSync(outputsDir)) {
-      fs.mkdirSync(outputsDir, { recursive: true })
-    }
+    await ensureDirectoryExists(outputsDir)
 
-    // File path for saving
+    // Determine file type from content type
+    const fileType = contentType?.includes('video') ? 'video' : 'image'
+
+    // Define file path
     const filePath = path.join(outputsDir, outputFilename)
 
-    // Get file data
-    const fileData = await response.arrayBuffer()
-    const fileBuffer = Buffer.from(fileData)
-    const fileSize = fileBuffer.length
+    // Write the file to disk
+    const fileBuffer = await response.arrayBuffer()
+    fs.writeFileSync(filePath, Buffer.from(fileBuffer))
+    const fileSize = fs.statSync(filePath).size
 
-    // Write file to disk
-    fs.writeFileSync(filePath, fileBuffer)
-    console.log(`[DOWNLOAD] File saved successfully at: ${filePath}`)
-
-    // Verify file exists
-    if (!fs.existsSync(filePath)) {
-      throw new Error(`Failed to save file to ${filePath}`)
-    }
-
-    // Determine file type
-    const fileType = targetFile.name.match(/\.(mp4|webm|mov)$/i) ? 'video' : 'image'
-
-    // For videos, apply optimization to improve loading performance
+    // Process video-specific tasks (optimization, thumbnail generation)
     let finalFilePath = filePath
     let finalFileSize = fileSize
     let thumbnailPath = null
-    let watermarkedPath = null
 
     if (fileType === 'video') {
       // Step 1: Optimize video if enabled
@@ -664,31 +637,6 @@ async function processCompletedTask(outputUrl, sourceFile, targetFile, outputPat
           } catch (thumbError) {
             console.error(`[THUMBNAIL ERROR] Failed to generate thumbnail: ${thumbError.message}`)
           }
-        }
-      }
-
-      // Step 2: Apply watermark if enabled
-      if (VIDEO_WATERMARK_ENABLED) {
-        try {
-          console.log(`[WATERMARK] Adding watermark to video: ${finalFilePath}`)
-
-          // Create watermarked version in outputs/watermarked folder
-          const watermarkResult = await addTextWatermark(finalFilePath, {
-            ...WATERMARK_CONFIG,
-            outputPath: path.join(outputsDir, 'watermarked', outputFilename),
-          })
-
-          console.log(`[WATERMARK] Video watermarked successfully: ${watermarkResult.outputPath}`)
-
-          // Update path to use watermarked version
-          watermarkedPath = watermarkResult.outputPath
-
-          // Use watermarked version as final if successful
-          finalFilePath = watermarkedPath
-          finalFileSize = fs.statSync(finalFilePath).size
-        } catch (watermarkError) {
-          console.error(`[WATERMARK ERROR] Failed to add watermark: ${watermarkError.message}`)
-          // Continue with the non-watermarked version if watermarking fails
         }
       }
     }
@@ -733,56 +681,81 @@ async function processCompletedTask(outputUrl, sourceFile, targetFile, outputPat
       }
     }
 
-    // Prepare paths for database storage
-    const relativeFilePath = `/outputs/${path.basename(finalFilePath)}`
-    const relativeThumbnailPath = thumbnailPath
-      ? `/outputs/thumbnails/${path.basename(thumbnailPath)}`
-      : null
-    const relativeWatermarkPath = watermarkedPath
-      ? `/outputs/watermarked/${path.basename(watermarkedPath)}`
-      : null
-
-    // Create database record
-    const dbRecord = await prisma.generatedMedia.create({
-      data: {
-        name: outputFilename,
-        type: fileType,
-        tempPath: outputPath,
-        filePath: relativeFilePath,
-        thumbnailPath: fileType === 'video' ? relativeThumbnailPath : null,
-        watermarkPath:
-          fileType === 'video' && VIDEO_WATERMARK_ENABLED ? relativeWatermarkPath : null,
-        fileSize: BigInt(finalFileSize),
-        mimeType: contentType || (fileType === 'video' ? 'video/mp4' : 'image/jpeg'),
-        isPaid: false,
-        faceSourceId: faceSourceId,
-        templateId: templateId,
-        authorId: userId, // Set the author ID from the logged-in user
-      },
+    // Create database record using helper function
+    const dbRecord = await createGeneratedMediaRecord({
+      outputFilename,
+      fileType,
+      outputPath,
+      finalFilePath,
+      thumbnailPath,
+      finalFileSize,
+      contentType,
+      faceSourceId,
+      templateId,
+      userId,
     })
-
-    console.log('[DB] Database record created:', serializeBigInt(dbRecord))
 
     // Return success response
     return {
       status: 'success',
-      message: 'Face fusion completed successfully',
-      filePath: relativeFilePath,
-      thumbnailPath: relativeThumbnailPath,
-      watermarkPath: relativeWatermarkPath,
-      fileSize: Number(finalFileSize),
+      filePath: `/outputs/${path.basename(finalFilePath)}`,
+      thumbnailPath: thumbnailPath ? `/outputs/thumbnails/${path.basename(thumbnailPath)}` : null,
+      name: outputFilename,
+      type: fileType,
       id: dbRecord.id,
-      optimized: VIDEO_OPTIMIZATION_ENABLED && fileType === 'video',
-      watermarked: VIDEO_WATERMARK_ENABLED && fileType === 'video' && !!watermarkedPath,
+      fileSize: finalFileSize,
     }
   } catch (error) {
-    console.error('[DOWNLOAD ERROR] Error processing completed task:', error)
+    console.error('[PROCESS ERROR]', error)
     return {
       status: 'error',
-      errorType: ERROR_TYPES.DOWNLOAD,
-      message: `Error processing completed task: ${error.message}`,
+      errorType: ERROR_TYPES.PROCESSING,
+      message: `Processing error: ${error.message}`,
     }
   }
+}
+
+/**
+ * Helper function to create a database record for generated media
+ */
+async function createGeneratedMediaRecord({
+  outputFilename,
+  fileType,
+  outputPath,
+  finalFilePath,
+  thumbnailPath,
+  finalFileSize,
+  contentType,
+  faceSourceId,
+  templateId,
+  userId,
+}) {
+  // Prepare paths for database storage
+  const relativeFilePath = `/outputs/${path.basename(finalFilePath)}`
+  const relativeThumbnailPath = thumbnailPath
+    ? `/outputs/thumbnails/${path.basename(thumbnailPath)}`
+    : null
+
+  // Create database record
+  const dbRecord = await prisma.generatedMedia.create({
+    data: {
+      name: outputFilename,
+      type: fileType,
+      tempPath: outputPath,
+      filePath: relativeFilePath,
+      thumbnailPath: fileType === 'video' ? relativeThumbnailPath : null,
+      fileSize: BigInt(finalFileSize),
+      mimeType: contentType || (fileType === 'video' ? 'video/mp4' : 'image/jpeg'),
+      isPaid: false,
+      faceSourceId: faceSourceId,
+      templateId: templateId,
+      authorId: userId, // Set the author ID from the logged-in user
+    },
+  })
+
+  console.log('[DB] Database record created:', serializeBigInt(dbRecord))
+
+  return dbRecord
 }
 
 // Helper function to determine file extension from content-type

@@ -93,8 +93,6 @@ export default function VideoModal({ video, onClose, onDownload, onDelete }) {
             className="w-full rounded-lg mb-4 max-h-[70vh] object-contain"
             autoPlay
             thumbnail={video.thumbnailPath}
-            watermarkedSrc={video.watermarkPath}
-            showWatermarked={!video.isPaid}
             showDuration={true}
             optimizedLoading={true}
           />

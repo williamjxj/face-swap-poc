@@ -80,8 +80,6 @@ export default function VideoPlayerWithLoading({
   preloadStrategy = 'metadata', // 'none', 'metadata', 'auto'
   optimizedLoading = true,
   thumbnail = null,
-  watermarkedSrc = null,
-  showWatermarked = false,
   showDuration = false,
 }) {
   const [loading, setLoading] = useState(true)
@@ -90,7 +88,6 @@ export default function VideoPlayerWithLoading({
   const [duration, setDuration] = useState(0)
   const videoRef = useRef(null)
   const [showVideo, setShowVideo] = useState(false)
-  const [displayWatermarked, setDisplayWatermarked] = useState(showWatermarked)
 
   useEffect(() => {
     // Reset states when src changes
@@ -118,33 +115,6 @@ export default function VideoPlayerWithLoading({
       videoRef.current.preload = preloadStrategy
     }
   }, [src, preloadStrategy, optimizedLoading])
-
-  // Effect to handle switching between watermarked and original sources
-  useEffect(() => {
-    if (videoRef.current && watermarkedSrc) {
-      const videoElement = videoRef.current
-      const currentTime = videoElement.currentTime
-      const isPlaying = !videoElement.paused
-
-      // Update video source
-      videoElement.src = displayWatermarked ? watermarkedSrc : src
-
-      // After loading, restore playback state
-      const handleSourceChange = () => {
-        videoElement.currentTime = currentTime
-        if (isPlaying) {
-          videoElement.play()
-        }
-      }
-
-      videoElement.addEventListener('loadeddata', handleSourceChange, { once: true })
-
-      return () => {
-        // Use the captured videoElement reference in the cleanup function
-        videoElement.removeEventListener('loadeddata', handleSourceChange)
-      }
-    }
-  }, [displayWatermarked, src, watermarkedSrc])
 
   const handleCanPlay = () => {
     setProgress(100)
@@ -217,7 +187,7 @@ export default function VideoPlayerWithLoading({
 
       <video
         ref={videoRef}
-        src={showWatermarked && watermarkedSrc ? watermarkedSrc : src}
+        src={src}
         className={`w-full ${className || ''}`}
         autoPlay={autoPlay}
         loop={loop}
@@ -235,18 +205,6 @@ export default function VideoPlayerWithLoading({
       {showDuration && duration > 0 && (
         <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
           {formatDuration(duration)}
-        </div>
-      )}
-
-      {watermarkedSrc && (
-        <div className="absolute top-2 right-2 z-30">
-          <button
-            className={`px-2 py-1 text-xs rounded ${displayWatermarked ? 'bg-blue-600 text-white' : 'bg-gray-700/70 text-white/90 hover:bg-gray-600'}`}
-            onClick={() => setDisplayWatermarked(!displayWatermarked)}
-            title={displayWatermarked ? 'Hide watermark' : 'Show watermark'}
-          >
-            {displayWatermarked ? 'Watermarked' : 'Show Watermark'}
-          </button>
         </div>
       )}
     </div>
