@@ -25,7 +25,7 @@ $ sudo firewall-cmd --reload
 
 $ psql -U postgres -d facefusion -f prisma/full_init_migration.sql
 $ npx prisma init
-DATABASE_URL="postgresql://<db_user>:<password>@<host>:<port>/facefusion"
+$ npx prisma db push
 
 $ vi /var/lib/pgsql/data/pg_hba.conf
 $ sudo systemctl restart postgresql

@@ -20,8 +20,8 @@ const CREATE_API = process.env.MODAL_CREATE_API
 const QUERY_API = process.env.MODAL_QUERY_API
 
 // Maximum number of retry attempts for polling
-const MAX_RETRIES = 60 // 5 minutes maximum (5 seconds × 60)
-const POLLING_INTERVAL = 5000 // 5 seconds
+const MAX_RETRIES = 60 // 6 minutes maximum (8 seconds × 60)
+const POLLING_INTERVAL = 8000 // 8 seconds
 
 // Configuration for video optimization
 const VIDEO_OPTIMIZATION_ENABLED = true // Set to false to disable optimization
@@ -239,11 +239,10 @@ async function createFusionTask(sourceFile, targetFile) {
 
     if (!CREATE_API) {
       throw new Error(
-        `API configuration error: Missing CREATE_API endpoint in environment variables`
+        `API configuration error: Missing CREATE API endpoint in environment variables`
       )
     }
 
-    // Call the CREATE_API with timeout handling
     const controller = new AbortController()
     const timeout = setTimeout(() => controller.abort(), 30000) // 30 second timeout
 
@@ -305,10 +304,10 @@ async function pollAndProcessResult(outputPath, sourceFile, targetFile, request 
   let progressPercentage = 0
 
   console.log(`[POLL] Starting to poll for results with outputPath: ${outputPath}`)
-  console.log(`[POLL] Using QUERY_API endpoint: ${QUERY_API}`)
+  console.log(`[POLL] Using QUERY API endpoint: ${QUERY_API}`)
 
   if (!QUERY_API) {
-    throw new Error(`API configuration error: Missing QUERY_API endpoint in environment variables`)
+    throw new Error(`API configuration error: Missing QUERY API endpoint in environment variables`)
   }
 
   while (retryCount < MAX_RETRIES) {

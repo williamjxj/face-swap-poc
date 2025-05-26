@@ -11,12 +11,6 @@
 - Ensure proper backup strategy for both database and file storage
 - Implement migration strategy for future cloud storage transition
 
-### 🥒 video2thumbnail
-
-```html
-<image src="video2thumbnail.png" alt="video2thumbnail" width="{116}" height="{176}" />
-```
-
 ### 🌶 npx prisma db push
 
 - Directly applies schema changes to the database
@@ -31,7 +25,7 @@
 - Applies changes to the database
 - Generates/updates Prisma Client
 
-### Prisma
+### Integration
 
 | Step                   | Command/Action                                                           |
 | ---------------------- | ------------------------------------------------------------------------ |
@@ -40,9 +34,3 @@
 | configure              | DATABASE_URL="postgresql://<db_user>:<password>@<host>:<port>/<db_name>" |
 | Introspect db          | `npx prisma db pull`                                                     |
 | Generate client        | `npx prisma generate` (sync schema)                                      |
-
-- npx prisma studio
-- npx prisma db seed
-- `npx prisma db push`
-- npx prisma migrate dev --name <migration_name>
-- npx prisma migrate deploy

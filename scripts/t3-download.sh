@@ -9,7 +9,7 @@ if [ -z "$output_path" ]; then
 fi
 
 # Download the result using output_path
-curl --location "${QUERY_API}" \
+curl --location "${MODAL_QUERY_API}" \
     --header 'Content-Type: application/json' \
     --data "{\"output_path\":\"${output_path}\"}" \
     --output "${DOWNLOAD_DIR}/result.mp4"

@@ -165,3 +165,9 @@ $ npm install --save-dev dependency-cruiser
 # Install npm-check for finding unused dependencies
 $ npm install --save-dev npm-check
 ```
+
+### 🥒 video2thumbnail
+
+```html
+<image src="video2thumbnail.png" alt="video2thumbnail" width="{116}" height="{176}" />
+```
