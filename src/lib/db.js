@@ -7,7 +7,7 @@ const globalForPrisma = global || globalThis
 export const db =
   globalForPrisma.prisma ||
   new PrismaClient({
-    log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
+    log: ['error'],
   })
 
 // Set the global prisma instance in development

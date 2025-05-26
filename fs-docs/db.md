@@ -1,3 +1,5 @@
+# Prisma DB Design
+
 ### 🥬 DB Type: TEXT vs. VARCHAR
 
 - file metadata
@@ -38,3 +40,9 @@
 | configure              | DATABASE_URL="postgresql://<db_user>:<password>@<host>:<port>/<db_name>" |
 | Introspect db          | `npx prisma db pull`                                                     |
 | Generate client        | `npx prisma generate` (sync schema)                                      |
+
+- npx prisma studio
+- npx prisma db seed
+- `npx prisma db push`
+- npx prisma migrate dev --name <migration_name>
+- npx prisma migrate deploy
