@@ -4,10 +4,8 @@ import path from 'path'
 import FormData from 'form-data'
 import fetch from 'node-fetch'
 import { PrismaClient } from '@prisma/client'
-import { serializeBigInt } from '@/utils/helper'
 import { optimizeVideo, generateVideoThumbnail } from '@/utils/videoUtils'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/services/auth'
+import { getValidatedUserId, logSessionDebugInfo } from '@/utils/auth-helper'
 
 // Create a direct Prisma client instance just for this route
 // This avoids triggering any middleware or global Prisma operations
@@ -46,25 +44,16 @@ const ERROR_TYPES = {
 
 export async function POST(request) {
   try {
-    // Get user session
-    const session = await getServerSession(authOptions)
-    const userId = session?.user?.id
+    // Log session debug info to help troubleshoot
+    await logSessionDebugInfo()
 
-    // Verify the user exists in the database
-    let validUserId = null
-    if (userId) {
-      try {
-        const userExists = await prisma.user.findUnique({
-          where: { id: userId },
-          select: { id: true },
-        })
-        if (userExists) {
-          validUserId = userId
-          console.log('[AUTH] Using validated user ID:', validUserId)
-        }
-      } catch (err) {
-        console.error('[AUTH ERROR] Error validating user ID:', err.message)
-      }
+    // Get validated user ID from helper function
+    const validUserId = await getValidatedUserId()
+
+    if (validUserId) {
+      console.log('[AUTH] Using validated user ID for face fusion:', validUserId)
+    } else {
+      console.log('[AUTH] No valid user ID found for face fusion')
     }
 
     let sourceFile, targetFile
@@ -300,7 +289,6 @@ async function createFusionTask(sourceFile, targetFile) {
 
 async function pollAndProcessResult(outputPath, sourceFile, targetFile, request = {}) {
   let retryCount = 0
-  let lastError = null
   let progressPercentage = 0
 
   console.log(`[POLL] Starting to poll for results with outputPath: ${outputPath}`)
@@ -691,7 +679,7 @@ async function processCompletedTask(outputUrl, sourceFile, targetFile, outputPat
       contentType,
       faceSourceId,
       templateId,
-      userId,
+      userId, // Use the userId parameter passed to the function
     })
 
     // Return success response
@@ -748,11 +736,15 @@ async function createGeneratedMediaRecord({
       isPaid: false,
       faceSourceId: faceSourceId,
       templateId: templateId,
-      authorId: userId, // Set the author ID from the logged-in user
+      authorId: userId, // Set the author ID from the validated user ID
     },
   })
 
-  console.log('[DB] Database record created:', serializeBigInt(dbRecord))
+  if (userId) {
+    console.log('[DB] Generated media associated with user ID:', userId)
+  } else {
+    console.log('[DB] Warning: Generated media created without author ID')
+  }
 
   return dbRecord
 }
@@ -772,8 +764,9 @@ function getFileExtensionFromContentType(contentType) {
 
 /**
  * Helper function to determine MIME type from file extension
+ * @private - Internal utility, not used currently but kept for potential future use
  */
-function getMimeTypeFromExtension(extension) {
+function _getMimeTypeFromExtension(extension) {
   const ext = extension.toLowerCase()
 
   // Map common extensions to MIME types
@@ -803,7 +796,8 @@ function getMimeTypeFromExtension(extension) {
 }
 
 // Helper function to check if content is a binary media file by looking for common signatures
-function isBinaryMediaFile(content) {
+// @private - Internal utility, not currently used but kept for future reference
+function _isBinaryMediaFile(content) {
   if (!content) return false
 
   try {

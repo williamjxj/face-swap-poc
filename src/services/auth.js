@@ -98,17 +98,23 @@ export const authOptions = {
       // If we have an email, ensure the user exists in the database
       if (session?.user?.email) {
         try {
-          // Simple upsert operation to ensure user exists
-          await db.user.upsert({
+          // Use upsert but retrieve the user information to get the correct ID
+          const user = await db.user.upsert({
             where: { account: session.user.email },
             update: { lastLogin: new Date() },
             create: {
               account: session.user.email,
               lastLogin: new Date(),
+              name: session.user.name || session.user.email.split('@')[0],
             },
           })
+
+          // Always ensure we have the correct user ID from the database
+          session.user.id = user.id
+          console.log('Auth session updated with user ID:', user.id)
         } catch (error) {
-          // Silently handle error but continue session
+          console.error('Error updating user session:', error)
+          // Continue session but log the error
         }
       }
 

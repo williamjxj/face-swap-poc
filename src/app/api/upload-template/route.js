@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server'
 import { writeFile, mkdir, unlink } from 'fs/promises'
 import path from 'path'
-import { v4 as uuidv4 } from 'uuid'
 import db from '@/lib/db'
 import { video2thumbnail, getVideoDuration } from '@/utils/videoHelper'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/services/auth'
+import { getValidatedUserId, logSessionDebugInfo } from '@/utils/auth-helper'
 
 export async function POST(request) {
   try {
@@ -112,31 +112,16 @@ export async function POST(request) {
 
     console.log('Template type:', templateType)
 
-    // Get the user session to associate with the upload
-    const session = await getServerSession(authOptions)
-    let authorId = null
+    // Log session debug info to help troubleshoot
+    await logSessionDebugInfo()
 
-    if (session?.user?.id) {
-      // Verify that the user exists in the database before using the ID
-      try {
-        const userExists = await db.user.findUnique({
-          where: { id: session.user.id },
-          select: { id: true },
-        })
+    // Get validated user ID from helper function
+    const authorId = await getValidatedUserId()
 
-        if (userExists) {
-          authorId = session.user.id
-          console.log('Adding author ID to template:', authorId)
-        } else {
-          console.log('User ID from session not found in database:', session.user.id)
-          console.log('Will create template without author ID')
-        }
-      } catch (userCheckError) {
-        console.error('Error checking user existence:', userCheckError)
-        console.log('Will create template without author ID')
-      }
+    if (authorId) {
+      console.log('Associating template with validated user ID:', authorId)
     } else {
-      console.log('No user session for template upload, template will be anonymous')
+      console.log('No valid user ID found, creating template without author ID')
     }
 
     const templateData = {

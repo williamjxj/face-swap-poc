@@ -11,6 +11,7 @@ import TabContent from './TabContent'
 import CloseButton from '@/components/CloseButton'
 import StripeCheckoutButton from '@/components/StripeCheckoutButton'
 import VideoPlayerWithLoading from '@/components/VideoPlayerWithLoading'
+import { MdFace } from 'react-icons/md'
 
 export default function FaceFusion() {
   // State declarations
@@ -956,18 +957,22 @@ export default function FaceFusion() {
               <button
                 onClick={handleSubmit}
                 disabled={!selectedSource || !selectedTemplate || processing}
-                className={`mt-4 py-2 px-4 rounded w-full ${
+                className={`mt-4 py-3 px-6 rounded-xl w-full font-medium text-base flex items-center justify-center gap-3 shadow-[0_8px_30px_rgb(0,0,0,0.12)] transform transition-all duration-300 ${
                   selectedSource && selectedTemplate && !processing
-                    ? 'bg-blue-500 hover:bg-blue-600 text-white cursor-pointer'
-                    : 'bg-blue-500/50 text-white/50 cursor-not-allowed'
+                    ? 'bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white cursor-pointer hover:scale-[1.02] hover:shadow-[0_10px_30px_rgba(59,130,246,0.3)] active:scale-[0.98] active:shadow-[0_5px_15px_rgba(59,130,246,0.2)]'
+                    : 'bg-gradient-to-r from-blue-500/40 to-indigo-600/40 text-white/60 cursor-not-allowed'
                 }`}
               >
                 {processing ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <Loading /> Processing...
+                  <span className="flex items-center justify-center gap-3">
+                    <Loading className="animate-spin" />
+                    <span className="animate-pulse">Processing...</span>
                   </span>
                 ) : (
-                  'Generate'
+                  <>
+                    <MdFace className="w-6 h-6 text-white" />
+                    <span>Generate</span>
+                  </>
                 )}
               </button>
 

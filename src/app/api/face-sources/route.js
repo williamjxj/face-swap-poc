@@ -5,8 +5,7 @@ import db from '@/lib/db'
 import { serializeBigInt } from '@/utils/helper'
 import { v4 as uuidv4 } from 'uuid'
 import sharp from 'sharp'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/services/auth'
+import { getValidatedUserId, logSessionDebugInfo } from '@/utils/auth-helper'
 
 // Helper function to handle BigInt serialization
 const sanitizeBigInt = data => {
@@ -61,31 +60,16 @@ export async function POST(request) {
     const fileSize = file.size
     const mimeType = file.type
 
-    // Get current user session - null user is allowed
-    const session = await getServerSession(authOptions)
-    let authorId = null
+    // Log session debug info to help troubleshoot
+    await logSessionDebugInfo()
 
-    if (session?.user?.id) {
-      // Verify that the user exists in the database before using the ID
-      try {
-        const userExists = await db.user.findUnique({
-          where: { id: session.user.id },
-          select: { id: true },
-        })
+    // Get validated user ID from helper function
+    const authorId = await getValidatedUserId()
 
-        if (userExists) {
-          authorId = session.user.id
-          console.log('Associating face source with user:', session.user.email)
-        } else {
-          console.log('User ID from session not found in database:', session.user.id)
-          console.log('Will create face source without author ID')
-        }
-      } catch (userCheckError) {
-        console.error('Error checking user existence:', userCheckError)
-        console.log('Will create face source without author ID')
-      }
+    if (authorId) {
+      console.log('Associating face source with validated user ID:', authorId)
     } else {
-      console.log('No user session, creating face source without author ID')
+      console.log('No valid user ID found, creating face source without author ID')
     }
 
     // Create record in database with or without authorId
@@ -103,6 +87,11 @@ export async function POST(request) {
     console.log('Creating face source record with data:', {
       ...faceSourceData,
       fileSize: faceSourceData.fileSize.toString(), // Convert BigInt to string for logging
+    })
+
+    // Add to database
+    const faceSource = await db.faceSource.create({
+      data: faceSourceData,
     })
 
     const sanitizedSource = sanitizeBigInt(faceSource)
