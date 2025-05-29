@@ -6,7 +6,7 @@ source_img="${ASSET_DIR}/image.png"
 target_img="${ASSET_DIR}/video.mp4"
 
 # First curl: create experiment and capture response
-response=$(curl --location --request POST "${MODAL_QUERY_API}" \
+response=$(curl --location --request POST "${MODAL_CREATE_API}" \
     --form "source=@${source_img}" \
     --form "target=@${target_img}")
 

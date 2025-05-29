@@ -4,7 +4,7 @@ import path from 'path'
 import FormData from 'form-data'
 import fetch from 'node-fetch'
 import { PrismaClient } from '@prisma/client'
-import { optimizeVideo, generateVideoThumbnail } from '@/utils/videoUtils'
+import { optimizeVideo } from '@/utils/videoUtils'
 import { getValidatedUserId, logSessionDebugInfo } from '@/utils/auth-helper'
 
 // Create a direct Prisma client instance just for this route
@@ -844,6 +844,3 @@ function _isBinaryMediaFile(content) {
     return false
   }
 }
-
-// downloadAndSaveGeneratedMedia function has been replaced by functionality in pollAndProcessResult
-// and processCompletedTask
