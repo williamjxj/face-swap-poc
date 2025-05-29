@@ -462,7 +462,6 @@ async function pollAndProcessResult(outputPath, sourceFile, targetFile, request 
         // For videos, apply optimization to improve loading performance
         let finalFilePath = filePath
         let finalFileSize = fileSize
-        let thumbnailPath = null
 
         if (fileType === 'video') {
           // Step 1: Optimize video if enabled
@@ -483,7 +482,6 @@ async function pollAndProcessResult(outputPath, sourceFile, targetFile, request 
               // Update to use the optimized version
               finalFilePath = optimizedResult.outputPath
               finalFileSize = fs.statSync(finalFilePath).size
-              thumbnailPath = optimizedResult.thumbnailPath
             } catch (optError) {
               console.error(`[OPTIMIZATION ERROR] Failed to optimize video: ${optError.message}`)
             }
@@ -496,7 +494,6 @@ async function pollAndProcessResult(outputPath, sourceFile, targetFile, request 
           fileType,
           outputPath,
           finalFilePath,
-          thumbnailPath,
           finalFileSize,
           contentType: null, // No content type in this case
           faceSourceId,
@@ -509,9 +506,6 @@ async function pollAndProcessResult(outputPath, sourceFile, targetFile, request 
           status: 'success',
           message: 'Face fusion completed successfully',
           filePath: `/outputs/${path.basename(finalFilePath)}`,
-          thumbnailPath: thumbnailPath
-            ? `/outputs/thumbnails/${path.basename(thumbnailPath)}`
-            : null,
           fileSize: Number(fileSize),
           id: dbRecord.id,
         }
@@ -590,10 +584,9 @@ async function processCompletedTask(outputUrl, sourceFile, targetFile, outputPat
     fs.writeFileSync(filePath, Buffer.from(fileBuffer))
     const fileSize = fs.statSync(filePath).size
 
-    // Process video-specific tasks (optimization, thumbnail generation)
+    // Process video-specific tasks (optimization)
     let finalFilePath = filePath
     let finalFileSize = fileSize
-    let thumbnailPath = null
 
     if (fileType === 'video') {
       // Step 1: Optimize video if enabled
@@ -612,18 +605,9 @@ async function processCompletedTask(outputUrl, sourceFile, targetFile, outputPat
           // Update to use the optimized version
           finalFilePath = optimizedResult.outputPath
           finalFileSize = fs.statSync(finalFilePath).size
-          thumbnailPath = optimizedResult.thumbnailPath
         } catch (optError) {
           console.error(`[OPTIMIZATION ERROR] Failed to optimize video: ${optError.message}`)
           // Continue with the original video if optimization fails
-
-          // Try to generate just a thumbnail if optimization failed
-          try {
-            thumbnailPath = await generateVideoThumbnail(filePath)
-            console.log(`[THUMBNAIL] Generated thumbnail at: ${thumbnailPath}`)
-          } catch (thumbError) {
-            console.error(`[THUMBNAIL ERROR] Failed to generate thumbnail: ${thumbError.message}`)
-          }
         }
       }
     }
@@ -674,7 +658,6 @@ async function processCompletedTask(outputUrl, sourceFile, targetFile, outputPat
       fileType,
       outputPath,
       finalFilePath,
-      thumbnailPath,
       finalFileSize,
       contentType,
       faceSourceId,
@@ -686,7 +669,6 @@ async function processCompletedTask(outputUrl, sourceFile, targetFile, outputPat
     return {
       status: 'success',
       filePath: `/outputs/${path.basename(finalFilePath)}`,
-      thumbnailPath: thumbnailPath ? `/outputs/thumbnails/${path.basename(thumbnailPath)}` : null,
       name: outputFilename,
       type: fileType,
       id: dbRecord.id,
@@ -710,7 +692,6 @@ async function createGeneratedMediaRecord({
   fileType,
   outputPath,
   finalFilePath,
-  thumbnailPath,
   finalFileSize,
   contentType,
   faceSourceId,
@@ -719,9 +700,6 @@ async function createGeneratedMediaRecord({
 }) {
   // Prepare paths for database storage
   const relativeFilePath = `/outputs/${path.basename(finalFilePath)}`
-  const relativeThumbnailPath = thumbnailPath
-    ? `/outputs/thumbnails/${path.basename(thumbnailPath)}`
-    : null
 
   // Create database record
   const dbRecord = await prisma.generatedMedia.create({
@@ -730,7 +708,6 @@ async function createGeneratedMediaRecord({
       type: fileType,
       tempPath: outputPath,
       filePath: relativeFilePath,
-      thumbnailPath: fileType === 'video' ? relativeThumbnailPath : null,
       fileSize: BigInt(finalFileSize),
       mimeType: contentType || (fileType === 'video' ? 'video/mp4' : 'image/jpeg'),
       isPaid: false,

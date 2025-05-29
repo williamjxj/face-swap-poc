@@ -30,8 +30,8 @@ export async function GET(request) {
       ...item,
       fileSize: item.fileSize.toString(),
       mimeType: item.mimeType || 'video/mp4', // Provide default mimeType if not set
-      // If item doesn't have a thumbnailPath, use a placeholder thumbnail instead of the video path
-      thumbnailPath: item.thumbnailPath || '/placeholder-thumbnail.svg',
+      // Use placeholder thumbnail for all media since thumbnailPath is not stored in DB
+      thumbnailPath: '/placeholder-thumbnail.svg',
     }))
 
     return NextResponse.json({ files: serializedMedia })

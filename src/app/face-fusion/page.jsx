@@ -24,6 +24,7 @@ export default function FaceFusion() {
   const [selectedTarget, setSelectedTarget] = useState(null)
   const [selectedSource, setSelectedSource] = useState(null)
   const [processing, setProcessing] = useState(false)
+  const [uploadProcessing, setUploadProcessing] = useState(false)
   const [progress, setProgress] = useState(0)
   const [error, setError] = useState(null)
   const [result, setResult] = useState(null)
@@ -190,7 +191,7 @@ export default function FaceFusion() {
     const file = e.target.files?.[0]
     if (file) {
       try {
-        setProcessing(true)
+        setUploadProcessing(true)
         setError(null)
 
         const formData = new FormData()
@@ -261,7 +262,7 @@ export default function FaceFusion() {
         console.error('Error uploading file:', error)
         setError('Failed to upload image')
       } finally {
-        setProcessing(false)
+        setUploadProcessing(false)
       }
     }
   }
@@ -950,7 +951,7 @@ export default function FaceFusion() {
                 onSourceSelect={handleSourceSelect}
                 onSourceUpload={handleSourceUpload}
                 onSourceDelete={handleSourceDelete}
-                processing={processing}
+                processing={uploadProcessing}
               />
 
               {/* Generate Button */}
