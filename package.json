@@ -1,6 +1,6 @@
 {
   "name": "face-swap-poc",
-  "version": "0.1.0",
+  "version": "0.2.2",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
@@ -16,7 +16,6 @@
     "@headlessui/react": "^2.2.0",
     "@prisma/client": "^6.7.0",
     "@stripe/stripe-js": "^7.3.0",
-    "@supabase/supabase-js": "^2.49.8",
     "autoprefixer": "^10.4.21",
     "bcryptjs": "^3.0.2",
     "form-data": "^4.0.2",

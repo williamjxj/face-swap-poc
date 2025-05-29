@@ -66,10 +66,6 @@ connecting str: postgresql://facefusion_owner:npg_qyrR70xpZhQa@ep-jolly-credit-a
 
 `DATABASE_URL="prisma+postgres://accelerate.prisma-data.net/?api_key=eyJ...eEyg"`
 
-### 🥃 Supabase
-
-- PostgreSQL, PostgREST, `https://<project_ref>.supabase.co/rest/v1/`
-
 ### 🥕 scp
 
 ```bash
