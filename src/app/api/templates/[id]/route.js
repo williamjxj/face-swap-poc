@@ -83,12 +83,11 @@ export async function DELETE(request, { params }) {
       })}`
     )
 
-    // If template has an author, verify ownership
-    if (template.authorId && userId && template.authorId !== userId) {
-      console.log(
-        `[DELETE] Unauthorized deletion attempt. Template belongs to ${template.authorId}, request from ${userId}`
-      )
-      return NextResponse.json({ error: 'Unauthorized to delete this template' }, { status: 403 })
+    // Ownership check removed - any authenticated user can delete any template
+    // Just check if user is authenticated
+    if (!userId) {
+      console.log('[DELETE] Unauthorized attempt: User is not authenticated')
+      return NextResponse.json({ error: 'Authentication required to delete templates' }, { status: 401 })
     }
 
     // First, check if there are any associated generatedMedia records
