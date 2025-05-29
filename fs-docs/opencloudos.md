@@ -45,23 +45,6 @@ $ pm2 stop face-swap-app
 $ pm2 delete face-swap-app
 ```
 
-### 🥃 Neon
-
-- `Serverless PostgreSQL`: Neon offers a fully managed serverless PostgreSQL service optimized for Prisma.
-- `Free tier`: Neon has a generous free tier that includes:
-  - 1 project
-  - Up to 10 branches
-  - 3 GiB storage
-  - Shared compute with auto-scaling capabilities
-- `Seamless Prisma integration`: Neon works extremely well with Prisma
-- `Modern interface`: Easy to use web console for managing your database
-- `SQL Editor`: Built-in SQL editor for running queries directly
-- `Branching capabilities`: You can create database branches for development/testing
-
-```bash
-connecting str: postgresql://facefusion_owner:npg_qyrR70xpZhQa@ep-jolly-credit-a64vj2lz-pooler.us-west-2.aws.neon.tech/facefusion?sslmode=require
-```
-
 ### 🥃 Prisma
 
 `DATABASE_URL="prisma+postgres://accelerate.prisma-data.net/?api_key=eyJ...eEyg"`

@@ -11,7 +11,6 @@ FaceFusion is a Next.js web application that provides AI-powered face swapping f
 - **Authentication**: NextAuth.js with Google OAuth and Microsoft Azure AD
 - **Payment Processing**: Integration with Stripe
 - **Face Swap Processing**: External API integration (Modal.run service)
-- **Model Context Protocol**: Integrated with Neon, context7, and local Postgres server
 
 ### 2. Main Features
 
@@ -46,7 +45,6 @@ As defined in the Prisma schema:
 
 The project includes MCP configuration in `.vscode/mcp.json` with three servers:
 
-- **Neon**: Remote MCP server at `https://mcp.neon.tech/sse`
 - **context7**: Uses `@upstash/context7-mcp` package
 - **postgres**: Local PostgreSQL connection for the facefusion database
 
