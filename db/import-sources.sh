@@ -1,10 +1,17 @@
 #!/bin/bash
 
-source "$(dirname "$0")/config.sh"
+# Check if ImageMagick is installed
+if ! command -v identify &> /dev/null; then
+    echo "ImageMagick is required but not installed. Please install it first."
+    exit 1
+fi
+
+# Directory containing the source images
+SOURCES_DIR="${HOME}/face-swap-poc/public/sources"
 
 # Check if directory exists
-if [ ! -d "$SOURCE_DIR" ]; then
-    echo "Error: Directory $SOURCE_DIR does not exist"
+if [ ! -d "$SOURCES_DIR" ]; then
+    echo "Error: Directory $SOURCES_DIR does not exist"
     exit 1
 fi
 
@@ -28,20 +35,20 @@ node -e "
 "
 
 # Process each image file (supporting common image formats)
-for img in "$SOURCE_DIR"/*.{jpg,jpeg,png,webp}; do
+for img in "$SOURCES_DIR"/*.{jpg,jpeg,png,webp}; do
     # Skip if no image files found
     [ -e "$img" ] || continue
     
     filename=$(basename "$img")
     echo "Processing $filename..."
     
-    # Get image dimensions using sips (built into macOS)
-    dimensions=$(sips -g pixelWidth -g pixelHeight "$img")
-    width=$(echo "$dimensions" | grep pixelWidth | awk '{print $2}')
-    height=$(echo "$dimensions" | grep pixelHeight | awk '{print $2}')
+    # Get image dimensions
+    dimensions=$(identify -format "%wx%h" "$img")
+    width=$(echo $dimensions | cut -d'x' -f1)
+    height=$(echo $dimensions | cut -d'x' -f2)
     
-    # Get file size in bytes using macOS stat
-    filesize=$(stat -f%z "$img")
+    # Get file size in bytes
+    filesize=$(stat -c%s "$img")
     
     # Get mime type
     mime_type=$(file --mime-type -b "$img")

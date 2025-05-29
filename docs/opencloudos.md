@@ -25,11 +25,19 @@ $ sudo firewall-cmd --reload
 
 $ psql -U postgres -d facefusion -f prisma/full_init_migration.sql
 $ npx prisma init
+$ npx prisma db push --force-reset
 $ npx prisma db push
 
 $ vi /var/lib/pgsql/data/pg_hba.conf
 $ sudo systemctl restart postgresql
 ```
+
+```sql
+DROP SCHEMA public CASCADE;
+CREATE SCHEMA public;
+```
+
+`psql "postgresql://postgres:William1!@localhost:5432/facefusion"`
 
 ### ▶️ Start the app with PM2
 
