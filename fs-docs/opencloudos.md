@@ -64,9 +64,7 @@ connecting str: postgresql://facefusion_owner:npg_qyrR70xpZhQa@ep-jolly-credit-a
 
 ### 🥃 Prisma
 
-````bash
-DATABASE_URL="prisma+postgres://accelerate.prisma-data.net/?api_key=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhcGlfa2V5IjoiMDFKVlI1RU01TlowTVlCWjZGS1M1N0RYQjMiLCJ0ZW5hbnRfaWQiOiIxNTk0YWRhNzgxZjg5Y2FjOWRkOWY1Yjg4NmYwMjliMzYyNzllZDg3MmFiNTAxNDM1MmFkOGM1YzU4MTA1NjhjIiwiaW50ZXJuYWxfc2VjcmV0IjoiNTg4NmJlNTYtOGNkOS00MGViLTgwMDUtMzcwYzg2NzcwMmU0In0.39sjBPsbEmF66e71_n21wa8N5TzInQjufF16vmjeEyg"
-```
+`DATABASE_URL="prisma+postgres://accelerate.prisma-data.net/?api_key=eyJ...eEyg"`
 
 ### 🥃 Supabase
 
