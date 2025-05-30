@@ -994,7 +994,7 @@ export default function FaceFusion() {
 
               {result && (
                 <div className="p-3 bg-green-500/10 text-green-500 text-sm rounded-lg mt-4">
-                  Success! Result saved as {result.file}
+                  Successful! Your video is ready in History tab.
                 </div>
               )}
             </div>

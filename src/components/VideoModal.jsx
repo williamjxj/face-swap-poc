@@ -7,8 +7,8 @@ import AtlosCheckoutButton from './AtlosCheckoutButton'
 import CloseButton from './CloseButton'
 import VideoPlayerWithLoading from './VideoPlayerWithLoading'
 
-export default function VideoModal({ video, onClose, onDownload, onDelete }) {
-  const [showPaymentOptions, setShowPaymentOptions] = useState(false)
+export default function VideoModal({ video, onClose, onDownload, onDelete, autoShowPayment = false }) {
+  const [showPaymentOptions, setShowPaymentOptions] = useState(autoShowPayment)
   const [isDeleting, setIsDeleting] = useState(false)
 
   const handleBackdropClick = useCallback(
@@ -136,7 +136,16 @@ export default function VideoModal({ video, onClose, onDownload, onDelete }) {
                     Checkout
                   </button>
                 )}
-                <button
+                {video.isPaid && (
+                  <button
+                    onClick={onDownload}
+                    className="flex items-center gap-2 px-3 py-2 bg-blue-500 hover:bg-blue-600 rounded-md cursor-pointer"
+                  >
+                    <Download className="w-4 h-4" />
+                    Download
+                  </button>
+                )}
+                {/* <button
                   onClick={onDownload}
                   disabled={!video.isPaid}
                   className={`flex items-center gap-2 px-3 py-2 ${
@@ -147,7 +156,7 @@ export default function VideoModal({ video, onClose, onDownload, onDelete }) {
                 >
                   <Download className="w-4 h-4" />
                   {video.isPaid ? 'Download' : 'Pay to Download'}
-                </button>
+                </button> */}
               </div>
             </div>
           ) : (

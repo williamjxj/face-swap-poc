@@ -107,8 +107,6 @@ export async function POST(request) {
   } catch (error) {
     console.error('Error uploading file:', error)
     return NextResponse.json({ error: 'Failed to upload file' }, { status: 500 })
-  } finally {
-    await prisma.$disconnect()
   }
 }
 
@@ -122,7 +120,7 @@ export async function DELETE(request) {
     }
 
     // Find the face source record
-    const faceSource = await prisma.faceSource.findFirst({
+    const faceSource = await db.faceSource.findFirst({
       where: {
         filename: filename,
         isActive: true,
@@ -134,7 +132,7 @@ export async function DELETE(request) {
     }
 
     // Soft delete by setting isActive to false
-    await prisma.faceSource.update({
+    await db.faceSource.update({
       where: {
         id: faceSource.id,
       },
@@ -158,7 +156,5 @@ export async function DELETE(request) {
   } catch (error) {
     console.error('Error deleting source:', error)
     return NextResponse.json({ error: 'Failed to delete source' }, { status: 500 })
-  } finally {
-    await prisma.$disconnect()
   }
 }

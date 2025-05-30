@@ -149,20 +149,13 @@ export async function optimizeVideo(
   const outputDir = path.dirname(outputPath)
   await fs.mkdir(outputDir, { recursive: true }).catch(() => {})
 
-  // Build FFMPEG command
-  const args = ['-i', inputPath]
-
-  // Add scaling if width is specified
-  if (width) {
-    args.push('-vf', `scale=${width}:-2`)
-  }
-
   // Try different video encoders in order of preference
   const videoEncoders = ['libx264', 'h264_vaapi', 'h264', 'libx265', 'copy']
   let selectedEncoder = 'copy' // fallback to copy without re-encoding
   
-  // Test each encoder to find one that works
+  // Test each encoder to find one that works (skip 'copy' during testing)
   for (const encoder of videoEncoders) {
+    if (encoder === 'copy') continue // Skip copy during testing
     try {
       // Test if encoder is available
       await runFfmpeg(['-f', 'lavfi', '-i', 'testsrc=duration=1:size=320x240:rate=1', '-c:v', encoder, '-t', '1', '-f', 'null', '-'], { timeout: 5000 })
@@ -175,13 +168,21 @@ export async function optimizeVideo(
     }
   }
 
-  // Add optimization parameters based on selected encoder
+  // Build FFMPEG command based on selected encoder
+  const args = ['-i', inputPath]
+
   if (selectedEncoder === 'copy') {
-    // Just copy without re-encoding
+    // Just copy without re-encoding - no filters allowed
     args.push('-c', 'copy', '-movflags', '+faststart', '-y', outputPath)
     console.log('[OPTIMIZATION] Using copy mode - no re-encoding')
   } else {
     // Use the selected encoder with optimization
+    
+    // Add scaling if width is specified (only when re-encoding)
+    if (width) {
+      args.push('-vf', `scale=${width}:-2`)
+    }
+    
     args.push(
       '-c:v',
       selectedEncoder,
@@ -203,7 +204,9 @@ export async function optimizeVideo(
     args.push('-c:a', 'aac', '-b:a', '128k')
     
     args.push('-y', outputPath)
-  }  try {
+  }
+  
+  try {
     console.log(`[OPTIMIZATION] Running FFmpeg with args: ${args.join(' ')}`)
     await runFfmpeg(args)
 

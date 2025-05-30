@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Loading from '@/components/Loading'
 import VideoPlayerWithLoading from '@/components/VideoPlayerWithLoading'
+import VideoModal from '@/components/VideoModal'
 import { Download, Play, Eye, Lock, ChevronDown } from 'lucide-react'
 import CloseButton from '@/components/CloseButton'
 
@@ -13,6 +14,7 @@ export default function GalleryPage() {
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('video')
   const [selectedMedia, setSelectedMedia] = useState(null)
+  const [selectedVideoForPayment, setSelectedVideoForPayment] = useState(null)
   const [error, setError] = useState(null)
   const [contentType, setContentType] = useState('generatedMedia')
   const [contentTypeDropdownOpen, setContentTypeDropdownOpen] = useState(false)
@@ -139,7 +141,8 @@ export default function GalleryPage() {
     e.stopPropagation()
 
     if (contentType === 'generatedMedia' && !media.isPaid) {
-      setError('Please purchase this media to download')
+      // Open payment modal instead of showing error
+      setSelectedVideoForPayment(media)
       return
     }
 
@@ -182,6 +185,80 @@ export default function GalleryPage() {
     } catch (err) {
       console.error(`Error downloading ${contentType}:`, err)
       setError(err.message)
+    }
+  }
+
+  // Handle video download for payment modal
+  const handleVideoDownload = async (video) => {
+    if (!video.isPaid) {
+      setError('Please purchase the video to download')
+      return
+    }
+
+    try {
+      const response = await fetch(`/api/download-media?filename=${video.name}`)
+      if (!response.ok) {
+        throw new Error('Failed to download video')
+      }
+
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = video.name
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
+
+      // Update download count
+      try {
+        await fetch(`/api/generated-media/${video.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            downloadCount: video.downloadCount ? video.downloadCount + 1 : 1,
+          }),
+        })
+      } catch (err) {
+        console.error('Error updating download count:', err)
+      }
+
+      // Close the modal after successful download
+      setSelectedVideoForPayment(null)
+    } catch (error) {
+      console.error('Error downloading video:', error)
+      setError('Failed to download video')
+    }
+  }
+
+  // Handle video deletion for payment modal
+  const handleVideoDelete = async (video) => {
+    try {
+      const response = await fetch('/api/videos/delete', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id: video.id }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to delete video')
+      }
+
+      // Update the media items by removing the deleted video
+      setMediaItems(prev => prev.filter(item => item.id !== video.id))
+      
+      // Close the modal
+      setSelectedVideoForPayment(null)
+    } catch (error) {
+      console.error('Error deleting video:', error)
+      setError('Failed to delete the video. Please try again.')
     }
   }
 
@@ -450,7 +527,7 @@ export default function GalleryPage() {
                     )}
                   </div>
 
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end">
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end z-10">
                     <div className="p-4 w-full">
                       <div className="flex justify-between items-center">
                         <div className="text-white font-medium truncate">
@@ -459,17 +536,16 @@ export default function GalleryPage() {
                         <div className="flex space-x-2">
                           <button
                             onClick={e => handleDownload(item, e)}
-                            className={`p-2 rounded-full bg-blue-600 hover:bg-blue-700 text-white ${
+                            className={`p-2 rounded-full text-white cursor-pointer transition-all transform hover:scale-110 ${
                               contentType === 'generatedMedia' && !item.isPaid
-                                ? 'opacity-50 cursor-not-allowed'
-                                : ''
+                                ? 'bg-yellow-600 hover:bg-yellow-700'
+                                : 'bg-blue-600 hover:bg-blue-700'
                             }`}
                             title={
                               contentType === 'generatedMedia' && !item.isPaid
-                                ? 'Purchase to download'
+                                ? 'Checkout'
                                 : 'Download'
                             }
-                            disabled={contentType === 'generatedMedia' && !item.isPaid}
                           >
                             <Download size={16} />
                           </button>
@@ -564,18 +640,17 @@ export default function GalleryPage() {
                 </h3>
                 <button
                   onClick={e => handleDownload(selectedMedia, e)}
-                  className={`px-4 py-2 rounded-lg text-white flex items-center space-x-2 
+                  className={`px-4 py-2 rounded-lg text-white flex items-center space-x-2 cursor-pointer transition-colors
                     ${
                       contentType !== 'generatedMedia' || selectedMedia.isPaid
                         ? 'bg-blue-600 hover:bg-blue-700'
-                        : 'bg-gray-600 opacity-50 cursor-not-allowed'
+                        : 'bg-yellow-600 hover:bg-yellow-700'
                     }`}
-                  disabled={contentType === 'generatedMedia' && !selectedMedia.isPaid}
                 >
                   <Download size={16} />
                   <span>
                     {contentType === 'generatedMedia' && !selectedMedia.isPaid
-                      ? 'Purchase to Download'
+                      ? 'Checkout'
                       : 'Download'}
                   </span>
                 </button>
@@ -587,6 +662,17 @@ export default function GalleryPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Payment modal for checkout */}
+      {selectedVideoForPayment && (
+        <VideoModal
+          video={selectedVideoForPayment}
+          onClose={() => setSelectedVideoForPayment(null)}
+          onDownload={() => handleVideoDownload(selectedVideoForPayment)}
+          onDelete={() => handleVideoDelete(selectedVideoForPayment)}
+          autoShowPayment={true}
+        />
       )}
     </div>
   )
