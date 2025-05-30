@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { getSession } from 'next-auth/react'
 import './form-fix.css' // Import the form fix CSS
+import { HiMail } from 'react-icons/hi'
 
 export default function SignInPage() {
   const router = useRouter()
@@ -46,13 +47,18 @@ export default function SignInPage() {
 
         {!showEmailForm ? (
           <div className={styles.providers}>
-            <AuthButton provider="google" />
-            <div className={styles.divider}>or</div>
-            <AuthButton provider="azure-ad" />
-            <div className={styles.divider}>or</div>
             <button onClick={() => setShowEmailForm(true)} className={styles.emailButton}>
+              <HiMail size={20} />
               Continue with Email
             </button>
+            
+            <div className={styles.divider}>or</div>
+            
+            <div className={styles.socialProviders}>
+              <div className={styles.socialProvidersTitle}>Social Login</div>
+              <AuthButton provider="google" />
+              <AuthButton provider="azure-ad" />
+            </div>
           </div>
         ) : (
           <>
