@@ -24,6 +24,9 @@ export default function TabContent({
   const [deletingTemplateId, setDeletingTemplateId] = useState(null)
   const tooltipTimeoutRef = useRef(null)
 
+  // Check if templates are still loading (initial load)
+  const isTemplatesLoading = !templates || templates.length === 0
+
   // Clear the timeout when component unmounts
   useEffect(() => {
     return () => {
@@ -158,6 +161,13 @@ export default function TabContent({
     </div>
   )
 
+  // Template loading skeleton
+  const renderTemplateSkeleton = (key) => (
+    <div key={key} className="w-[116px] h-[176px] rounded-lg bg-gray-700 animate-pulse flex items-center justify-center">
+      <Loading />
+    </div>
+  )
+
   const renderVideoTab = () => (
     <div className="p-4">
       <div className="grid grid-cols-3 gap-3">
@@ -172,7 +182,11 @@ export default function TabContent({
             loading={videoUploadLoading}
           />
         </div>
-        {filteredTemplates.map(renderTemplateCard)}
+        {isTemplatesLoading
+          ? Array.from({ length: 3 }).map((_, index) => (
+              renderTemplateSkeleton(index)
+            ))
+          : filteredTemplates.map(renderTemplateCard)}
       </div>
     </div>
   )
@@ -191,7 +205,11 @@ export default function TabContent({
             loading={imageUploadLoading}
           />
         </div>
-        {filteredTemplates.map(renderTemplateCard)}
+        {isTemplatesLoading
+          ? Array.from({ length: 3 }).map((_, index) => (
+              renderTemplateSkeleton(index)
+            ))
+          : filteredTemplates.map(renderTemplateCard)}
       </div>
     </div>
   )
@@ -210,7 +228,11 @@ export default function TabContent({
             loading={gifUploadLoading}
           />
         </div>
-        {filteredTemplates.map(renderTemplateCard)}
+        {isTemplatesLoading
+          ? Array.from({ length: 3 }).map((_, index) => (
+              renderTemplateSkeleton(index)
+            ))
+          : filteredTemplates.map(renderTemplateCard)}
       </div>
     </div>
   )
@@ -229,7 +251,11 @@ export default function TabContent({
             loading={multiFaceUploadLoading}
           />
         </div>
-        {filteredTemplates.map(renderTemplateCard)}
+        {isTemplatesLoading
+          ? Array.from({ length: 3 }).map((_, index) => (
+              renderTemplateSkeleton(index)
+            ))
+          : filteredTemplates.map(renderTemplateCard)}
       </div>
     </div>
   )
