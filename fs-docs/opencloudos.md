@@ -58,17 +58,10 @@ $ pm2 delete face-swap-app
 - `SQL Editor`: Built-in SQL editor for running queries directly
 - `Branching capabilities`: You can create database branches for development/testing
 
-```bash
-connecting str: postgresql://facefusion_owner:npg_qyrR70xpZhQa@ep-jolly-credit-a64vj2lz-pooler.us-west-2.aws.neon.tech/facefusion?sslmode=require
-```
-
 ### 🥃 Prisma
 
 `DATABASE_URL="prisma+postgres://accelerate.prisma-data.net/?api_key=eyJ...eEyg"`
 
-### 🥃 Supabase
-
-- PostgreSQL, PostgREST, `https://<project_ref>.supabase.co/rest/v1/`
 
 ### 🥕 scp
 
@@ -92,4 +85,7 @@ $ ssh -T git@github.com
 $ nginx -T
 $ sudo systemctl resrt nginx
 ```
-````
+
+```
+
+```
