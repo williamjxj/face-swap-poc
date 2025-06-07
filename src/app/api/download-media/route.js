@@ -7,7 +7,7 @@ export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url)
     const filename = searchParams.get('filename')
-    
+
     console.log(`[DOWNLOAD] Attempting to download file: ${filename}`)
 
     if (!filename) {
@@ -34,10 +34,13 @@ export async function GET(request) {
 
       if (!fs.existsSync(filePath)) {
         console.log(`[DOWNLOAD] File not found at path: ${filePath}`)
-        return NextResponse.json({ 
-          error: 'File not found on server',
-          details: `The file ${filename} does not exist at ${filePath}`
-        }, { status: 404 })
+        return NextResponse.json(
+          {
+            error: 'File not found on server',
+            details: `The file ${filename} does not exist at ${filePath}`,
+          },
+          { status: 404 }
+        )
       }
 
       console.log(`[DOWNLOAD] Reading file: ${filePath}`)
@@ -52,16 +55,16 @@ export async function GET(request) {
       })
     } catch (dbError) {
       console.error('[DOWNLOAD] Database error:', dbError)
-      
+
       // Even if DB lookup fails, try to serve the file if it exists
       try {
         console.log('[DOWNLOAD] Attempting to serve file directly without DB validation')
         const filePath = path.join(process.cwd(), 'public', 'outputs', filename)
-        
+
         if (fs.existsSync(filePath)) {
           console.log(`[DOWNLOAD] File exists, serving directly: ${filePath}`)
           const fileBuffer = fs.readFileSync(filePath)
-          
+
           return new NextResponse(fileBuffer, {
             headers: {
               'Content-Type': 'video/mp4', // Default to video/mp4
@@ -74,17 +77,23 @@ export async function GET(request) {
         }
       } catch (fileError) {
         console.error('[DOWNLOAD] File system error in fallback:', fileError)
-        return NextResponse.json({ 
-          error: 'Failed to access file',
-          details: fileError.message
-        }, { status: 500 })
+        return NextResponse.json(
+          {
+            error: 'Failed to access file',
+            details: fileError.message,
+          },
+          { status: 500 }
+        )
       }
     }
   } catch (error) {
     console.error('[DOWNLOAD] Unexpected error:', error)
-    return NextResponse.json({ 
-      error: 'Failed to download media',
-      details: error.message
-    }, { status: 500 })
+    return NextResponse.json(
+      {
+        error: 'Failed to download media',
+        details: error.message,
+      },
+      { status: 500 }
+    )
   }
 }

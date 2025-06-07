@@ -189,7 +189,7 @@ export default function GalleryPage() {
   }
 
   // Handle video download for payment modal
-  const handleVideoDownload = async (video) => {
+  const handleVideoDownload = async video => {
     if (!video.isPaid) {
       setError('Please purchase the video to download')
       return
@@ -235,7 +235,7 @@ export default function GalleryPage() {
   }
 
   // Handle video deletion for payment modal
-  const handleVideoDelete = async (video) => {
+  const handleVideoDelete = async video => {
     try {
       const response = await fetch('/api/videos/delete', {
         method: 'DELETE',
@@ -253,7 +253,7 @@ export default function GalleryPage() {
 
       // Update the media items by removing the deleted video
       setMediaItems(prev => prev.filter(item => item.id !== video.id))
-      
+
       // Close the modal
       setSelectedVideoForPayment(null)
     } catch (error) {

@@ -87,7 +87,10 @@ export async function DELETE(request, { params }) {
     // Just check if user is authenticated
     if (!userId) {
       console.log('[DELETE] Unauthorized attempt: User is not authenticated')
-      return NextResponse.json({ error: 'Authentication required to delete templates' }, { status: 401 })
+      return NextResponse.json(
+        { error: 'Authentication required to delete templates' },
+        { status: 401 }
+      )
     }
 
     // First, check if there are any associated generatedMedia records

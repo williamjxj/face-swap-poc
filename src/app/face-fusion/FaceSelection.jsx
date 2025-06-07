@@ -57,8 +57,11 @@ export default function FaceSelection({
   }
 
   // Source image loading skeleton
-  const renderSourceImageSkeleton = (key) => (
-    <div key={key} className="w-20 h-20 rounded-full bg-gray-700 animate-pulse flex items-center justify-center">
+  const renderSourceImageSkeleton = key => (
+    <div
+      key={key}
+      className="w-20 h-20 rounded-full bg-gray-700 animate-pulse flex items-center justify-center"
+    >
       <Loading />
     </div>
   )
@@ -124,37 +127,36 @@ export default function FaceSelection({
           </label>
 
           {/* Source images */}
-          {isImageSourcesLoading 
+          {isImageSourcesLoading
             ? Array.from({ length: 5 }, (_, i) => renderSourceImageSkeleton(`source-skeleton-${i}`))
             : imageSources.map(image => (
-              <div key={image.id} className="relative">
-                <div
-                  className={`w-20 h-20 rounded-full overflow-hidden cursor-pointer border-2 transition-all duration-200 ${
-                    selectedSource?.name === image.name
-                      ? 'ring-2 ring-blue-500 scale-[1.02]'
-                      : 'hover:scale-[1.02] hover:ring-1 hover:ring-gray-400'
-                  }`}
-                  onClick={() => onSourceSelect(image)}
-                  onMouseEnter={e => handleMouseEnter(image, e)}
-                  onMouseLeave={handleMouseLeave}
-                >
-                  <Image
-                    src={image.imagePath}
-                    alt={`Source ${image.id}`}
-                    width={80}
-                    height={80}
-                    className="w-full h-full object-cover"
-                  />
+                <div key={image.id} className="relative">
+                  <div
+                    className={`w-20 h-20 rounded-full overflow-hidden cursor-pointer border-2 transition-all duration-200 ${
+                      selectedSource?.name === image.name
+                        ? 'ring-2 ring-blue-500 scale-[1.02]'
+                        : 'hover:scale-[1.02] hover:ring-1 hover:ring-gray-400'
+                    }`}
+                    onClick={() => onSourceSelect(image)}
+                    onMouseEnter={e => handleMouseEnter(image, e)}
+                    onMouseLeave={handleMouseLeave}
+                  >
+                    <Image
+                      src={image.imagePath}
+                      alt={`Source ${image.id}`}
+                      width={80}
+                      height={80}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <button
+                    onClick={e => onSourceDelete(image, e)}
+                    className="absolute top-1 right-1 bg-gray-800/80 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-gray-700/80 cursor-pointer"
+                  >
+                    ×
+                  </button>
                 </div>
-                <button
-                  onClick={e => onSourceDelete(image, e)}
-                  className="absolute top-1 right-1 bg-gray-800/80 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-gray-700/80 cursor-pointer"
-                >
-                  ×
-                </button>
-              </div>
-            ))
-          }
+              ))}
         </div>
       </div>
 

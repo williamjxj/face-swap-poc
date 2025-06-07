@@ -162,8 +162,11 @@ export default function TabContent({
   )
 
   // Template loading skeleton
-  const renderTemplateSkeleton = (key) => (
-    <div key={key} className="w-[116px] h-[176px] rounded-lg bg-gray-700 animate-pulse flex items-center justify-center">
+  const renderTemplateSkeleton = key => (
+    <div
+      key={key}
+      className="w-[116px] h-[176px] rounded-lg bg-gray-700 animate-pulse flex items-center justify-center"
+    >
       <Loading />
     </div>
   )
@@ -183,9 +186,7 @@ export default function TabContent({
           />
         </div>
         {isTemplatesLoading
-          ? Array.from({ length: 3 }).map((_, index) => (
-              renderTemplateSkeleton(index)
-            ))
+          ? Array.from({ length: 3 }).map((_, index) => renderTemplateSkeleton(index))
           : filteredTemplates.map(renderTemplateCard)}
       </div>
     </div>
@@ -206,9 +207,7 @@ export default function TabContent({
           />
         </div>
         {isTemplatesLoading
-          ? Array.from({ length: 3 }).map((_, index) => (
-              renderTemplateSkeleton(index)
-            ))
+          ? Array.from({ length: 3 }).map((_, index) => renderTemplateSkeleton(index))
           : filteredTemplates.map(renderTemplateCard)}
       </div>
     </div>
@@ -229,9 +228,7 @@ export default function TabContent({
           />
         </div>
         {isTemplatesLoading
-          ? Array.from({ length: 3 }).map((_, index) => (
-              renderTemplateSkeleton(index)
-            ))
+          ? Array.from({ length: 3 }).map((_, index) => renderTemplateSkeleton(index))
           : filteredTemplates.map(renderTemplateCard)}
       </div>
     </div>
@@ -252,9 +249,7 @@ export default function TabContent({
           />
         </div>
         {isTemplatesLoading
-          ? Array.from({ length: 3 }).map((_, index) => (
-              renderTemplateSkeleton(index)
-            ))
+          ? Array.from({ length: 3 }).map((_, index) => renderTemplateSkeleton(index))
           : filteredTemplates.map(renderTemplateCard)}
       </div>
     </div>

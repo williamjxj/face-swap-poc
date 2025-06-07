@@ -1,7 +1,6 @@
 'use client'
-
 import Image from 'next/image'
-import { Info, ArrowLeftRight, Download, Lock } from 'lucide-react'
+import { Info, ArrowLeftRight, Download, Lock, Wand2, Sparkles } from 'lucide-react'
 import FaceSelection from './FaceSelection'
 import { useState, useEffect } from 'react'
 import VideoModal from '@/components/VideoModal'
@@ -130,6 +129,7 @@ export default function FaceFusion() {
 
     loadTemplates()
   }, [])
+
   useEffect(() => {
     const loadGeneratedVideos = async () => {
       try {
@@ -337,8 +337,6 @@ export default function FaceFusion() {
   const handleVideoClick = video => {
     setSelectedVideo(video)
   }
-
-  // Note: Delete functionality is now handled only in the admin area, not in user-facing UI
 
   // Handle download of video
   const handleDownload = async video => {
@@ -774,20 +772,20 @@ export default function FaceFusion() {
   }
 
   return (
-    <div className="flex gap-4 h-[calc(100vh-4rem)]">
+    <div className="flex gap-4 h-[calc(100vh-4rem)] bg-[#0a0a0f] p-4">
       {/* Left side - Tab navigation */}
-      <div className="w-1/4 bg-[#1a1d24] rounded-lg flex flex-col">
+      <div className="w-1/4 bg-[#13131a] rounded-xl flex flex-col border border-[#2a2a35] shadow-xl">
         {/* Tab Navigation */}
-        <div className="p-4 border-b border-gray-800">
-          <div className="flex space-x-2">
+        <div className="p-4 border-b border-[#2a2a35]">
+          <div className="flex space-x-1">
             {tabOptions.map(tab => (
               <button
                 key={tab.id}
                 onClick={() => setSelectedTab(tab.id)}
-                className={`px-3 py-2 rounded-lg text-sm ${
+                className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
                   selectedTab === tab.id
-                    ? 'bg-blue-500 text-white'
-                    : 'text-gray-400 hover:bg-[#2a2d34]'
+                    ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg'
+                    : 'text-gray-400 hover:bg-[#1a1a23] hover:text-white'
                 }`}
               >
                 {tab.label}
@@ -818,44 +816,21 @@ export default function FaceFusion() {
       </div>
 
       {/* Middle - Video Preview */}
-      <div className="flex-1 bg-[#1a1d24] flex flex-col items-center rounded-lg relative p-6 pt-2 pb-2">
-        <div className="flex items-center justify-center gap-3">
-          <div className="w-12 h-12 relative overflow-hidden">
-            <div className="absolute inset-0 w-full h-full overflow-hidden">
-              <div
-                className="absolute inset-0 animate-pulse"
-                style={{
-                  background: 'linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%)',
-                  opacity: 0.85,
-                  mixBlendMode: 'color',
-                  zIndex: 10,
-                }}
-              ></div>
-            </div>
-            <Image
-              src={'/face.webp'}
-              alt="Face Changing"
-              fill
-              className="object-contain"
-              style={{
-                zIndex: 5,
-                filter: 'contrast(1.2) brightness(1.1)',
-              }}
-              priority
-            />
+      <div className="flex-1 bg-[#13131a] flex flex-col items-center rounded-xl relative p-6 border border-[#2a2a35] shadow-xl">
+        <div className="flex items-center justify-center gap-3 mb-6">
+          <div className="w-12 h-12 relative overflow-hidden rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+            <Wand2 size={24} className="text-white" />
           </div>
           <div>
-            <h2 className="text-2xl font-semibold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
-              AI Face Swap
-            </h2>
+            <h2 className="text-2xl font-bold krea-gradient-text">AI Face Swap</h2>
             <span className="text-sm text-gray-400">Support video for face swapping</span>
           </div>
         </div>
 
         {selectedTemplate ? (
-          <div className="w-[calc(100%-160px)] h-[calc(100vh-240px)] max-h-[480px] bg-[#2a2832] rounded-[20px] border-2 border-dashed border-white/70 relative mt-3 flex items-center justify-center">
+          <div className="w-full max-w-2xl h-[calc(100vh-280px)] bg-[#1a1a23] rounded-xl border-2 border-dashed border-[#3a3a45] relative flex items-center justify-center overflow-hidden">
             {/* Close button for clearing selection */}
-            <div className="absolute top-2 right-2 z-10">
+            <div className="absolute top-3 right-3 z-10">
               <CloseButton
                 onClick={() => {
                   setSelectedTemplate(null)
@@ -877,7 +852,7 @@ export default function FaceFusion() {
                 />
               ) : (
                 <Image
-                  src={selectedTemplate.filePath}
+                  src={selectedTemplate.filePath || '/placeholder.svg'}
                   alt={selectedTemplate.filename}
                   className="object-contain rounded-lg"
                   width={800}
@@ -888,16 +863,20 @@ export default function FaceFusion() {
             </div>
           </div>
         ) : (
-          <div className="w-[calc(100%-160px)] h-[calc(100vh-240px)] max-h-[480px] bg-[#2a2832] rounded-[20px] border-2 border-dashed border-white/70 relative mt-3 flex items-center justify-center">
+          <div className="w-full max-w-2xl h-[calc(100vh-280px)] bg-[#1a1a23] rounded-xl border-2 border-dashed border-[#3a3a45] relative flex items-center justify-center">
             <div className="text-center p-12 space-y-6">
               <div className="flex flex-col items-center space-y-4">
-                <ArrowLeftRight className="w-12 h-12 text-blue-500 mb-2" />
-                <p className="text-xl text-gray-300 font-medium">
-                  Step 1: Select a template to preview
-                </p>
-                <p className="text-xl text-gray-300 font-medium">
-                  Step 2: Add a face from the right panel, then generate
-                </p>
+                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-500/20 to-purple-600/20 flex items-center justify-center mb-4">
+                  <ArrowLeftRight className="w-8 h-8 text-blue-400" />
+                </div>
+                <div className="space-y-2">
+                  <p className="text-xl text-gray-300 font-medium">
+                    Step 1: Select a template to preview
+                  </p>
+                  <p className="text-xl text-gray-300 font-medium">
+                    Step 2: Add a face from the right panel, then generate
+                  </p>
+                </div>
               </div>
             </div>
           </div>
@@ -905,32 +884,31 @@ export default function FaceFusion() {
       </div>
 
       {/* Right side - Face Selection and History */}
-      <div className="w-1/4 bg-[#1a1d24] rounded-lg flex flex-col">
+      <div className="w-1/4 bg-[#13131a] rounded-xl flex flex-col border border-[#2a2a35] shadow-xl">
         {/* Tab Navigation */}
-        <div className="p-4 border-b border-gray-800">
-          <div className="flex space-x-2">
+        <div className="p-4 border-b border-[#2a2a35]">
+          <div className="flex space-x-1">
             <button
               onClick={() => setRightSideTab('face-swap')}
-              className={`px-3 py-2 rounded-lg text-sm cursor-pointer ${
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
                 rightSideTab === 'face-swap'
-                  ? 'bg-blue-500 text-white'
-                  : 'text-gray-400 hover:bg-[#2a2d34]'
+                  ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg'
+                  : 'text-gray-400 hover:bg-[#1a1a23] hover:text-white'
               }`}
             >
+              <Sparkles size={16} />
               Face Swap
-              <span className="text-gray-400 ml-0">
-                <Info
-                  className="inline-block ml-1 w-4 h-4 text-gray-400 cursor-pointer hover:text-gray-300"
-                  onClick={() => setIsModalOpen(true)}
-                />
-              </span>
+              <Info
+                className="w-4 h-4 text-gray-400 cursor-pointer hover:text-gray-300"
+                onClick={() => setIsModalOpen(true)}
+              />
             </button>
             <button
               onClick={() => setRightSideTab('history')}
-              className={`px-3 py-2 rounded-lg text-sm cursor-pointer ${
+              className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
                 rightSideTab === 'history'
-                  ? 'bg-blue-500 text-white'
-                  : 'text-gray-400 hover:bg-[#2a2d34]'
+                  ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg'
+                  : 'text-gray-400 hover:bg-[#1a1a23] hover:text-white'
               }`}
             >
               History
@@ -958,10 +936,10 @@ export default function FaceFusion() {
               <button
                 onClick={handleSubmit}
                 disabled={!selectedSource || !selectedTemplate || processing}
-                className={`mt-4 py-3 px-6 rounded-xl w-full font-medium text-base flex items-center justify-center gap-3 shadow-[0_8px_30px_rgb(0,0,0,0.12)] transform transition-all duration-300 ${
+                className={`mt-6 py-4 px-6 rounded-xl w-full font-semibold text-base flex items-center justify-center gap-3 shadow-xl transform transition-all duration-300 ${
                   selectedSource && selectedTemplate && !processing
-                    ? 'bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white cursor-pointer hover:scale-[1.02] hover:shadow-[0_10px_30px_rgba(59,130,246,0.3)] active:scale-[0.98] active:shadow-[0_5px_15px_rgba(59,130,246,0.2)]'
-                    : 'bg-gradient-to-r from-blue-500/40 to-indigo-600/40 text-white/60 cursor-not-allowed'
+                    ? 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white cursor-pointer hover:scale-[1.02] hover:shadow-2xl active:scale-[0.98]'
+                    : 'bg-gradient-to-r from-blue-600/40 to-purple-600/40 text-white/60 cursor-not-allowed'
                 }`}
               >
                 {processing ? (
@@ -978,22 +956,22 @@ export default function FaceFusion() {
               </button>
 
               {processing && (
-                <div className="w-full bg-gray-700 rounded-full h-2.5 mt-4">
+                <div className="w-full bg-[#2a2a35] rounded-full h-3 mt-4 overflow-hidden">
                   <div
-                    className="bg-blue-500 h-2.5 rounded-full"
+                    className="bg-gradient-to-r from-blue-500 to-purple-500 h-3 rounded-full transition-all duration-300"
                     style={{ width: `${progress}%` }}
                   ></div>
                 </div>
               )}
 
               {error && (
-                <div className="p-3 bg-red-500/10 text-red-500 text-sm rounded-lg mt-4">
+                <div className="p-4 bg-red-500/10 border border-red-500/20 text-red-400 text-sm rounded-lg mt-4">
                   Error: {error}
                 </div>
               )}
 
               {result && (
-                <div className="p-3 bg-green-500/10 text-green-500 text-sm rounded-lg mt-4">
+                <div className="p-4 bg-green-500/10 border border-green-500/20 text-green-400 text-sm rounded-lg mt-4">
                   Successful! Your video is ready in History tab.
                 </div>
               )}
@@ -1006,12 +984,12 @@ export default function FaceFusion() {
                   {Array.from({ length: 4 }).map((_, i) => (
                     <div
                       key={i}
-                      className="bg-[#2a2d34] p-3 rounded-lg cursor-default transition-colors relative overflow-hidden"
+                      className="bg-[#1a1a23] p-3 rounded-lg cursor-default transition-colors relative overflow-hidden border border-[#2a2a35]"
                     >
                       <div className="relative">
                         {/* Enhanced gradient background with better shimmer */}
                         <div className="w-full h-32 rounded-lg mb-2 relative overflow-hidden">
-                          <div className="absolute inset-0 bg-gradient-to-r from-[#2a2d34] via-[#3a3d44] to-[#2a2d34] bg-[length:400%_100%] animate-shimmer" />
+                          <div className="absolute inset-0 bg-gradient-to-r from-[#1a1a23] via-[#2a2a35] to-[#1a1a23] bg-[length:400%_100%] animate-shimmer" />
                         </div>
                         {/* Improved loading animation */}
                         <div className="flex flex-col items-center justify-center h-12 gap-2">
@@ -1037,8 +1015,8 @@ export default function FaceFusion() {
               ) : (
                 <>
                   {generatedVideos.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center p-6 bg-[#2a2d34] rounded-lg">
-                      <div className="w-16 h-16 mb-4 text-gray-400 flex items-center justify-center rounded-full bg-[#3a3d44]">
+                    <div className="flex flex-col items-center justify-center p-6 bg-[#1a1a23] rounded-xl border border-[#2a2a35]">
+                      <div className="w-16 h-16 mb-4 text-gray-400 flex items-center justify-center rounded-full bg-[#2a2a35]">
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
                           width="24"
@@ -1060,7 +1038,7 @@ export default function FaceFusion() {
                       </p>
                       <button
                         onClick={() => setRightSideTab('face-swap')}
-                        className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors"
+                        className="px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-lg transition-all duration-200"
                       >
                         Create Your First Swap
                       </button>
@@ -1070,7 +1048,7 @@ export default function FaceFusion() {
                       {generatedVideos.map(media => (
                         <div
                           key={media.id}
-                          className="bg-[#2a2d34] p-3 rounded-lg cursor-pointer hover:bg-[#3a3d44] transition-colors relative"
+                          className="bg-[#1a1a23] p-3 rounded-lg cursor-pointer hover:bg-[#2a2a35] transition-all duration-200 relative border border-[#2a2a35] hover:border-[#3a3a45]"
                           onClick={() => handleVideoClick(media)}
                         >
                           <div className="relative">
@@ -1086,7 +1064,7 @@ export default function FaceFusion() {
                               />
                             ) : (
                               <Image
-                                src={media.filePath}
+                                src={media.filePath || '/placeholder.svg'}
                                 alt={media.name}
                                 width={300}
                                 height={128}
@@ -1100,12 +1078,12 @@ export default function FaceFusion() {
                               />
                             )}
                             {!media.isPaid && (
-                              <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                              <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-lg">
                                 <Lock className="w-8 h-8 text-white" />
                               </div>
                             )}
                             {paymentSuccessId === media.id && (
-                              <div className="absolute inset-0 flex items-center justify-center bg-green-500/30 animate-pulse">
+                              <div className="absolute inset-0 flex items-center justify-center bg-green-500/30 animate-pulse rounded-lg">
                                 <div className="bg-green-500 text-white px-3 py-2 rounded-md font-medium">
                                   Payment Successful!
                                 </div>
@@ -1114,7 +1092,7 @@ export default function FaceFusion() {
                           </div>
                           <div className="flex justify-between items-center">
                             <div className="flex items-center gap-2">
-                              <span className="text-sm text-white">{media.name}</span>
+                              <span className="text-sm text-white truncate">{media.name}</span>
                               <span className="text-xs text-gray-400">
                                 {new Date(media.createdAt).toLocaleString()}
                               </span>
@@ -1129,7 +1107,7 @@ export default function FaceFusion() {
                                   className="p-1 hover:bg-blue-500/20 rounded"
                                   title="Download"
                                 >
-                                  <Download className="w-4 h-4 text-blue-500" />
+                                  <Download className="w-4 h-4 text-blue-400" />
                                 </button>
                               ) : (
                                 <StripeCheckoutButton video={media} disabled={false} small={true} />

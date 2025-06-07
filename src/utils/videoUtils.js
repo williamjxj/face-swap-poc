@@ -152,13 +152,28 @@ export async function optimizeVideo(
   // Try different video encoders in order of preference
   const videoEncoders = ['libx264', 'h264_vaapi', 'h264', 'libx265', 'copy']
   let selectedEncoder = 'copy' // fallback to copy without re-encoding
-  
+
   // Test each encoder to find one that works (skip 'copy' during testing)
   for (const encoder of videoEncoders) {
     if (encoder === 'copy') continue // Skip copy during testing
     try {
       // Test if encoder is available
-      await runFfmpeg(['-f', 'lavfi', '-i', 'testsrc=duration=1:size=320x240:rate=1', '-c:v', encoder, '-t', '1', '-f', 'null', '-'], { timeout: 5000 })
+      await runFfmpeg(
+        [
+          '-f',
+          'lavfi',
+          '-i',
+          'testsrc=duration=1:size=320x240:rate=1',
+          '-c:v',
+          encoder,
+          '-t',
+          '1',
+          '-f',
+          'null',
+          '-',
+        ],
+        { timeout: 5000 }
+      )
       selectedEncoder = encoder
       console.log(`[OPTIMIZATION] Using video encoder: ${selectedEncoder}`)
       break
@@ -177,19 +192,14 @@ export async function optimizeVideo(
     console.log('[OPTIMIZATION] Using copy mode - no re-encoding')
   } else {
     // Use the selected encoder with optimization
-    
+
     // Add scaling if width is specified (only when re-encoding)
     if (width) {
       args.push('-vf', `scale=${width}:-2`)
     }
-    
-    args.push(
-      '-c:v',
-      selectedEncoder,
-      '-movflags',
-      '+faststart'
-    )
-    
+
+    args.push('-c:v', selectedEncoder, '-movflags', '+faststart')
+
     // Add encoder-specific parameters
     if (selectedEncoder.includes('x264') || selectedEncoder.includes('h264')) {
       args.push('-preset', preset, '-crf', crf.toString())
@@ -199,13 +209,13 @@ export async function optimizeVideo(
     } else if (selectedEncoder.includes('x265')) {
       args.push('-preset', preset, '-crf', (crf + 5).toString()) // x265 needs higher CRF
     }
-    
+
     // Add audio encoding if not copying
     args.push('-c:a', 'aac', '-b:a', '128k')
-    
+
     args.push('-y', outputPath)
   }
-  
+
   try {
     console.log(`[OPTIMIZATION] Running FFmpeg with args: ${args.join(' ')}`)
     await runFfmpeg(args)
@@ -239,7 +249,7 @@ export async function optimizeVideo(
     }
   } catch (error) {
     console.error('Error optimizing video:', error)
-    
+
     // If optimization failed but input file exists, try copying it instead
     if (await fileExists(inputPath)) {
       console.log('[OPTIMIZATION] Attempting fallback copy operation...')
@@ -254,7 +264,7 @@ export async function optimizeVideo(
         console.error('[OPTIMIZATION] Fallback copy also failed:', copyError)
       }
     }
-    
+
     throw new Error(`Failed to optimize video: ${error.message}`)
   }
 }

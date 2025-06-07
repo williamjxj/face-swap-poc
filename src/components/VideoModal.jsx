@@ -7,7 +7,13 @@ import AtlosCheckoutButton from './AtlosCheckoutButton'
 import CloseButton from './CloseButton'
 import VideoPlayerWithLoading from './VideoPlayerWithLoading'
 
-export default function VideoModal({ video, onClose, onDownload, onDelete, autoShowPayment = false }) {
+export default function VideoModal({
+  video,
+  onClose,
+  onDownload,
+  onDelete,
+  autoShowPayment = false,
+}) {
   const [showPaymentOptions, setShowPaymentOptions] = useState(autoShowPayment)
   const [isDeleting, setIsDeleting] = useState(false)
 
