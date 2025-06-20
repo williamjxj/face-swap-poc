@@ -4,7 +4,7 @@ import { promises as fs } from 'fs'
 import { promisify } from 'util'
 import path from 'path'
 
-const execAsync = promisify(exec)
+const _execAsync = promisify(exec) // For future use
 const FFMPEG_PATH = 'ffmpeg' // Assuming ffmpeg is in PATH, otherwise use absolute path
 const DEFAULT_WATERMARK_TEXT = 'FACE SWAP POC'
 
@@ -41,7 +41,7 @@ async function runFfmpeg(args, options = {}) {
             const currentTime = hours * 3600 + minutes * 60 + seconds
             onProgress(currentTime)
           }
-        } catch (err) {
+        } catch (_err) {
           // Ignore progress parsing errors
         }
       }

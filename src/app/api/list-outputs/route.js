@@ -14,8 +14,8 @@ export async function GET() {
       return NextResponse.json({ files: [] })
     }
 
-    // Get all files in the outputs directory
-    const files = fs
+    // Get all files in the outputs directory (for future use)
+    const _files = fs
       .readdirSync(outputDir)
       .filter(file => file.endsWith('.mp4')) // Only get video files
       .map(fileName => {

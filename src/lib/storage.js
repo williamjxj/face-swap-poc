@@ -40,7 +40,6 @@ export const validateFile = (
 export const generateFilePath = (originalName, userId, prefix = '') => {
   const timestamp = Date.now()
   const uuid = uuidv4().split('-')[0] // Short UUID
-  const extension = originalName.split('.').pop()
   const sanitizedName = originalName.replace(/[^a-zA-Z0-9.-]/g, '_')
 
   return `${userId}/${prefix}${timestamp}_${uuid}_${sanitizedName}`

@@ -58,7 +58,7 @@ export const authOptions = {
             email: user.account,
             name: user.name || user.account.split('@')[0],
           }
-        } catch (error) {
+        } catch (_error) {
           return null
         }
       },
@@ -156,7 +156,7 @@ export const getCurrentSession = async () => {
   try {
     const session = await getSession()
     return session
-  } catch (error) {
+  } catch (_error) {
     return null
   }
 }
@@ -173,7 +173,7 @@ export const logout = async () => {
           where: { account: session.user.email },
           data: { lastLogout: new Date() },
         })
-      } catch (error) {
+      } catch (_error) {
         // Continue with logout even if the update fails
       }
     }

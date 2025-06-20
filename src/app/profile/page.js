@@ -6,8 +6,8 @@ import { useSession } from 'next-auth/react'
 
 export default function ProfilePage() {
   const router = useRouter()
-  const { data: session, status } = useSession()
-  const [activeTab, setActiveTab] = useState('profile')
+  const { data: _session, status } = useSession()
+  const [_activeTab, _setActiveTab] = useState('profile')
 
   useEffect(() => {
     // If user is not authenticated, redirect to login
