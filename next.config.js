@@ -15,7 +15,7 @@ const nextConfig = {
     }
     return config
   },
-  allowedDevOrigins: ['shop.ultimatech.hk', 'localhost:3000'],
+  allowedDevOrigins: ['localhost:3000', 'face-swap-poc.vercel.app'],
   async headers() {
     return [
       {
