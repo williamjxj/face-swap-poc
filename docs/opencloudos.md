@@ -62,7 +62,6 @@ $ pm2 delete face-swap-app
 
 `DATABASE_URL="prisma+postgres://accelerate.prisma-data.net/?api_key=eyJ...eEyg"`
 
-
 ### 🥕 scp
 
 ```bash

@@ -97,7 +97,6 @@ sharp('input.jpg')
 - Using `middleware` to add `CORS` headers
 - Configuring `CORS` for API routes in `next.config.js`
 
-
 ### 🌽
 
 ### Checkout
@@ -113,7 +112,7 @@ sharp('input.jpg')
 ```html
 <video width="320" height="240" controls preload="none">
   <source src="/path/to/video.mp4" type="video/mp4" />
-  <track src="/path/to/captions.vtt" kind="subtitles" srcLang="en" label="English" />
+  <track src="/path/to/captions.vtt" kind="subtitles" srclang="en" label="English" />
   Your browser does not support the video tag.
 </video>
 ```
