@@ -1,5 +1,6 @@
 'use client'
 import { X, Download, Eye, Calendar, Clock, FileText, Tag, ShoppingCart } from 'lucide-react'
+import { PRICING_CONFIG } from '@/config/pricing'
 
 export default function VideoDetailsModal({ video, isOpen, onClose, onDownload, onPurchase }) {
   if (!isOpen || !video) return null
@@ -140,7 +141,9 @@ export default function VideoDetailsModal({ video, isOpen, onClose, onDownload, 
         {/* Footer Actions */}
         <div className="flex items-center justify-between p-6 border-t border-gray-700">
           <div className="text-sm text-gray-400">
-            {video.isPaid ? 'You own this video' : `Purchase for $${video.price || '9.99'}`}
+            {video.isPaid
+              ? 'You own this video'
+              : `Purchase for ${PRICING_CONFIG.getFormattedPrice()}`}
           </div>
 
           <div className="flex space-x-3">

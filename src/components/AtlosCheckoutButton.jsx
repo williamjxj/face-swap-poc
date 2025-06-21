@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Script from 'next/script'
 import { Bitcoin } from 'lucide-react'
 import { generateOrderId } from '@/lib/atlos'
+import { PRICING_CONFIG } from '@/config/pricing'
 
 // Simplified version focusing on core functionality
 export default function AtlosCheckoutButton({ video, disabled = false, small = false }) {
@@ -66,8 +67,8 @@ export default function AtlosCheckoutButton({ video, disabled = false, small = f
       const paymentConfig = {
         merchantId: merchantId,
         orderId: orderId,
-        orderAmount: '20.00',
-        orderCurrency: 'USD',
+        orderAmount: video.price || PRICING_CONFIG.getPrice('crypto'),
+        orderCurrency: PRICING_CONFIG.CURRENCY,
         // BTC-only to completely avoid WalletConnect
         acceptedCoins: ['BTC'],
         paymentCoins: ['BTC'],

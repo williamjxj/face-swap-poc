@@ -1,6 +1,7 @@
 'use client'
 import { Download, Trash2 } from 'lucide-react'
 import { useCallback, useState } from 'react'
+import { useToast } from '@/contexts/ToastContext'
 import Image from 'next/image'
 import StripeCheckoutButton from './StripeCheckoutButton'
 import PayPalCheckoutButton from './PayPalCheckoutButton'
@@ -11,6 +12,7 @@ import VideoPlayerWithLoading from './VideoPlayerWithLoading'
 export default function VideoModal({ video, onClose, onDownload, onDelete }) {
   const [showPaymentOptions, setShowPaymentOptions] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+  const toast = useToast()
 
   const handleBackdropClick = useCallback(
     e => {
@@ -63,7 +65,7 @@ export default function VideoModal({ video, onClose, onDownload, onDelete }) {
         onClose()
       } catch (error) {
         console.error('Error deleting video:', error)
-        alert('Failed to delete the video. Please try again.')
+        toast.error('Failed to delete the video. Please try again.')
       } finally {
         setIsDeleting(false)
       }

@@ -5,6 +5,7 @@ import ConditionalHeader from '@/components/ConditionalHeader'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/services/auth'
 import AuthProvider from '@/components/AuthProvider'
+import { ToastProvider } from '@/contexts/ToastContext'
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -33,10 +34,12 @@ export default async function RootLayout({ children }) {
         suppressHydrationWarning
       >
         <AuthProvider session={session}>
-          {/* Client-side header component that checks for auth pages */}
-          <ConditionalHeader />
-          <main className={inter.className}>{children}</main>
-          <Footer />
+          <ToastProvider>
+            {/* Client-side header component that checks for auth pages */}
+            <ConditionalHeader />
+            <main className={inter.className}>{children}</main>
+            <Footer />
+          </ToastProvider>
         </AuthProvider>
       </body>
     </html>

@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { X, CreditCard, Bitcoin } from 'lucide-react'
+import { PRICING_CONFIG } from '@/config/pricing'
 
 // PayPal icon component
 const PayPalIcon = ({ size = 16 }) => (
@@ -50,7 +51,9 @@ export default function PaymentModal({ media, isOpen, onClose }) {
           <h3 className="text-lg font-semibold text-white mb-2">{media.name || media.filename}</h3>
           <div className="flex items-center justify-between text-sm text-gray-400">
             <span>Price:</span>
-            <span className="text-green-400 font-semibold text-lg">${media.price || '4.98'}</span>
+            <span className="text-green-400 font-semibold text-lg">
+              {PRICING_CONFIG.getFormattedPrice()}
+            </span>
           </div>
         </div>
 

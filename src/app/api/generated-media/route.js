@@ -6,9 +6,11 @@ import path from 'path'
 // GET all generated media
 export async function GET(request) {
   try {
-    // Parse type filter from query params if provided
+    // Parse query parameters
     const { searchParams } = new URL(request.url)
     const typeFilter = searchParams.get('type')
+    const limitParam = searchParams.get('limit')
+    const limit = limitParam ? parseInt(limitParam, 10) : undefined
 
     // Construct where clause with isActive filter and optional type filter
     const whereClause = {
@@ -19,6 +21,7 @@ export async function GET(request) {
     const media = await prisma.generatedMedia.findMany({
       where: whereClause,
       orderBy: { createdAt: 'desc' },
+      ...(limit ? { take: limit } : {}),
       include: {
         targetTemplate: { select: { type: true } },
         faceSource: { select: { id: true, filename: true } },

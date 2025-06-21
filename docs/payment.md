@@ -5,7 +5,15 @@
 ## Stripe
 
 - [Integrating Stripe Checkout with Next.js Is Easier Than You Think](https://hackernoon.com/integrating-stripe-checkout-with-nextjs-is-easier-than-you-think)
-- STRIPE_WEBHOOK_SECRET==whsec_xxxx (checkout.session.completed)
+
+### Environment Variables Required
+
+```bash
+STRIPE_SECRET_KEY=sk_test_... # or sk_live_... for production
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_... # or pk_live_... for production
+STRIPE_WEBHOOK_SECRET=whsec_xxxx # (checkout.session.completed)
+NEXT_PUBLIC_STRIPE_PRICE_ID=price_1234567890abcdef # From Stripe Dashboard
+```
 
 ```bash
 # expost local to public

@@ -2,6 +2,8 @@
 
 import { useState } from 'react'
 import Script from 'next/script'
+import { PRICING_CONFIG } from '@/config/pricing'
+import { useToast } from '@/contexts/ToastContext'
 
 // PayPal icon component
 const PayPalIcon = ({ size = 16 }) => (
@@ -13,10 +15,11 @@ const PayPalIcon = ({ size = 16 }) => (
 export default function PayPalCheckoutButton({ video, small = false }) {
   const [isLoading, setIsLoading] = useState(false)
   const [isPayPalLoaded, setIsPayPalLoaded] = useState(false)
+  const toast = useToast()
 
   const handlePayPalPayment = async () => {
     if (!window.paypal) {
-      alert('PayPal is not loaded yet. Please try again.')
+      toast.warning('PayPal is not loaded yet. Please try again.')
       return
     }
 
@@ -37,8 +40,8 @@ export default function PayPalCheckoutButton({ video, small = false }) {
               purchase_units: [
                 {
                   amount: {
-                    value: video.price || '4.98',
-                    currency_code: 'USD',
+                    value: video.price || PRICING_CONFIG.getPrice('paypal'),
+                    currency_code: PRICING_CONFIG.CURRENCY,
                   },
                   description: `Video: ${video.name || video.filename}`,
                   custom_id: video.id,
@@ -56,7 +59,7 @@ export default function PayPalCheckoutButton({ video, small = false }) {
           onError: err => {
             console.error('PayPal payment error:', err)
             setIsLoading(false)
-            alert('PayPal payment failed. Please try again.')
+            toast.error('PayPal payment failed. Please try again.')
           },
           onCancel: () => {
             console.log('PayPal payment cancelled')
@@ -67,7 +70,7 @@ export default function PayPalCheckoutButton({ video, small = false }) {
     } catch (error) {
       console.error('Error initializing PayPal:', error)
       setIsLoading(false)
-      alert('Failed to initialize PayPal. Please try again.')
+      toast.error('Failed to initialize PayPal. Please try again.')
     }
   }
 

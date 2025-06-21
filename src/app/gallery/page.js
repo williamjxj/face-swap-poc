@@ -30,15 +30,17 @@ import {
 import CloseButton from '@/components/CloseButton'
 import VideoDetailsModal from '@/components/VideoDetailsModal'
 import PaymentModal from '@/components/PaymentModal'
+import { PRICING_CONFIG } from '@/config/pricing'
+import { useToast } from '@/contexts/ToastContext'
 
 export default function GalleryPage() {
   const [mediaItems, setMediaItems] = useState([])
   const [targetTemplates, setTargetTemplates] = useState([])
   const [faceSources, setFaceSources] = useState([])
   const [loading, setLoading] = useState(true)
+  const toast = useToast()
   const [activeTab, setActiveTab] = useState('video')
   const [selectedMedia, setSelectedMedia] = useState(null)
-  const [error, setError] = useState(null)
   const [contentType, setContentType] = useState('generatedMedia')
   const [contentTypeDropdownOpen, setContentTypeDropdownOpen] = useState(false)
 
@@ -123,7 +125,7 @@ export default function GalleryPage() {
         }
       } catch (err) {
         console.error('Error fetching data:', err)
-        setError(err.message)
+        toast.error(`Failed to load content: ${err.message}`)
       } finally {
         setLoading(false)
       }
@@ -139,7 +141,7 @@ export default function GalleryPage() {
 
     if (paymentSuccess) {
       // Show success message
-      alert('Payment successful! You can now download your content.')
+      toast.success('Payment successful! You can now download your content.')
 
       // Update the specific media item to mark as paid
       setMediaItems(prev =>
@@ -398,7 +400,7 @@ export default function GalleryPage() {
     if (e) e.stopPropagation()
 
     if (contentType === 'generatedMedia' && !media.isPaid) {
-      setError('Please purchase this media to download')
+      toast.warning('Please purchase this media to download')
       return
     }
 
@@ -478,7 +480,7 @@ export default function GalleryPage() {
       }
     } catch (err) {
       console.error(`Error downloading ${contentType}:`, err)
-      setError(err.message)
+      toast.error(`Download failed: ${err.message}`)
     }
   }
 
@@ -487,7 +489,7 @@ export default function GalleryPage() {
     if (e) e.stopPropagation()
 
     if (contentType !== 'generatedMedia') {
-      setError('Purchase is only available for generated media')
+      toast.warning('Purchase is only available for generated media')
       return
     }
 
@@ -502,7 +504,7 @@ export default function GalleryPage() {
       setShowVideoDetails(false)
     } catch (error) {
       console.error('Purchase failed:', error)
-      setError('Failed to open payment options. Please try again.')
+      toast.error('Failed to open payment options. Please try again.')
     }
   }
 
@@ -970,16 +972,6 @@ export default function GalleryPage() {
             <Loading />
             <p className="text-gray-400 mt-4">Loading your media...</p>
           </div>
-        ) : error ? (
-          <div className="flex flex-col items-center justify-center h-full">
-            <div className="text-red-500 mb-4">Error: {error}</div>
-            <button
-              onClick={() => window.location.reload()}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-            >
-              Retry
-            </button>
-          </div>
         ) : (
           <>
             {/* Enhanced Header with horizontal filters */}
@@ -1426,7 +1418,7 @@ export default function GalleryPage() {
                             <button
                               onClick={e => handlePurchase(item, e)}
                               className="group p-3 rounded-xl bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 backdrop-blur-sm cursor-pointer"
-                              title={`Purchase for $${item.price || '9.99'}`}
+                              title={`Purchase for ${PRICING_CONFIG.getFormattedPrice()}`}
                             >
                               <ShoppingCart
                                 size={16}
@@ -1546,7 +1538,7 @@ export default function GalleryPage() {
                               <button
                                 onClick={e => handlePurchase(item, e)}
                                 className="group p-3 rounded-xl bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 backdrop-blur-sm cursor-pointer"
-                                title={`Purchase for $${item.price || '9.99'}`}
+                                title={`Purchase for ${PRICING_CONFIG.getFormattedPrice()}`}
                               >
                                 <ShoppingCart
                                   size={16}

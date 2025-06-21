@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { loadStripe } from '@stripe/stripe-js'
 import { CreditCard } from 'lucide-react'
+import { PRICING_CONFIG } from '@/config/pricing'
 
 // Initialize Stripe outside the component
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY)
@@ -26,14 +27,16 @@ export default function StripeCheckoutButton({ video, disabled = false, small = 
         headers: {
           'Content-Type': 'application/json',
         },
-        // body: JSON.stringify({
-        //   priceId: 'price_1RSDO9PQv7UPATi3uiGKigiD',
-        // }),
         body: JSON.stringify({
-          name: `Video: ${video.name}`,
-          description: 'Purchase video content',
-          amount: '4.98', // You can make this dynamic based on your pricing
-          currency: 'USD',
+          // Use Stripe Price ID if available, otherwise use custom pricing
+          ...(PRICING_CONFIG.isUsingStripePriceId()
+            ? { priceId: PRICING_CONFIG.getStripePriceId() }
+            : {
+                name: `Video: ${video.name}`,
+                description: 'Purchase video content',
+                amount: video.price || PRICING_CONFIG.getPrice('stripe'),
+                currency: PRICING_CONFIG.CURRENCY,
+              }),
           imageId: video.name,
           // Include the video id to use in webhook
           videoId: video.id,

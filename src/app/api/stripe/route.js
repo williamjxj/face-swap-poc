@@ -3,10 +3,19 @@ import stripe from '@/lib/stripe'
 
 export async function POST(request) {
   try {
-    const { name, description, amount, currency, imageId, videoId } = await request.json()
+    const { priceId, name, description, amount, currency, imageId, videoId } = await request.json()
 
-    if (!name || !description || !amount || !currency) {
-      return NextResponse.json({ error: 'Missing required session details' }, { status: 400 })
+    // Validate required fields based on whether using price ID or custom pricing
+    if (priceId) {
+      // Using Stripe Price ID - only need priceId and videoId
+      if (!priceId || !videoId) {
+        return NextResponse.json({ error: 'Missing priceId or videoId' }, { status: 400 })
+      }
+    } else {
+      // Using custom pricing - need all pricing details
+      if (!name || !description || !amount || !currency) {
+        return NextResponse.json({ error: 'Missing required session details' }, { status: 400 })
+      }
     }
 
     // Get the base URL from environment variables
@@ -19,9 +28,29 @@ export async function POST(request) {
       )
     }
 
-    const session = await stripe.checkout.sessions.create({
+    // Create session configuration based on whether using price ID or custom pricing
+    const sessionConfig = {
       payment_method_types: ['card'],
-      line_items: [
+      mode: 'payment',
+      success_url: `${baseUrl}/api/payment/success?session_id={CHECKOUT_SESSION_ID}&method=stripe&video_id=${videoId}`,
+      cancel_url: `${baseUrl}/gallery`,
+      metadata: {
+        imageId: imageId || '',
+        videoId: videoId || '',
+      },
+    }
+
+    if (priceId) {
+      // Using Stripe Price ID from dashboard
+      sessionConfig.line_items = [
+        {
+          price: priceId,
+          quantity: 1,
+        },
+      ]
+    } else {
+      // Using custom pricing (fallback)
+      sessionConfig.line_items = [
         {
           price_data: {
             currency: currency.toLowerCase(),
@@ -34,15 +63,10 @@ export async function POST(request) {
           },
           quantity: 1,
         },
-      ],
-      mode: 'payment',
-      success_url: `${baseUrl}/api/payment/success?session_id={CHECKOUT_SESSION_ID}&method=stripe&video_id=${videoId}`,
-      cancel_url: `${baseUrl}/gallery`,
-      metadata: {
-        imageId: imageId || '',
-        videoId: videoId || '',
-      },
-    })
+      ]
+    }
+
+    const session = await stripe.checkout.sessions.create(sessionConfig)
 
     return NextResponse.json({ sessionId: session.id })
   } catch (error) {

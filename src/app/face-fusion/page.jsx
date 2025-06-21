@@ -1,7 +1,7 @@
 'use client'
 
 import Image from 'next/image'
-import { Info, ArrowLeftRight, Download, Lock } from 'lucide-react'
+import { Info, ArrowLeftRight, Download, Lock, ShoppingCart, ExternalLink } from 'lucide-react'
 import FaceSelection from './FaceSelection'
 import { useState, useEffect } from 'react'
 import VideoModal from '@/components/VideoModal'
@@ -12,6 +12,12 @@ import CloseButton from '@/components/CloseButton'
 import StripeCheckoutButton from '@/components/StripeCheckoutButton'
 import VideoPlayerWithLoading from '@/components/VideoPlayerWithLoading'
 import { MdFace } from 'react-icons/md'
+import { PRICING_CONFIG } from '@/config/pricing'
+import { loadStripe } from '@stripe/stripe-js'
+import PaymentModal from '@/components/PaymentModal'
+
+// Initialize Stripe outside the component
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY)
 
 export default function FaceFusion() {
   // State declarations
@@ -19,6 +25,8 @@ export default function FaceFusion() {
   const [rightSideTab, setRightSideTab] = useState('face-swap')
   const [isLoading, setIsLoading] = useState(false)
   const [paymentSuccessId, setPaymentSuccessId] = useState(null)
+  const [showPaymentModal, setShowPaymentModal] = useState(false)
+  const [selectedMediaForPurchase, setSelectedMediaForPurchase] = useState(null)
   const [targetPath, setTargetPath] = useState(null)
   const [sourcePath, setSourcePath] = useState(null)
   const [selectedTarget, setSelectedTarget] = useState(null)
@@ -747,10 +755,41 @@ export default function FaceFusion() {
     }
   }
 
+  // Helper function to get video duration
+  const getVideoDuration = media => {
+    if (media.duration) {
+      const minutes = Math.floor(media.duration / 60)
+      const seconds = Math.floor(media.duration % 60)
+      return `${minutes}:${seconds.toString().padStart(2, '0')}`
+    }
+    return '0:00'
+  }
+
+  // Handle purchase action - opens payment modal
+  const handlePurchase = async (media, e) => {
+    if (e) e.stopPropagation()
+
+    try {
+      console.log('Opening payment modal for:', media.name)
+
+      // Open payment modal with selected media
+      setSelectedMediaForPurchase(media)
+      setShowPaymentModal(true)
+    } catch (error) {
+      console.error('Purchase failed:', error)
+    }
+  }
+
+  // Handle payment modal close
+  const handlePaymentModalClose = () => {
+    setShowPaymentModal(false)
+    setSelectedMediaForPurchase(null)
+  }
+
   // Functions
   const fetchVideos = async () => {
     try {
-      const response = await fetch('/api/generated-media')
+      const response = await fetch('/api/generated-media?limit=20')
       if (!response.ok) {
         throw new Error('Failed to load generated videos')
       }
@@ -998,22 +1037,31 @@ export default function FaceFusion() {
               )}
             </div>
           ) : (
-            <div className="p-4">
-              <h2 className="text-lg font-bold mb-4 text-white">Generated Media</h2>
+            <div className="p-3">
+              {/* Header with Gallery Link */}
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-bold text-white">Recent History</h2>
+                <button
+                  onClick={() => window.open('/gallery', '_blank')}
+                  className="flex items-center gap-1 px-3 py-1.5 text-xs bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 rounded-lg transition-colors"
+                  title="View all in Gallery"
+                >
+                  <span>View All</span>
+                  <ExternalLink className="w-3 h-3" />
+                </button>
+              </div>
+
               {isLoading ? (
-                <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
                   {Array.from({ length: 4 }).map((_, i) => (
-                    <div
-                      key={i}
-                      className="bg-[#2a2d34] p-3 rounded-lg cursor-default transition-colors relative overflow-hidden"
-                    >
+                    <div key={i} className="bg-[#2a2d34] rounded-xl overflow-hidden relative">
                       <div className="relative">
                         {/* Enhanced gradient background with better shimmer */}
-                        <div className="w-full h-32 rounded-lg mb-2 relative overflow-hidden">
+                        <div className="w-full h-24 relative overflow-hidden">
                           <div className="absolute inset-0 bg-gradient-to-r from-[#2a2d34] via-[#3a3d44] to-[#2a2d34] bg-[length:400%_100%] animate-shimmer" />
                         </div>
                         {/* Improved loading animation */}
-                        <div className="flex flex-col items-center justify-center h-12 gap-2">
+                        <div className="absolute inset-0 flex items-center justify-center">
                           <div className="flex items-center gap-2">
                             {[0, 1, 2].map(dot => (
                               <div
@@ -1023,11 +1071,6 @@ export default function FaceFusion() {
                               />
                             ))}
                           </div>
-                          <div className="flex items-center gap-1 mt-2">
-                            <span className="text-sm text-gray-300 font-medium animate-pulse-opacity">
-                              Loading your videos...
-                            </span>
-                          </div>
                         </div>
                       </div>
                     </div>
@@ -1036,12 +1079,12 @@ export default function FaceFusion() {
               ) : (
                 <>
                   {generatedVideos.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center p-6 bg-[#2a2d34] rounded-lg">
-                      <div className="w-16 h-16 mb-4 text-gray-400 flex items-center justify-center rounded-full bg-[#3a3d44]">
+                    <div className="flex flex-col items-center justify-center p-6 bg-[#2a2d34] rounded-xl">
+                      <div className="w-12 h-12 mb-3 text-gray-400 flex items-center justify-center rounded-full bg-[#3a3d44]">
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
-                          width="24"
-                          height="24"
+                          width="20"
+                          height="20"
                           viewBox="0 0 24 24"
                           fill="none"
                           stroke="currentColor"
@@ -1053,30 +1096,30 @@ export default function FaceFusion() {
                           <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
                         </svg>
                       </div>
-                      <h3 className="text-lg font-medium text-white mb-2">No videos yet</h3>
-                      <p className="text-gray-400 text-center mb-4">
-                        Create your first face swap by selecting a target video and your face image
+                      <h3 className="text-sm font-medium text-white mb-2">No videos yet</h3>
+                      <p className="text-gray-400 text-center text-xs mb-3">
+                        Create your first face swap
                       </p>
                       <button
                         onClick={() => setRightSideTab('face-swap')}
-                        className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors"
+                        className="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors text-xs"
                       >
-                        Create Your First Swap
+                        Start Creating
                       </button>
                     </div>
                   ) : (
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-2 gap-2">
                       {generatedVideos.map(media => (
                         <div
                           key={media.id}
-                          className="bg-[#2a2d34] p-3 rounded-lg cursor-pointer hover:bg-[#3a3d44] transition-colors relative"
+                          className="group bg-[#2a2d34] p-2 rounded-xl cursor-pointer hover:bg-[#3a3d44] transition-colors relative"
                           onClick={() => handleVideoClick(media)}
                         >
                           <div className="relative">
                             {media.type === 'video' ? (
                               <VideoPlayerWithLoading
                                 src={media.filePath}
-                                className="w-full h-32 rounded-lg mb-2"
+                                className="w-full h-40 rounded-lg mb-2"
                                 autoPlay={true}
                                 loop={true}
                                 muted={true}
@@ -1088,51 +1131,72 @@ export default function FaceFusion() {
                                 src={media.filePath}
                                 alt={media.name}
                                 width={300}
-                                height={128}
+                                height={160}
                                 className="rounded-lg mb-2"
                                 style={{
                                   width: '100%',
-                                  height: '8rem',
+                                  height: '10rem',
                                   objectFit: 'cover',
                                   borderRadius: '8px',
                                 }}
                               />
                             )}
-                            {!media.isPaid && (
-                              <div className="absolute inset-0 flex items-center justify-center bg-black/30">
-                                <Lock className="w-8 h-8 text-white" />
-                              </div>
-                            )}
-                            {paymentSuccessId === media.id && (
-                              <div className="absolute inset-0 flex items-center justify-center bg-green-500/30 animate-pulse">
-                                <div className="bg-green-500 text-white px-3 py-2 rounded-md font-medium">
-                                  Payment Successful!
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                          <div className="flex justify-between items-center">
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm text-white">{media.name}</span>
-                              <span className="text-xs text-gray-400">
-                                {new Date(media.createdAt).toLocaleString()}
-                              </span>
+
+                            {/* Video Duration Badge - Top Left */}
+                            <div className="absolute top-2 left-2 bg-black/70 text-white text-xs px-2 py-1 rounded font-medium z-30 pointer-events-none">
+                              {getVideoDuration(media)}
                             </div>
-                            <div className="flex items-center gap-2">
+
+                            {/* Payment/Download Button - Top Right */}
+                            <div className="absolute top-2 right-2 z-30">
                               {media.isPaid ? (
                                 <button
                                   onClick={e => {
                                     e.stopPropagation()
                                     handleDownload(media)
                                   }}
-                                  className="p-1 hover:bg-blue-500/20 rounded"
+                                  className="group/btn p-2 rounded-lg bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 backdrop-blur-sm"
                                   title="Download"
                                 >
-                                  <Download className="w-4 h-4 text-blue-500" />
+                                  <Download className="w-4 h-4 group-hover/btn:scale-110 transition-transform duration-200" />
                                 </button>
                               ) : (
-                                <StripeCheckoutButton video={media} disabled={false} small={true} />
+                                <button
+                                  onClick={e => handlePurchase(media, e)}
+                                  className="group/btn p-2 rounded-lg bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 backdrop-blur-sm"
+                                  title={`Purchase for ${PRICING_CONFIG.getFormattedPrice()}`}
+                                >
+                                  <ShoppingCart className="w-4 h-4 group-hover/btn:scale-110 transition-transform duration-200" />
+                                </button>
                               )}
+                            </div>
+
+                            {/* Lock overlay for unpaid videos */}
+                            {!media.isPaid && (
+                              <div className="absolute inset-0 flex items-center justify-center bg-black/30 z-20">
+                                <Lock className="w-8 h-8 text-white" />
+                              </div>
+                            )}
+
+                            {/* Payment success overlay */}
+                            {paymentSuccessId === media.id && (
+                              <div className="absolute inset-0 flex items-center justify-center bg-green-500/30 animate-pulse z-25">
+                                <div className="bg-green-500 text-white px-3 py-2 rounded-md font-medium">
+                                  Payment Successful!
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Hover overlay with video info */}
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-end z-10">
+                              <div className="p-2 w-full">
+                                <div className="text-white font-medium text-xs truncate mb-1">
+                                  {media.name}
+                                </div>
+                                <div className="text-gray-300 text-xs">
+                                  {new Date(media.createdAt).toLocaleDateString()}
+                                </div>
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -1156,6 +1220,13 @@ export default function FaceFusion() {
       )}
 
       {isModalOpen && <GuidelineModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />}
+
+      {/* Payment Modal */}
+      <PaymentModal
+        media={selectedMediaForPurchase}
+        isOpen={showPaymentModal}
+        onClose={handlePaymentModalClose}
+      />
     </div>
   )
 }

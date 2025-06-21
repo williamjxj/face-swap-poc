@@ -10,6 +10,7 @@ import {
   Play,
   Pause,
 } from 'lucide-react'
+import { PRICING_CONFIG } from '@/config/pricing'
 
 export default function VideoCarousel({
   videos,
@@ -172,7 +173,7 @@ export default function VideoCarousel({
                 <button
                   onClick={() => onPurchase(currentVideo)}
                   className="group px-4 py-3 rounded-lg bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white transition-all duration-300 shadow-lg hover:shadow-xl flex items-center space-x-2"
-                  title={`Purchase for $${currentVideo.price || '9.99'}`}
+                  title={`Purchase for ${PRICING_CONFIG.getFormattedPrice()}`}
                 >
                   <ShoppingCart
                     size={16}
