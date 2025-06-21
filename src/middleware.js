@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { getToken } from 'next-auth/jwt'
 
 // Define allowed origins
-const allowedOrigins = ['localhost:3000', 'face-swap-poc.vercel.app']
+const allowedOrigins = ['localhost:3000']
 
 export async function middleware(request) {
   const { pathname } = request.nextUrl
@@ -26,12 +26,7 @@ export async function middleware(request) {
     response.headers.set('Access-Control-Max-Age', '86400')
 
     // Set CORS headers for allowed origins
-    if (
-      origin &&
-      (allowedOrigins.includes(origin) ||
-        origin.startsWith('http://localhost') ||
-        origin.startsWith('https://face-swap-poc.vercel.app'))
-    ) {
+    if (origin && (allowedOrigins.includes(origin) || origin.startsWith('http://localhost'))) {
       response.headers.set('Access-Control-Allow-Origin', origin)
       response.headers.set('Access-Control-Allow-Credentials', 'true')
     }
@@ -58,9 +53,9 @@ export async function middleware(request) {
     secureCookie: process.env.NODE_ENV === 'production',
   })
 
-  // If user is logged in and trying to access login page, redirect to welcome page
+  // If user is logged in and trying to access login page, redirect to gallery page
   if (token && pathname === '/auth/signin') {
-    const url = new URL('/welcome', request.url)
+    const url = new URL('/face-fusion', request.url)
     return NextResponse.redirect(url)
   }
 

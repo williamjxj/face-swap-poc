@@ -27,7 +27,6 @@ export default function Navigator() {
   const navItems = [
     { href: '/face-fusion', icon: <FaMagic size={16} />, label: 'FaceFusion' },
     { href: '/gallery', icon: <FaImages size={16} />, label: 'Gallery' },
-    { href: '/profile', icon: <FaUser size={16} />, label: 'Profile' },
   ]
 
   // Function to get avatar background color based on email
@@ -98,13 +97,56 @@ export default function Navigator() {
             {getInitials(session.user.email)}
           </div>
 
-          {/* Tooltip that appears on hover */}
-          <div className="absolute right-0 mt-2 w-48 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform scale-95 group-hover:scale-100 z-50">
-            <div className="bg-gray-800 text-white text-sm rounded-lg shadow-lg px-4 py-3">
-              <p className="font-medium">Logged in as:</p>
-              <p className="truncate mt-1">{session.user.email}</p>
+          {/* Enhanced Tooltip that appears on hover */}
+          <div className="absolute right-0 mt-2 w-64 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform scale-95 group-hover:scale-100 z-50">
+            <div className="bg-gray-800 text-white text-sm rounded-lg shadow-lg px-4 py-4 border border-gray-700">
+              <div className="flex items-center space-x-3 mb-3">
+                <div
+                  className="h-10 w-10 rounded-full flex items-center justify-center text-white font-medium text-sm"
+                  style={{ backgroundColor: getAvatarColor(session.user.email) }}
+                >
+                  {getInitials(session.user.email)}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-white">User Account</p>
+                  <p className="text-xs text-gray-400">Active Session</p>
+                </div>
+              </div>
+
+              <div className="space-y-2 text-xs">
+                <div>
+                  <p className="text-gray-400">Email:</p>
+                  <p className="truncate text-white font-mono">{session.user.email}</p>
+                </div>
+
+                {userData && (
+                  <>
+                    <div>
+                      <p className="text-gray-400">User ID:</p>
+                      <p className="truncate text-white font-mono">{userData.id}</p>
+                    </div>
+
+                    {userData.lastLogin && (
+                      <div>
+                        <p className="text-gray-400">Last Login:</p>
+                        <p className="text-white">
+                          {new Date(userData.lastLogin).toLocaleString()}
+                        </p>
+                      </div>
+                    )}
+                  </>
+                )}
+
+                <div className="pt-2 border-t border-gray-600">
+                  <p className="text-gray-400">Session Status:</p>
+                  <div className="flex items-center space-x-1">
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    <p className="text-green-400">Online</p>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div className="h-2 w-2 bg-gray-800 rotate-45 absolute -top-1 right-3"></div>
+            <div className="h-2 w-2 bg-gray-800 rotate-45 absolute -top-1 right-6 border-l border-t border-gray-700"></div>
           </div>
         </div>
       )}

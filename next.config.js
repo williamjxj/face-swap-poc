@@ -15,7 +15,7 @@ const nextConfig = {
     }
     return config
   },
-  allowedDevOrigins: ['localhost:3000', 'face-swap-poc.vercel.app'],
+  allowedDevOrigins: ['localhost:3000'],
   async headers() {
     return [
       {

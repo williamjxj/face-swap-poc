@@ -7,10 +7,47 @@ import { authOptions } from '@/services/auth'
 export async function GET(request) {
   const searchParams = request.nextUrl.searchParams
   const sessionId = searchParams.get('session_id')
+  const paypalOrderId = searchParams.get('paypal_order_id')
+  const method = searchParams.get('method')
+  const videoId = searchParams.get('video_id')
 
-  console.log(`Payment success route called with session ID: ${sessionId}`)
+  console.log(`Payment success route called with method: ${method}`)
 
-  // If no session ID is provided, redirect to home
+  // Handle PayPal payments
+  if (method === 'paypal' && paypalOrderId && videoId) {
+    console.log(`PayPal payment success for order: ${paypalOrderId}, video: ${videoId}`)
+
+    try {
+      // Verify PayPal payment
+      const verifyResponse = await fetch(`${request.nextUrl.origin}/api/paypal`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          orderID: paypalOrderId,
+          videoId: videoId,
+        }),
+      })
+
+      if (verifyResponse.ok) {
+        console.log('PayPal payment verified successfully')
+        return NextResponse.redirect(new URL(`/gallery?paymentSuccess=${videoId}`, request.url))
+      } else {
+        console.error('PayPal payment verification failed')
+        return NextResponse.redirect(
+          new URL('/face-fusion?tab=history&paymentFailed=true', request.url)
+        )
+      }
+    } catch (error) {
+      console.error('Error verifying PayPal payment:', error)
+      return NextResponse.redirect(
+        new URL('/face-fusion?tab=history&paymentFailed=true', request.url)
+      )
+    }
+  }
+
+  // Handle Stripe payments (existing logic)
   if (!sessionId) {
     console.log('No session ID provided, redirecting to home')
     return NextResponse.redirect(new URL('/', request.url))
@@ -103,11 +140,9 @@ export async function GET(request) {
         }
       }
 
-      // Redirect to history tab with payment success param
-      console.log(`Redirecting to history tab with success param: ${videoId}`)
-      return NextResponse.redirect(
-        new URL(`/face-fusion?tab=history&paymentSuccess=${videoId}`, request.url)
-      )
+      // Redirect to gallery with payment success param
+      console.log(`Redirecting to gallery with success param: ${videoId}`)
+      return NextResponse.redirect(new URL(`/gallery?paymentSuccess=${videoId}`, request.url))
     } else {
       // Redirect to home if payment was not successful
       console.log('Payment was not successful, redirecting to home')

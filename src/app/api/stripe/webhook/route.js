@@ -6,15 +6,31 @@ import prisma from '@/lib/db'
 // This is your Stripe CLI webhook secret for testing your endpoint locally
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET
 
+// Configure the route to handle raw body for webhook signature verification
+export const runtime = 'nodejs'
+
 // Check if Payment model exists in Prisma schema
 const paymentModelExists = !!prisma.payment
 console.log(`Payment model exists in Prisma: ${paymentModelExists}`)
 
 export async function POST(req) {
   console.log('Stripe webhook received')
-  const body = await req.text()
-  const headersList = await headers()
-  const sig = headersList.get('stripe-signature')
+
+  let body
+  let sig
+
+  try {
+    body = await req.text()
+    const headersList = await headers()
+    sig = headersList.get('stripe-signature')
+
+    console.log('Webhook body length:', body.length)
+    console.log('Signature header present:', !!sig)
+    console.log('Endpoint secret configured:', !!endpointSecret)
+  } catch (err) {
+    console.error('Error reading webhook request:', err.message)
+    return NextResponse.json({ error: 'Failed to read request' }, { status: 400 })
+  }
 
   let event
 
@@ -24,13 +40,36 @@ export async function POST(req) {
       console.warn('Webhook secret not configured, skipping signature verification')
       event = JSON.parse(body)
       console.log('Parsed raw webhook JSON:', event.type)
+    } else if (!sig) {
+      console.error('No Stripe signature header found')
+      return NextResponse.json({ error: 'No signature header' }, { status: 400 })
     } else {
       console.log('Verifying Stripe signature with secret')
-      event = stripe.webhooks.constructEvent(body, sig, endpointSecret)
-      console.log('Stripe signature verified successfully')
+
+      // For development, try signature verification but don't fail if it doesn't work
+      try {
+        event = stripe.webhooks.constructEvent(body, sig, endpointSecret)
+        console.log('Stripe signature verified successfully')
+      } catch (sigError) {
+        console.warn(
+          'Signature verification failed, but continuing in development mode:',
+          sigError.message
+        )
+
+        // In development, parse the JSON directly if signature fails
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('Development mode: parsing webhook without signature verification')
+          event = JSON.parse(body)
+        } else {
+          // In production, fail if signature verification fails
+          throw sigError
+        }
+      }
     }
   } catch (err) {
     console.error(`Webhook signature verification failed: ${err.message}`)
+    console.error('Signature:', sig)
+    console.error('Body preview:', body.substring(0, 100))
     return NextResponse.json({ error: `Webhook error: ${err.message}` }, { status: 400 })
   }
 

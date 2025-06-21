@@ -33,7 +33,7 @@ export default function EmailForm() {
           setError(result.error || 'Invalid email or password 1')
         } else {
           // Redirect on successful login
-          router.push('/welcome')
+          router.push('/face-fusion')
         }
       } else {
         // Register
@@ -42,7 +42,7 @@ export default function EmailForm() {
           setError(result.error || 'Registration failed')
         } else {
           // Redirect on successful registration
-          router.push('/welcome')
+          router.push('/gallery')
         }
       }
     } catch (error) {

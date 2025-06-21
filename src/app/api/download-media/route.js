@@ -13,7 +13,7 @@ export async function GET(request) {
     }
 
     // Check if the video exists and is paid
-    const media = await prisma.generatedMedia.findUnique({
+    const media = await prisma.generatedMedia.findFirst({
       where: { name: filename },
     })
 

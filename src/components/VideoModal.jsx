@@ -3,6 +3,7 @@ import { Download, Trash2 } from 'lucide-react'
 import { useCallback, useState } from 'react'
 import Image from 'next/image'
 import StripeCheckoutButton from './StripeCheckoutButton'
+import PayPalCheckoutButton from './PayPalCheckoutButton'
 import AtlosCheckoutButton from './AtlosCheckoutButton'
 import CloseButton from './CloseButton'
 import VideoPlayerWithLoading from './VideoPlayerWithLoading'
@@ -155,6 +156,7 @@ export default function VideoModal({ video, onClose, onDownload, onDelete }) {
               <h3 className="text-lg font-semibold mb-2 text-center">Choose Payment Method</h3>
               <div className="flex justify-center gap-3">
                 <StripeCheckoutButton video={video} />
+                <PayPalCheckoutButton video={video} />
                 <AtlosCheckoutButton video={video} />
               </div>
               <div className="text-center">

@@ -78,47 +78,65 @@ export const authOptions = {
       if (url.startsWith('/')) return `${baseUrl}${url}`
       // Allows callback URLs on the same origin
       else if (new URL(url).origin === baseUrl) return url
-      return baseUrl + '/welcome'
+      return baseUrl + '/face-fusion'
     },
     async jwt({ token, user, account, profile }) {
-      // Initial sign in
-      if (account && profile) {
-        // Store user email in the token
-        token.email = profile.email || profile.mail
+      try {
+        // Initial sign in
+        if (account && profile) {
+          // Store user email in the token
+          token.email = profile.email || profile.mail
+        }
+        if (user) {
+          token.id = user.id
+        }
+        return token
+      } catch (error) {
+        console.error('JWT callback error:', error)
+        // Return a fresh token on error
+        return {}
       }
-      if (user) {
-        token.id = user.id
-      }
-      return token
     },
     async session({ session, token }) {
-      // Pass user ID to the client session
-      session.user.id = token.id
-
-      // If we have an email, ensure the user exists in the database
-      if (session?.user?.email) {
-        try {
-          // Use upsert but retrieve the user information to get the correct ID
-          const user = await db.user.upsert({
-            where: { account: session.user.email },
-            update: { lastLogin: new Date() },
-            create: {
-              account: session.user.email,
-              lastLogin: new Date(),
-              name: session.user.name || session.user.email.split('@')[0],
-            },
-          })
-
-          // Always ensure we have the correct user ID from the database
-          session.user.id = user.id
-          console.log('Auth session updated with user ID:', user.id)
-        } catch (error) {
-          console.error('Error updating user session:', error)
-          // Continue session but log the error
+      try {
+        // Handle case where token might be corrupted or empty
+        if (!token || Object.keys(token).length === 0) {
+          console.log('Empty or corrupted token, returning null session')
+          return null
         }
-      }
 
-      return session
+        // Pass user ID to the client session
+        session.user.id = token.id
+
+        // If we have an email, ensure the user exists in the database
+        if (session?.user?.email) {
+          try {
+            // Use upsert but retrieve the user information to get the correct ID
+            const user = await db.user.upsert({
+              where: { account: session.user.email },
+              update: { lastLogin: new Date() },
+              create: {
+                account: session.user.email,
+                lastLogin: new Date(),
+                name: session.user.name || session.user.email.split('@')[0],
+              },
+            })
+
+            // Always ensure we have the correct user ID from the database
+            session.user.id = user.id
+            console.log('Auth session updated with user ID:', user.id)
+          } catch (error) {
+            console.error('Error updating user session:', error)
+            // Continue session but log the error
+          }
+        }
+
+        return session
+      } catch (error) {
+        console.error('Session callback error:', error)
+        // Return null to force re-authentication
+        return null
+      }
     },
     async signIn({ profile, user }) {
       // Allow credential authentication where user is returned from authorize callback

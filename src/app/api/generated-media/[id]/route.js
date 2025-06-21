@@ -22,11 +22,11 @@ export async function GET(request, { params }) {
       return NextResponse.json({ error: 'Generated media not found' }, { status: 404 })
     }
 
-    // Ensure thumbnailPath has a fallback value
+    // Convert BigInt to string and add thumbnail fallback
     const responseData = {
       ...generatedMedia,
       fileSize: generatedMedia.fileSize.toString(),
-      thumbnailPath: generatedMedia.thumbnailPath || '/placeholder-thumbnail.svg',
+      thumbnailPath: '/placeholder-thumbnail.svg', // Default thumbnail since field doesn't exist in schema
     }
 
     return NextResponse.json(responseData)
@@ -60,13 +60,13 @@ export async function PUT(request, { params }) {
     if (data.type !== undefined) updateData.type = data.type
     if (data.tempPath !== undefined) updateData.tempPath = data.tempPath
     if (data.filePath !== undefined) updateData.filePath = data.filePath
-    if (data.thumbnailPath !== undefined) updateData.thumbnailPath = data.thumbnailPath
     if (data.fileSize !== undefined) updateData.fileSize = data.fileSize
+    if (data.mimeType !== undefined) updateData.mimeType = data.mimeType
     if (data.isPaid !== undefined) updateData.isPaid = data.isPaid
     if (data.isActive !== undefined) updateData.isActive = data.isActive
 
     if (data.downloadCount !== undefined) {
-      updateData.downloadCount = existingMedia.downloadCount + 1
+      updateData.downloadCount = (existingMedia.downloadCount || 0) + 1
     }
 
     const updatedGeneratedMedia = await prisma.generatedMedia.update({

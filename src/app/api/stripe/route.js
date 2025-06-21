@@ -36,8 +36,8 @@ export async function POST(request) {
         },
       ],
       mode: 'payment',
-      success_url: `${baseUrl}/api/payment/success?session_id={CHECKOUT_SESSION_ID}&method=stripe`,
-      cancel_url: `${baseUrl}/face-fusion?tab=history`,
+      success_url: `${baseUrl}/api/payment/success?session_id={CHECKOUT_SESSION_ID}&method=stripe&video_id=${videoId}`,
+      cancel_url: `${baseUrl}/gallery`,
       metadata: {
         imageId: imageId || '',
         videoId: videoId || '',

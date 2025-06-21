@@ -7,6 +7,7 @@ import {
   FaEnvelope,
   FaShieldAlt,
   FaFileContract,
+  FaUser,
 } from 'react-icons/fa'
 
 export default function MoreMenu() {
@@ -41,8 +42,20 @@ export default function MoreMenu() {
             <Menu.Item>
               {({ active }) => (
                 <Link
+                  href="/profile"
+                  className={`${active ? 'bg-[#2a2d34]' : ''} flex px-4 py-2 text-sm text-gray-400 hover:text-white items-center gap-2`}
+                >
+                  <FaUser size={14} />
+                  Profile
+                </Link>
+              )}
+            </Menu.Item>
+            <div className="border-t border-gray-700 my-1"></div>
+            <Menu.Item>
+              {({ active }) => (
+                <Link
                   href="/about"
-                  className={`${active ? 'bg-[#2a2d34]' : ''} block px-4 py-2 text-sm text-gray-400 hover:text-white flex items-center gap-2`}
+                  className={`${active ? 'bg-[#2a2d34]' : ''} flex px-4 py-2 text-sm text-gray-400 hover:text-white items-center gap-2`}
                 >
                   <FaInfoCircle size={14} />
                   About Us
@@ -53,7 +66,7 @@ export default function MoreMenu() {
               {({ active }) => (
                 <Link
                   href="/faq"
-                  className={`${active ? 'bg-[#2a2d34]' : ''} block px-4 py-2 text-sm text-gray-400 hover:text-white flex items-center gap-2`}
+                  className={`${active ? 'bg-[#2a2d34]' : ''} flex px-4 py-2 text-sm text-gray-400 hover:text-white items-center gap-2`}
                 >
                   <FaQuestionCircle size={14} />
                   FAQ
@@ -64,7 +77,7 @@ export default function MoreMenu() {
               {({ active }) => (
                 <Link
                   href="/contact"
-                  className={`${active ? 'bg-[#2a2d34]' : ''} block px-4 py-2 text-sm text-gray-400 hover:text-white flex items-center gap-2`}
+                  className={`${active ? 'bg-[#2a2d34]' : ''} flex px-4 py-2 text-sm text-gray-400 hover:text-white items-center gap-2`}
                 >
                   <FaEnvelope size={14} />
                   Contact Us
@@ -75,7 +88,7 @@ export default function MoreMenu() {
               {({ active }) => (
                 <Link
                   href="/privacy"
-                  className={`${active ? 'bg-[#2a2d34]' : ''} block px-4 py-2 text-sm text-gray-400 hover:text-white flex items-center gap-2`}
+                  className={`${active ? 'bg-[#2a2d34]' : ''} flex px-4 py-2 text-sm text-gray-400 hover:text-white items-center gap-2`}
                 >
                   <FaShieldAlt size={14} />
                   Privacy Policy
@@ -86,7 +99,7 @@ export default function MoreMenu() {
               {({ active }) => (
                 <Link
                   href="/terms"
-                  className={`${active ? 'bg-[#2a2d34]' : ''} block px-4 py-2 text-sm text-gray-400 hover:text-white flex items-center gap-2`}
+                  className={`${active ? 'bg-[#2a2d34]' : ''} flex px-4 py-2 text-sm text-gray-400 hover:text-white items-center gap-2`}
                 >
                   <FaFileContract size={14} />
                   Terms & Conditions
