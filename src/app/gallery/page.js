@@ -984,7 +984,9 @@ export default function GalleryPage() {
                       const IconComponent = getPageTitleIcon()
                       return <IconComponent size={24} className="text-blue-500" />
                     })()}
-                    <h1 className="text-2xl font-bold text-white">{getPageTitle()}</h1>
+                    <h1 className="text-2xl font-semibold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+                      {getPageTitle()}
+                    </h1>
                   </div>
                   <p className="text-gray-400 text-sm mt-1">
                     {filteredAndSortedItems.length}{' '}

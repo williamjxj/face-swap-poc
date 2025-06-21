@@ -4,7 +4,7 @@ import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { logout } from '@/services/auth'
 import MoreMenu from './MoreMenu'
-import { FaMagic, FaImages, FaUser, FaSignOutAlt } from 'react-icons/fa'
+import { FaMagic, FaImages, FaSignOutAlt, FaPlay } from 'react-icons/fa'
 import { useSession } from 'next-auth/react'
 import { useUserData } from '@/hooks/useUserData'
 
@@ -27,6 +27,7 @@ export default function Navigator() {
   const navItems = [
     { href: '/face-fusion', icon: <FaMagic size={16} />, label: 'FaceFusion' },
     { href: '/gallery', icon: <FaImages size={16} />, label: 'Gallery' },
+    { href: '/video-carousel', icon: <FaPlay size={16} />, label: 'Video Carousel' },
   ]
 
   // Function to get avatar background color based on email
