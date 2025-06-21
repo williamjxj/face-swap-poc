@@ -27,7 +27,7 @@ export default function Navigator() {
   const navItems = [
     { href: '/face-fusion', icon: <FaMagic size={16} />, label: 'FaceFusion' },
     { href: '/gallery', icon: <FaImages size={16} />, label: 'Gallery' },
-    { href: '/video-carousel', icon: <FaPlay size={16} />, label: 'Video Carousel' },
+    { href: '/video-carousel', icon: <FaPlay size={16} />, label: 'Carousel' },
   ]
 
   // Function to get avatar background color based on email

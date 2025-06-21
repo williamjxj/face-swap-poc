@@ -176,7 +176,7 @@ const VideoThumbnail = ({
 
             {/* YouTube-style play button overlay */}
             <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-              <div className="bg-red-600 hover:bg-red-700 rounded-full p-4 transform hover:scale-110 transition-all duration-200 shadow-lg">
+              <div className="bg-gradient-to-r from-blue-400 to-purple-500 hover:from-blue-500 hover:to-purple-600 rounded-full p-4 transform hover:scale-110 transition-all duration-200 shadow-lg">
                 <Play className="w-8 h-8 text-white fill-white" />
               </div>
             </div>

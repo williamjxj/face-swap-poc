@@ -812,17 +812,17 @@ export default function FaceFusion() {
   }
 
   return (
-    <div className="flex gap-4 h-[calc(100vh-4rem)]">
+    <div className="flex gap-1 sm:gap-2 md:gap-3 lg:gap-4 h-[calc(100vh-4rem)]">
       {/* Left side - Tab navigation */}
-      <div className="w-1/4 bg-[#1a1d24] rounded-lg flex flex-col">
+      <div className="w-1/4 lg:w-1/4 md:w-1/3 sm:w-2/5 bg-[#1a1d24] rounded-lg flex flex-col">
         {/* Tab Navigation */}
-        <div className="p-4 border-b border-gray-800">
-          <div className="flex space-x-2">
+        <div className="p-2 sm:p-3 md:p-4 border-b border-gray-800">
+          <div className="flex space-x-1 sm:space-x-2">
             {tabOptions.map(tab => (
               <button
                 key={tab.id}
                 onClick={() => setSelectedTab(tab.id)}
-                className={`px-3 py-2 rounded-lg text-sm ${
+                className={`px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm ${
                   selectedTab === tab.id
                     ? 'bg-blue-500 text-white'
                     : 'text-gray-400 hover:bg-[#2a2d34]'
@@ -856,7 +856,7 @@ export default function FaceFusion() {
       </div>
 
       {/* Middle - Video Preview */}
-      <div className="flex-1 bg-[#1a1d24] flex flex-col items-center rounded-lg relative p-6 pt-2 pb-2">
+      <div className="flex-1 bg-[#1a1d24] flex flex-col items-center rounded-lg relative p-2 sm:p-4 md:p-6 pt-2 pb-2">
         <div className="flex items-center justify-center gap-3">
           <div className="w-12 h-12 relative overflow-hidden">
             <div className="absolute inset-0 w-full h-full overflow-hidden">
@@ -943,13 +943,13 @@ export default function FaceFusion() {
       </div>
 
       {/* Right side - Face Selection and History */}
-      <div className="w-1/4 bg-[#1a1d24] rounded-lg flex flex-col">
+      <div className="w-1/4 lg:w-1/4 md:w-1/3 sm:w-2/5 bg-[#1a1d24] rounded-lg flex flex-col">
         {/* Tab Navigation */}
-        <div className="p-4 border-b border-gray-800">
-          <div className="flex space-x-2">
+        <div className="p-2 sm:p-3 md:p-4 border-b border-gray-800">
+          <div className="flex space-x-1 sm:space-x-2">
             <button
               onClick={() => setRightSideTab('face-swap')}
-              className={`px-3 py-2 rounded-lg text-sm cursor-pointer ${
+              className={`px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm cursor-pointer ${
                 rightSideTab === 'face-swap'
                   ? 'bg-blue-500 text-white'
                   : 'text-gray-400 hover:bg-[#2a2d34]'
@@ -965,7 +965,7 @@ export default function FaceFusion() {
             </button>
             <button
               onClick={() => setRightSideTab('history')}
-              className={`px-3 py-2 rounded-lg text-sm cursor-pointer ${
+              className={`px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm cursor-pointer ${
                 rightSideTab === 'history'
                   ? 'bg-blue-500 text-white'
                   : 'text-gray-400 hover:bg-[#2a2d34]'
@@ -979,7 +979,7 @@ export default function FaceFusion() {
         {/* Tab Content */}
         <div className="flex-1 overflow-y-auto">
           {rightSideTab === 'face-swap' ? (
-            <div className="p-4">
+            <div className="p-2 sm:p-3 md:p-4">
               <FaceSelection
                 selectedTemplate={selectedTemplate}
                 selectedFace={selectedFace}
@@ -1037,7 +1037,7 @@ export default function FaceFusion() {
               )}
             </div>
           ) : (
-            <div className="p-3">
+            <div className="p-1 sm:p-2 md:p-3">
               {/* Header with Gallery Link */}
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-bold text-white">Recent History</h2>
@@ -1108,18 +1108,18 @@ export default function FaceFusion() {
                       </button>
                     </div>
                   ) : (
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-2 gap-1 sm:gap-1.5 md:gap-2">
                       {generatedVideos.map(media => (
                         <div
                           key={media.id}
-                          className="group bg-[#2a2d34] p-2 rounded-xl cursor-pointer hover:bg-[#3a3d44] transition-colors relative"
+                          className="group bg-[#2a2d34] p-1 sm:p-1.5 md:p-2 rounded-lg sm:rounded-xl cursor-pointer hover:bg-[#3a3d44] transition-colors relative"
                           onClick={() => handleVideoClick(media)}
                         >
                           <div className="relative">
                             {media.type === 'video' ? (
                               <VideoPlayerWithLoading
                                 src={media.filePath}
-                                className="w-full h-40 rounded-lg mb-2"
+                                className="w-full h-24 sm:h-32 md:h-40 rounded-md sm:rounded-lg mb-1 sm:mb-2"
                                 autoPlay={true}
                                 loop={true}
                                 muted={true}
@@ -1132,41 +1132,35 @@ export default function FaceFusion() {
                                 alt={media.name}
                                 width={300}
                                 height={160}
-                                className="rounded-lg mb-2"
-                                style={{
-                                  width: '100%',
-                                  height: '10rem',
-                                  objectFit: 'cover',
-                                  borderRadius: '8px',
-                                }}
+                                className="rounded-md sm:rounded-lg mb-1 sm:mb-2 h-24 sm:h-32 md:h-40 object-cover w-full"
                               />
                             )}
 
                             {/* Video Duration Badge - Top Left */}
-                            <div className="absolute top-2 left-2 bg-black/70 text-white text-xs px-2 py-1 rounded font-medium z-30 pointer-events-none">
+                            <div className="absolute top-1 sm:top-2 left-1 sm:left-2 bg-black/70 text-white text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded font-medium z-30 pointer-events-none">
                               {getVideoDuration(media)}
                             </div>
 
                             {/* Payment/Download Button - Top Right */}
-                            <div className="absolute top-2 right-2 z-30">
+                            <div className="absolute top-1 sm:top-2 right-1 sm:right-2 z-30">
                               {media.isPaid ? (
                                 <button
                                   onClick={e => {
                                     e.stopPropagation()
                                     handleDownload(media)
                                   }}
-                                  className="group/btn p-2 rounded-lg bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 backdrop-blur-sm"
+                                  className="group/btn p-1.5 sm:p-2 rounded-md sm:rounded-lg bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 backdrop-blur-sm"
                                   title="Download"
                                 >
-                                  <Download className="w-4 h-4 group-hover/btn:scale-110 transition-transform duration-200" />
+                                  <Download className="w-3 h-3 sm:w-4 sm:h-4 group-hover/btn:scale-110 transition-transform duration-200" />
                                 </button>
                               ) : (
                                 <button
                                   onClick={e => handlePurchase(media, e)}
-                                  className="group/btn p-2 rounded-lg bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 backdrop-blur-sm"
+                                  className="group/btn p-1.5 sm:p-2 rounded-md sm:rounded-lg bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 backdrop-blur-sm"
                                   title={`Purchase for ${PRICING_CONFIG.getFormattedPrice()}`}
                                 >
-                                  <ShoppingCart className="w-4 h-4 group-hover/btn:scale-110 transition-transform duration-200" />
+                                  <ShoppingCart className="w-3 h-3 sm:w-4 sm:h-4 group-hover/btn:scale-110 transition-transform duration-200" />
                                 </button>
                               )}
                             </div>
@@ -1174,7 +1168,7 @@ export default function FaceFusion() {
                             {/* Lock overlay for unpaid videos */}
                             {!media.isPaid && (
                               <div className="absolute inset-0 flex items-center justify-center bg-black/30 z-20">
-                                <Lock className="w-8 h-8 text-white" />
+                                <Lock className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
                               </div>
                             )}
 
@@ -1189,7 +1183,7 @@ export default function FaceFusion() {
 
                             {/* Hover overlay with video info */}
                             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-end z-10">
-                              <div className="p-2 w-full">
+                              <div className="p-1 sm:p-2 w-full">
                                 <div className="text-white font-medium text-xs truncate mb-1">
                                   {media.name}
                                 </div>

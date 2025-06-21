@@ -1,16 +1,55 @@
 'use client'
-import { X, Download, Eye, Calendar, Clock, FileText, Tag, ShoppingCart } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { X, Download, ShoppingCart } from 'lucide-react'
 import { PRICING_CONFIG } from '@/config/pricing'
 
 export default function VideoDetailsModal({ video, isOpen, onClose, onDownload, onPurchase }) {
-  if (!isOpen || !video) return null
+  const [isPlaying, setIsPlaying] = useState(false)
 
-  const formatFileSize = bytes => {
-    if (!bytes) return 'Unknown'
-    const sizes = ['Bytes', 'KB', 'MB', 'GB']
-    const i = Math.floor(Math.log(bytes) / Math.log(1024))
-    return Math.round((bytes / Math.pow(1024, i)) * 100) / 100 + ' ' + sizes[i]
-  }
+  // Auto-play when modal opens (like carousel)
+  useEffect(() => {
+    if (isOpen && video) {
+      setTimeout(() => {
+        const videoElement = document.getElementById('details-video')
+        if (videoElement && videoElement.readyState >= 2) {
+          videoElement.play().catch(error => {
+            console.log('Auto-play prevented or failed:', error.message)
+          })
+          setIsPlaying(true)
+        }
+      }, 200)
+    }
+  }, [isOpen, video])
+
+  // Handle keyboard shortcuts (like carousel)
+  useEffect(() => {
+    const handleKeyDown = e => {
+      if (!isOpen) return
+
+      switch (e.key) {
+        case 'Escape':
+          onClose()
+          break
+        case ' ':
+          e.preventDefault()
+          const videoElement = document.getElementById('details-video')
+          if (videoElement) {
+            if (isPlaying) {
+              videoElement.pause()
+            } else {
+              videoElement.play()
+            }
+            setIsPlaying(!isPlaying)
+          }
+          break
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [isOpen, isPlaying, onClose])
+
+  if (!isOpen || !video) return null
 
   const formatDuration = seconds => {
     if (!seconds) return '00:00'
@@ -20,164 +59,102 @@ export default function VideoDetailsModal({ video, isOpen, onClose, onDownload, 
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-[#1a1d24] rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-700">
-          <h2 className="text-xl font-bold text-white">Video Details</h2>
-          <button
-            onClick={onClose}
-            className="p-2 rounded-lg bg-[#2a2d34] hover:bg-[#3a3d44] text-gray-400 hover:text-white transition-colors"
-          >
-            <X size={20} />
-          </button>
-        </div>
+    <div className="fixed inset-0 bg-black/95 flex items-center justify-center z-50">
+      {/* Close Button */}
+      <button
+        onClick={onClose}
+        className="absolute top-4 right-4 z-60 p-3 rounded-full bg-black/50 hover:bg-black/70 text-white transition-colors"
+      >
+        <X size={24} />
+      </button>
 
-        {/* Content */}
-        <div className="p-6">
-          {/* Video Preview */}
-          <div className="relative mb-6 rounded-lg overflow-hidden bg-[#2a2d34]">
-            <video
-              src={video.filePath}
-              className="w-full max-h-96 object-contain"
-              controls
-              poster={video.thumbnailPath}
-            />
+      {/* Video Container */}
+      <div className="relative flex items-center justify-center w-full h-full max-w-[95vw] max-h-[90vh] mx-4">
+        <video
+          id="details-video"
+          src={video.filePath}
+          className="max-w-full max-h-full object-contain rounded-lg"
+          controls
+          poster={video.thumbnailPath}
+          onPlay={() => setIsPlaying(true)}
+          onPause={() => setIsPlaying(false)}
+          onEnded={() => setIsPlaying(false)}
+          onLoadedData={e => {
+            // Auto-play when video loads (only if not already playing)
+            const videoElement = e.target
+            if (videoElement && isOpen && !isPlaying && videoElement.paused) {
+              videoElement.play().catch(error => {
+                console.log('Video auto-play prevented:', error.message)
+              })
+              setIsPlaying(true)
+            }
+          }}
+          onError={e => {
+            console.error('Video loading error:', e.target.error)
+            setIsPlaying(false)
+          }}
+          style={{ aspectRatio: 'auto' }}
+        />
 
-            {/* Video Duration Overlay */}
-            <div className="absolute top-2 left-2 bg-black/80 text-white text-xs px-2 py-1 rounded">
-              {formatDuration(video.duration)}
+        {/* Video Info Overlay */}
+        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-6 rounded-b-lg">
+          <div className="flex items-end justify-between">
+            <div className="flex-1">
+              <h3 className="text-xl font-bold text-white mb-2">
+                {video.name || video.filename || 'Untitled Video'}
+              </h3>
+              {video.description && (
+                <p className="text-gray-300 text-sm mb-3">{video.description}</p>
+              )}
+              <div className="flex items-center space-x-4 text-sm text-gray-400">
+                <span>{new Date(video.createdAt).toLocaleDateString()}</span>
+                <span>{formatDuration(video.duration)}</span>
+                <span>{video.downloadCount || 0} downloads</span>
+              </div>
             </div>
 
-            {/* Status Badge */}
-            <div className="absolute top-2 right-2">
-              {video.isPaid ? (
-                <span className="bg-green-600 text-white text-xs px-2 py-1 rounded font-medium">
-                  PURCHASED
-                </span>
+            {/* Action Buttons */}
+            <div className="flex items-center space-x-3 ml-6">
+              {video.isPurchased || video.isPaid ? (
+                <button
+                  onClick={() => onDownload(video)}
+                  className="group px-4 py-3 rounded-lg bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white transition-all duration-300 shadow-lg hover:shadow-xl flex items-center space-x-2"
+                  title="Download"
+                >
+                  <Download
+                    size={16}
+                    className="group-hover:scale-110 transition-transform duration-200"
+                  />
+                  <span>Download</span>
+                </button>
               ) : (
-                <span className="bg-yellow-600 text-white text-xs px-2 py-1 rounded font-medium">
-                  PREVIEW
-                </span>
+                <button
+                  onClick={() => onPurchase(video)}
+                  className="group px-4 py-3 rounded-lg bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white transition-all duration-300 shadow-lg hover:shadow-xl flex items-center space-x-2"
+                  title={`Purchase for ${PRICING_CONFIG.getFormattedPrice()}`}
+                >
+                  <ShoppingCart
+                    size={16}
+                    className="group-hover:scale-110 transition-transform duration-200"
+                  />
+                  <span>Purchase</span>
+                </button>
               )}
             </div>
           </div>
-
-          {/* Video Information */}
-          <div className="space-y-4">
-            {/* Title and Description */}
-            <div>
-              <h3 className="text-lg font-semibold text-white mb-2">
-                {video.name || video.filename || 'Untitled Video'}
-              </h3>
-              {video.description && <p className="text-gray-400 text-sm">{video.description}</p>}
-            </div>
-
-            {/* Metadata Grid */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-3">
-                <div className="flex items-center space-x-2 text-sm">
-                  <Calendar className="text-gray-400" size={16} />
-                  <span className="text-gray-400">Created:</span>
-                  <span className="text-white">
-                    {new Date(video.createdAt).toLocaleDateString()}
-                  </span>
-                </div>
-
-                <div className="flex items-center space-x-2 text-sm">
-                  <Clock className="text-gray-400" size={16} />
-                  <span className="text-gray-400">Duration:</span>
-                  <span className="text-white">{formatDuration(video.duration)}</span>
-                </div>
-
-                <div className="flex items-center space-x-2 text-sm">
-                  <FileText className="text-gray-400" size={16} />
-                  <span className="text-gray-400">Size:</span>
-                  <span className="text-white">{formatFileSize(video.fileSize)}</span>
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                <div className="flex items-center space-x-2 text-sm">
-                  <Eye className="text-gray-400" size={16} />
-                  <span className="text-gray-400">Downloads:</span>
-                  <span className="text-white">{video.downloadCount || 0}</span>
-                </div>
-
-                <div className="flex items-center space-x-2 text-sm">
-                  <Tag className="text-gray-400" size={16} />
-                  <span className="text-gray-400">Type:</span>
-                  <span className="text-white capitalize">{video.type || 'Video'}</span>
-                </div>
-
-                {video.resolution && (
-                  <div className="flex items-center space-x-2 text-sm">
-                    <span className="text-gray-400">Resolution:</span>
-                    <span className="text-white">{video.resolution}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Tags */}
-            {video.tags && video.tags.length > 0 && (
-              <div>
-                <h4 className="text-sm font-medium text-gray-400 mb-2">Tags</h4>
-                <div className="flex flex-wrap gap-2">
-                  {video.tags.map((tag, index) => (
-                    <span
-                      key={index}
-                      className="bg-[#2a2d34] text-gray-300 text-xs px-2 py-1 rounded"
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
         </div>
 
-        {/* Footer Actions */}
-        <div className="flex items-center justify-between p-6 border-t border-gray-700">
-          <div className="text-sm text-gray-400">
-            {video.isPaid
-              ? 'You own this video'
-              : `Purchase for ${PRICING_CONFIG.getFormattedPrice()}`}
-          </div>
-
-          <div className="flex space-x-3">
-            <button
-              onClick={onClose}
-              className="px-4 py-2 bg-[#2a2d34] hover:bg-[#3a3d44] text-gray-400 hover:text-white rounded-lg transition-colors"
-            >
-              Close
-            </button>
-
-            {video.isPaid ? (
-              <button
-                onClick={() => onDownload(video)}
-                className="group px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-lg transition-all duration-200 flex items-center space-x-2 shadow-md hover:shadow-lg"
-              >
-                <Download
-                  size={16}
-                  className="group-hover:scale-110 transition-transform duration-200"
-                />
-                <span>Download</span>
-              </button>
-            ) : (
-              <button
-                onClick={() => onPurchase(video)}
-                className="group px-6 py-3 bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-700 hover:to-orange-700 text-white rounded-lg transition-all duration-200 flex items-center space-x-2 shadow-md hover:shadow-lg"
-              >
-                <ShoppingCart
-                  size={16}
-                  className="group-hover:scale-110 transition-transform duration-200"
-                />
-                <span>Purchase</span>
-              </button>
-            )}
-          </div>
+        {/* Status Badge */}
+        <div className="absolute top-4 right-4">
+          {video.isPurchased || video.isPaid ? (
+            <span className="bg-green-600 text-white text-xs px-3 py-1 rounded-full font-medium backdrop-blur-sm">
+              PURCHASED
+            </span>
+          ) : (
+            <span className="bg-yellow-600 text-white text-xs px-3 py-1 rounded-full font-medium backdrop-blur-sm">
+              PREVIEW
+            </span>
+          )}
         </div>
       </div>
     </div>
