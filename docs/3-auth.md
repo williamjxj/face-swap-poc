@@ -45,8 +45,19 @@ flowchart TD
     end
 ```
 
-
 ### ✅ Key Clarification
 
 When `Supabase handles the OAuth flow directly` (using supabase.auth.signInWithOAuth({ provider: 'google' })), the `Redirect URI is to Supabase itself`, not your Next.js frontend. You do not set api/auth/callback/google like with NextAuth.
+
+### ✅ @supabase/ssr vs auth/supabase-adapter
+
+| Aspect               | `@supabase/ssr`                                               | `auth/supabase-adapter` (for next-auth)                      |
+|----------------------|--------------------------------------------------------------|--------------------------------------------------------------|
+| Primary role         | Supabase client setup for SSR with secure cookie-based sessions and PKCE flow | Adapter to connect Supabase Auth backend with next-auth framework |
+| Token storage        | Secure HTTP cookies accessible by server and client          | Managed by next-auth session storage (e.g., JWT, cookies)    |
+| OAuth flow           | Uses PKCE flow by default (recommended for SSR)              | Uses next-auth’s OAuth flows, typically implicit or code flow|
+| SSR support          | Built-in support for SSR frameworks (Next.js, SvelteKit)     | SSR support depends on next-auth’s implementation             |
+| Session management   | Supabase-native session management with refresh tokens       | next-auth session management with Supabase as backend         |
+| Use case            | Direct Supabase Auth integration in SSR apps                  | Using Supabase Auth with next-auth for broader auth features  |
+| Complexity          | Requires configuring Supabase client and cookie handling     | Simplifies integration if already using next-auth             |
 
