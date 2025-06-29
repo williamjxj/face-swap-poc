@@ -54,9 +54,7 @@ const Toast = ({ toast, onRemove }) => {
     >
       {getIcon()}
       <div className="flex-1 min-w-0">
-        {toast.title && (
-          <h4 className="text-sm font-medium text-white mb-1">{toast.title}</h4>
-        )}
+        {toast.title && <h4 className="text-sm font-medium text-white mb-1">{toast.title}</h4>}
         <p className="text-sm text-gray-300">{toast.message}</p>
       </div>
       <button
@@ -88,7 +86,7 @@ export const ToastProvider = ({ children }) => {
   const addToast = useCallback((message, type = 'info', title = null, duration = 5000) => {
     const id = Date.now() + Math.random()
     const toast = { id, message, type, title, duration }
-    
+
     setToasts(prev => [...prev, toast])
 
     // Auto remove after duration
@@ -101,7 +99,7 @@ export const ToastProvider = ({ children }) => {
     return id
   }, [])
 
-  const removeToast = useCallback((id) => {
+  const removeToast = useCallback(id => {
     setToasts(prev => prev.filter(toast => toast.id !== id))
   }, [])
 
@@ -111,13 +109,15 @@ export const ToastProvider = ({ children }) => {
 
   // Convenience methods
   const toast = {
-    success: (message, title = null, duration = 5000) => addToast(message, 'success', title, duration),
+    success: (message, title = null, duration = 5000) =>
+      addToast(message, 'success', title, duration),
     error: (message, title = null, duration = 7000) => addToast(message, 'error', title, duration),
-    warning: (message, title = null, duration = 6000) => addToast(message, 'warning', title, duration),
+    warning: (message, title = null, duration = 6000) =>
+      addToast(message, 'warning', title, duration),
     info: (message, title = null, duration = 5000) => addToast(message, 'info', title, duration),
     custom: addToast,
     remove: removeToast,
-    removeAll: removeAllToasts
+    removeAll: removeAllToasts,
   }
 
   return (

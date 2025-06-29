@@ -4,9 +4,5 @@ export const metadata = {
 }
 
 export default function VideoCarouselLayout({ children }) {
-  return (
-    <div className="min-h-screen bg-[#0f1419]">
-      {children}
-    </div>
-  )
+  return <div className="min-h-screen bg-[#0f1419]">{children}</div>
 }

@@ -17,9 +17,9 @@ fi
 
 
 # Supabase database connection details
-# postgresql://postgres:[YOUR-PASSWORD]@db.vrwpcukrazrkpdlrdqhx.supabase.co:5432/postgres
-# psql -h db.vrwpcukrazrkpdlrdqhx.supabase.co -p 5432 -d postgres -U postgres
-host="db.vrwpcukrazrkpdlrdqhx.supabase.co"
+# postgresql://postgres:[YOUR-PASSWORD]@db.yunxidsqumhfushjcgyg.supabase.co:5432/postgres
+# psql -h db.yunxidsqumhfushjcgyg.supabase.co -p 5432 -d postgres -U postgres
+host="db.yunxidsqumhfushjcgyg.supabase.co"
 port=5432
 database=postgres
 user=postgres
