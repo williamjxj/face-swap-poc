@@ -3,6 +3,7 @@
 ## Overview
 
 This guide covers integrating Prisma, Supabase, and Next-Auth v4 in three deployment scenarios:
+
 1. **Local App + Local PostgreSQL** ✅ (Working)
 2. **Local App + Remote Supabase DB** 🔧 (Target)
 3. **Vercel App + Remote Supabase DB** 🔧 (Target)
@@ -17,23 +18,23 @@ graph TB
         D[API Routes] --> B
         E[Auth Middleware] --> A
     end
-    
+
     subgraph "Authentication Providers"
         F[Google OAuth]
         G[Azure AD]
         H[Credentials]
     end
-    
+
     subgraph "Database Options"
         I[Local PostgreSQL]
         J[Supabase PostgreSQL]
     end
-    
+
     subgraph "Deployment"
         K[Local Development]
         L[Vercel Production]
     end
-    
+
     A --> F
     A --> G
     A --> H
@@ -42,7 +43,7 @@ graph TB
     K --> I
     K --> J
     L --> J
-    
+
     style A fill:#e1f5fe
     style B fill:#f3e5f5
     style J fill:#e8f5e8
@@ -51,6 +52,7 @@ graph TB
 ## Scenario Configurations
 
 ### 1. Local App + Local PostgreSQL ✅
+
 ```bash
 # .env.local
 DATABASE_URL="postgresql://postgres:password@localhost:5432/facefusion"
@@ -58,8 +60,9 @@ NEXTAUTH_URL="http://localhost:3000"
 ```
 
 ### 2. Local App + Remote Supabase DB 🎯
+
 ```bash
-# .env.local  
+# .env.local
 DATABASE_URL="postgresql://postgres:[PASSWORD]@db.[PROJECT-ID].supabase.co:5432/postgres"
 NEXTAUTH_URL="http://localhost:3000"
 NEXT_PUBLIC_SUPABASE_URL="https://[PROJECT-ID].supabase.co"
@@ -67,6 +70,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY="[ANON-KEY]"
 ```
 
 ### 3. Vercel App + Remote Supabase DB 🎯
+
 ```bash
 # Vercel Environment Variables
 DATABASE_URL="postgresql://postgres:[PASSWORD]@db.[PROJECT-ID].supabase.co:5432/postgres"
@@ -79,6 +83,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY="[ANON-KEY]"
 ## Database Migration Strategy
 
 ### Step 1: Export Local Schema
+
 ```bash
 # Export your local database structure
 pg_dump -h localhost -U postgres -d facefusion --schema-only > schema.sql
@@ -88,6 +93,7 @@ pg_dump -h localhost -U postgres -d facefusion --data-only > data.sql
 ```
 
 ### Step 2: Prepare Supabase Database
+
 ```bash
 # Reset Supabase migrations (if needed)
 npx supabase db reset
@@ -97,6 +103,7 @@ npx prisma db push --accept-data-loss
 ```
 
 ### Step 3: Verify Migration
+
 ```bash
 # Generate fresh Prisma client
 npx prisma generate
@@ -110,17 +117,20 @@ npx prisma db pull
 ### Prisma + Supabase Integration
 
 **Prisma Role:**
+
 - ORM layer for type-safe database operations
 - Schema management and migrations
 - Query optimization and connection pooling
 
 **Supabase Role:**
+
 - Managed PostgreSQL database hosting
 - Real-time subscriptions (if needed)
 - Built-in Row Level Security (RLS)
 - Database backups and scaling
 
 **Integration Flow:**
+
 ```javascript
 // src/lib/db.js
 import { PrismaClient } from '@prisma/client'
@@ -132,8 +142,8 @@ const getDatabaseConfig = () => ({
   datasources: {
     db: {
       url: process.env.DATABASE_URL, // Points to Supabase
-    }
-  }
+    },
+  },
 })
 
 export const db = globalForPrisma.prisma || new PrismaClient(getDatabaseConfig())
@@ -142,12 +152,14 @@ export const db = globalForPrisma.prisma || new PrismaClient(getDatabaseConfig()
 ### Next-Auth v4 + Prisma + Supabase
 
 **Authentication Flow:**
+
 1. User authenticates via Next-Auth providers
 2. Next-Auth stores session data in database via Prisma
 3. Prisma connects to Supabase PostgreSQL
 4. User sessions persist across requests
 
 **Configuration:**
+
 ```javascript
 // src/services/auth.js
 export const authOptions = {
@@ -177,6 +189,7 @@ export const authOptions = {
 ## Environment Switching Guide
 
 ### Quick Switch Script
+
 Create `scripts/switch-db.sh`:
 
 ```bash
@@ -211,6 +224,7 @@ echo "Run: npm run db:generate && npm run dev"
 ```
 
 ### Environment Template
+
 Create `.env.local.template`:
 
 ```bash
@@ -238,29 +252,32 @@ GOOGLE_CLIENT_SECRET="your-google-client-secret"
 ## Key Migration Points
 
 ### 1. Database URL Format
+
 ```bash
 # Local PostgreSQL
 postgresql://user:password@localhost:5432/database
 
-# Supabase PostgreSQL  
+# Supabase PostgreSQL
 postgresql://postgres:password@db.project-id.supabase.co:5432/postgres
 ```
 
 ### 2. Connection Pooling
+
 ```javascript
 // For production Supabase, enable connection pooling
 const DATABASE_URL = process.env.DATABASE_URL
-const pooledUrl = DATABASE_URL?.includes('supabase.co') 
+const pooledUrl = DATABASE_URL?.includes('supabase.co')
   ? DATABASE_URL.replace(':5432/', ':6543/') + '?pgbouncer=true'
   : DATABASE_URL
 ```
 
 ### 3. Schema Synchronization
+
 ```bash
 # Pull current schema from Supabase
 npx prisma db pull
 
-# Push local schema to Supabase  
+# Push local schema to Supabase
 npx prisma db push
 
 # Generate client after schema changes
@@ -268,6 +285,7 @@ npx prisma generate
 ```
 
 ### 4. Data Migration
+
 ```bash
 # Export from local
 pg_dump postgresql://postgres:password@localhost:5432/facefusion > backup.sql
@@ -306,6 +324,7 @@ NEXT_PUBLIC_APP_URL="https://your-app.vercel.app"
 ```
 
 ### Deployment Checklist:
+
 - [ ] Set up Supabase project and get credentials
 - [ ] Configure OAuth providers for production URLs
 - [ ] Set all environment variables in Vercel dashboard
@@ -316,6 +335,7 @@ NEXT_PUBLIC_APP_URL="https://your-app.vercel.app"
 ## Troubleshooting Common Issues
 
 ### Issue 1: Connection Refused
+
 ```bash
 # Check if DATABASE_URL is correct
 echo $DATABASE_URL
@@ -325,6 +345,7 @@ npx prisma db pull
 ```
 
 ### Issue 2: OAuth Redirect Mismatch
+
 ```bash
 # Ensure OAuth providers have correct redirect URLs:
 # Local: http://localhost:3000/api/auth/callback/[provider]
@@ -332,6 +353,7 @@ npx prisma db pull
 ```
 
 ### Issue 3: Schema Drift
+
 ```bash
 # Reset and resync
 npx prisma migrate reset

@@ -617,3 +617,11 @@ supabase db reset      # Reset local database
 - Clear Next.js cache: `rm -rf .next`
 - Regenerate Prisma client: `npx prisma generate`
 - Check for TypeScript errors: `npm run type-check`
+
+| nextjs app              | authentication lib             |
+| ----------------------- | ------------------------------ |
+| nextjs-supabase-gallery | @auth/supabase-adapter: v1.9.1 |
+| nextjs-dashboard        | next-auth: 5.0                 |
+| fact-swap-poc           | next-auth: 4.24.11             |
+| nextjs-mcp-template     | next-auth: 5.0                 |
+| manus-ai-shop           | @supabase/ssr: 0.5.2           |
