@@ -3,8 +3,6 @@
 import { useState, useEffect } from 'react'
 import VideoCarousel from '@/components/VideoCarousel'
 import VideoThumbnail from '@/components/VideoThumbnail'
-import { Play, Grid3X3, Info } from 'lucide-react'
-import { PRICING_CONFIG } from '@/config/pricing'
 import { useToast } from '@/contexts/ToastContext'
 
 export default function VideoCarouselPage() {

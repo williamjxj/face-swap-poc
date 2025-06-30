@@ -1,0 +1,96 @@
+
+> face-swap-poc@0.3.6 build
+> next build
+
+   ▲ Next.js 15.2.4
+   - Environments: .env.local, .env.production, .env
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully
+   Linting and checking validity of types ...
+
+./src/app/api/auth/register/route.js
+47:12  Warning: '_error' is defined but never used.  unused-imports/no-unused-vars
+
+./src/app/api/paypal/route.js
+6:31  Warning: 'payerID' is assigned a value but never used. Allowed unused vars must match /^_/u.  unused-imports/no-unused-vars
+
+./src/app/api/user/profile/route.js
+43:12  Warning: '_error' is defined but never used.  unused-imports/no-unused-vars
+
+./src/app/gallery/page.js
+135:6  Warning: React Hook useEffect has a missing dependency: 'toast'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+155:6  Warning: React Hook useEffect has a missing dependency: 'toast'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./src/services/auth.js
+61:18  Warning: '_error' is defined but never used.  unused-imports/no-unused-vars
+177:12  Warning: '_error' is defined but never used.  unused-imports/no-unused-vars
+194:16  Warning: '_error' is defined but never used.  unused-imports/no-unused-vars
+
+./src/utils/videoUtils.js
+42:18  Warning: '_err' is defined but never used.  unused-imports/no-unused-vars
+
+info  - Need to disable some ESLint rules? Learn more here: https://nextjs.org/docs/app/api-reference/config/eslint#disabling-rules
+   Collecting page data ...
+Payment model exists in Prisma: true
+   Generating static pages (0/40) ...
+   Generating static pages (10/40) 
+   Generating static pages (20/40) 
+Payment model exists in Prisma: true
+   Generating static pages (30/40) 
+ ✓ Generating static pages (40/40)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                                 Size  First Load JS
+┌ ƒ /                                      224 B         101 kB
+├ ƒ /_not-found                            982 B         102 kB
+├ ƒ /about                                 553 B         101 kB
+├ ƒ /api/auth/[...nextauth]                224 B         101 kB
+├ ƒ /api/auth/register                     224 B         101 kB
+├ ƒ /api/delete-output                     224 B         101 kB
+├ ƒ /api/delete-template                   224 B         101 kB
+├ ƒ /api/download-media                    224 B         101 kB
+├ ƒ /api/download-source                   224 B         101 kB
+├ ƒ /api/download-template                 224 B         101 kB
+├ ƒ /api/face-fusion                       224 B         101 kB
+├ ƒ /api/face-sources                      224 B         101 kB
+├ ƒ /api/face-sources/[id]                 224 B         101 kB
+├ ƒ /api/gallery                           224 B         101 kB
+├ ƒ /api/generated-media                   224 B         101 kB
+├ ƒ /api/generated-media/[id]              224 B         101 kB
+├ ƒ /api/guidelines                        224 B         101 kB
+├ ƒ /api/list-outputs                      224 B         101 kB
+├ ƒ /api/logout                            224 B         101 kB
+├ ƒ /api/payment/success                   224 B         101 kB
+├ ƒ /api/paypal                            224 B         101 kB
+├ ƒ /api/stripe                            224 B         101 kB
+├ ƒ /api/stripe/webhook                    224 B         101 kB
+├ ƒ /api/templates                         224 B         101 kB
+├ ƒ /api/templates/[id]                    224 B         101 kB
+├ ƒ /api/test-db                           224 B         101 kB
+├ ƒ /api/upload-source                     224 B         101 kB
+├ ƒ /api/upload-template                   224 B         101 kB
+├ ƒ /api/user/profile                      224 B         101 kB
+├ ƒ /api/video/optimize                    224 B         101 kB
+├ ƒ /api/videos/delete                     224 B         101 kB
+├ ƒ /auth/signin                         4.39 kB         145 kB
+├ ƒ /contact                               880 B         102 kB
+├ ƒ /face-fusion                         11.2 kB         127 kB
+├ ƒ /faq                                   877 B         102 kB
+├ ƒ /gallery                             10.2 kB         126 kB
+├ ƒ /privacy                               966 B         102 kB
+├ ƒ /profile                               594 B         111 kB
+├ ƒ /terms                                 813 B         102 kB
+├ ƒ /video-carousel                       7.5 kB         108 kB
+└ ƒ /welcome                               921 B         111 kB
++ First Load JS shared by all             101 kB
+  ├ chunks/1684-dd92c4797b14a423.js      45.4 kB
+  ├ chunks/4bd1b696-0eb39584be690edd.js  53.2 kB
+  └ other shared chunks (total)          2.05 kB
+
+
+ƒ Middleware                             53.2 kB
+
+ƒ  (Dynamic)  server-rendered on demand
+

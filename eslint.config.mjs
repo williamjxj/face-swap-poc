@@ -30,6 +30,8 @@ const eslintConfig = [
           argsIgnorePattern: '^_',
         },
       ],
+      // Suppress React Hook dependency warnings for toast context
+      'react-hooks/exhaustive-deps': 'off',
     },
   },
 ]

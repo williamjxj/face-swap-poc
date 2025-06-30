@@ -3,7 +3,7 @@ import prisma from '@/lib/db'
 
 export async function POST(request) {
   try {
-    const { orderID, videoId, payerID } = await request.json()
+    const { orderID, videoId, payerID: _payerID } = await request.json()
 
     if (!orderID || !videoId) {
       return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 })

@@ -3,15 +3,9 @@ import fs from 'fs'
 import path from 'path'
 import FormData from 'form-data'
 import fetch from 'node-fetch'
-import { PrismaClient } from '@prisma/client'
+import { db } from '@/lib/db'
 import { optimizeVideo } from '@/utils/videoUtils'
 import { getValidatedUserId, logSessionDebugInfo } from '@/utils/auth-helper'
-
-// Create a direct Prisma client instance just for this route
-// This avoids triggering any middleware or global Prisma operations
-const prisma = new PrismaClient({
-  log: ['error'], // Minimize logging
-})
 
 // Environment variables for API endpoints (configure in .env.local)
 const CREATE_API = process.env.MODAL_CREATE_API
@@ -199,7 +193,12 @@ export async function POST(request) {
   }
 }
 
-// Create a face fusion task by uploading source and target files
+/**
+ * Create a face fusion task by uploading source and target files to the remote API
+ * @param {Object} sourceFile - Source face image file
+ * @param {Object} targetFile - Target video/image file
+ * @returns {Promise<string>} Output path for the created task
+ */
 async function createFusionTask(sourceFile, targetFile) {
   try {
     console.log('[CREATE] Creating fusion task with source and target files')
@@ -283,10 +282,14 @@ async function createFusionTask(sourceFile, targetFile) {
   }
 }
 
-// saveResultToDatabase function has been replaced by functionality in pollAndProcessResult
-
-// pollForResults function has been replaced by functionality in pollAndProcessResult
-
+/**
+ * Poll for task completion and process the result when ready
+ * @param {string} outputPath - Path to poll for results
+ * @param {Object} sourceFile - Source file information
+ * @param {Object} targetFile - Target file information
+ * @param {Object} request - Request context with user information
+ * @returns {Promise<Object>} Processing result
+ */
 async function pollAndProcessResult(outputPath, sourceFile, targetFile, request = {}) {
   let retryCount = 0
   let progressPercentage = 0
@@ -428,7 +431,7 @@ async function pollAndProcessResult(outputPath, sourceFile, targetFile, request 
           const sourcePathMatch = sourceFile.path.match(/\/sources\/([a-f0-9-]+)/i)
           if (sourcePathMatch && sourcePathMatch[1]) {
             try {
-              const faceSource = await prisma.faceSource.findUnique({
+              const faceSource = await db.faceSource.findUnique({
                 where: { id: sourcePathMatch[1] },
                 select: { id: true },
               })
@@ -446,7 +449,7 @@ async function pollAndProcessResult(outputPath, sourceFile, targetFile, request 
           const targetPathMatch = targetFile.path.match(/\/templates\/([a-f0-9-]+)/i)
           if (targetPathMatch && targetPathMatch[1]) {
             try {
-              const template = await prisma.targetTemplate.findUnique({
+              const template = await db.targetTemplate.findUnique({
                 where: { id: targetPathMatch[1] },
                 select: { id: true },
               })
@@ -543,7 +546,15 @@ async function pollAndProcessResult(outputPath, sourceFile, targetFile, request 
   }
 }
 
-// Process a completed task by downloading and saving the generated media
+/**
+ * Process a completed task by downloading and saving the generated media
+ * @param {string} outputUrl - URL to download the result
+ * @param {Object} sourceFile - Source file information
+ * @param {Object} targetFile - Target file information
+ * @param {string} outputPath - Original output path
+ * @param {string|null} userId - User ID for database association
+ * @returns {Promise<Object>} Processing result with file information
+ */
 async function processCompletedTask(outputUrl, sourceFile, targetFile, outputPath, userId = null) {
   try {
     // Create full URL if needed
@@ -571,7 +582,9 @@ async function processCompletedTask(outputUrl, sourceFile, targetFile, outputPat
 
     // Ensure outputs directory exists
     const outputsDir = path.join(process.cwd(), 'public', 'outputs')
-    await ensureDirectoryExists(outputsDir)
+    if (!fs.existsSync(outputsDir)) {
+      fs.mkdirSync(outputsDir, { recursive: true })
+    }
 
     // Determine file type from content type
     const fileType = contentType?.includes('video') ? 'video' : 'image'
@@ -621,7 +634,7 @@ async function processCompletedTask(outputUrl, sourceFile, targetFile, outputPat
       const sourcePathMatch = sourceFile.path.match(/\/sources\/([a-f0-9-]+)/i)
       if (sourcePathMatch && sourcePathMatch[1]) {
         try {
-          const faceSource = await prisma.faceSource.findUnique({
+          const faceSource = await db.faceSource.findUnique({
             where: { id: sourcePathMatch[1] },
             select: { id: true },
           })
@@ -639,7 +652,7 @@ async function processCompletedTask(outputUrl, sourceFile, targetFile, outputPat
       const targetPathMatch = targetFile.path.match(/\/templates\/([a-f0-9-]+)/i)
       if (targetPathMatch && targetPathMatch[1]) {
         try {
-          const template = await prisma.targetTemplate.findUnique({
+          const template = await db.targetTemplate.findUnique({
             where: { id: targetPathMatch[1] },
             select: { id: true },
           })
@@ -702,7 +715,7 @@ async function createGeneratedMediaRecord({
   const relativeFilePath = `/outputs/${path.basename(finalFilePath)}`
 
   // Create database record
-  const dbRecord = await prisma.generatedMedia.create({
+  const dbRecord = await db.generatedMedia.create({
     data: {
       name: outputFilename,
       type: fileType,
@@ -726,7 +739,11 @@ async function createGeneratedMediaRecord({
   return dbRecord
 }
 
-// Helper function to determine file extension from content-type
+/**
+ * Helper function to determine file extension from HTTP content-type header
+ * @param {string|null} contentType - HTTP content-type header value
+ * @returns {string} File extension with leading dot
+ */
 function getFileExtensionFromContentType(contentType) {
   if (!contentType) return '.mp4' // Default to mp4
 
@@ -734,116 +751,5 @@ function getFileExtensionFromContentType(contentType) {
   if (contentType.includes('image/png')) return '.png'
   if (contentType.includes('image/jpeg')) return '.jpg'
 
-  // Extract extension from content-disposition if available
-  // For simplicity, we're using the default extension based on content-type
-  return '.mp4'
+  return '.mp4' // Default fallback
 }
-
-/**
- * Helper function to determine MIME type from file extension
- * @private - Internal utility, not used currently but kept for potential future use
- */
-function _getMimeTypeFromExtension(extension) {
-  const ext = extension.toLowerCase()
-
-  // Map common extensions to MIME types
-  switch (ext) {
-    case '.jpg':
-    case '.jpeg':
-      return 'image/jpeg'
-    case '.png':
-      return 'image/png'
-    case '.gif':
-      return 'image/gif'
-    case '.webp':
-      return 'image/webp'
-    case '.mp4':
-      return 'video/mp4'
-    case '.mov':
-      return 'video/quicktime'
-    case '.webm':
-      return 'video/webm'
-    default:
-      // If we can't determine the MIME type, make a guess based on the extension
-      if (['.jpg', '.jpeg', '.png', '.gif', '.webp'].includes(ext)) {
-        return 'image/jpeg' // Default to JPEG for images
-      }
-      return 'video/mp4' // Default to MP4 for everything else
-  }
-}
-
-// Helper function to check if content is a binary media file by looking for common signatures
-// @private - Internal utility, not currently used but kept for future reference
-function _isBinaryMediaFile(content) {
-  if (!content) return false
-
-  try {
-    // Handle different content types
-    let str
-    if (Buffer.isBuffer(content)) {
-      str = content.toString('binary', 0, 200)
-    } else if (content instanceof ArrayBuffer || content instanceof Uint8Array) {
-      str = String.fromCharCode.apply(null, new Uint8Array(content).slice(0, 200))
-    } else if (typeof content === 'string') {
-      str = content.substring(0, 200)
-    } else {
-      str = String(content).substring(0, 200)
-    }
-
-    // MP4/MOV file signatures (ISO media format)
-    if (
-      str.includes('ftyp') ||
-      str.includes('mdat') ||
-      str.includes('moov') ||
-      str.includes('pnot') ||
-      str.includes('wide')
-    ) {
-      return true
-    }
-
-    // JPEG signatures
-    if (str.includes('\xFF\xD8\xFF')) {
-      return true
-    }
-
-    // PNG signature
-    if (str.includes('PNG')) {
-      return true
-    }
-
-    // WebM/MKV signatures
-    if (str.includes('\x1A\x45\xDF\xA3') || str.includes('webm') || str.includes('matroska')) {
-      return true
-    }
-
-    // MP3 signatures
-    if (
-      str.includes('ID3') ||
-      str.includes('\xFF\xFB') ||
-      str.includes('\xFF\xF3') ||
-      str.includes('\xFF\xF2') ||
-      str.includes('\xFF\xFA')
-    ) {
-      return true
-    }
-
-    // Look for non-printable characters which suggest binary content
-    const nonPrintableCount = Array.from(str).filter(char => {
-      const code = char.charCodeAt(0)
-      return (code < 32 || code > 126) && code !== 10 && code !== 13 && code !== 9
-    }).length
-
-    // If more than 20% of the first 200 chars are non-printable, likely binary
-    if (nonPrintableCount > str.length * 0.2) {
-      return true
-    }
-
-    return false
-  } catch (error) {
-    console.error('Error checking for binary media file:', error)
-    return false
-  }
-}
-
-// downloadAndSaveGeneratedMedia function has been replaced by functionality in pollAndProcessResult
-// and processCompletedTask

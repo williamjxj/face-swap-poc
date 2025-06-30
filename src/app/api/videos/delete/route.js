@@ -1,14 +1,9 @@
 import { NextResponse } from 'next/server'
-import { PrismaClient } from '@prisma/client'
+import { db } from '@/lib/db'
 import fs from 'fs'
 import path from 'path'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/services/auth'
-
-// Create a direct Prisma client instance for this route
-const prisma = new PrismaClient({
-  log: ['error'],
-})
 
 export async function DELETE(request) {
   try {
@@ -36,7 +31,7 @@ export async function DELETE(request) {
     console.log(`[DELETE] Attempting to delete video with ID: ${id}`)
 
     // 1. Find the video in the database
-    const video = await prisma.generatedMedia.findUnique({
+    const video = await db.generatedMedia.findUnique({
       where: { id },
     })
 
@@ -64,7 +59,7 @@ export async function DELETE(request) {
     }
 
     // 3. Delete the record from the database
-    await prisma.generatedMedia.delete({
+    await db.generatedMedia.delete({
       where: { id },
     })
 

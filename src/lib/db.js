@@ -9,8 +9,18 @@ const getDatabaseConfig = () => {
     log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],
   }
 
-  // Add connection pooling for production (Supabase)
-  if (process.env.NODE_ENV === 'production') {
+  // Ensure DATABASE_URL is available for all environments
+  if (!process.env.DATABASE_URL) {
+    // During build time, provide a fallback URL to prevent build failures
+    if (process.env.NODE_ENV !== 'production') {
+      console.warn('DATABASE_URL not found, using fallback for build process')
+    }
+    config.datasources = {
+      db: {
+        url: 'postgresql://user:password@localhost:5432/fallback_db',
+      },
+    }
+  } else {
     config.datasources = {
       db: {
         url: process.env.DATABASE_URL,

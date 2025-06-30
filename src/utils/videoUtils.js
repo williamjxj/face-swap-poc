@@ -39,8 +39,11 @@ async function runFfmpeg(args, options = {}) {
             const currentTime = hours * 3600 + minutes * 60 + seconds
             onProgress(currentTime)
           }
-        } catch (_err) {
-          // Ignore progress parsing errors
+        } catch (err) {
+          // Ignore progress parsing errors (can be noisy)
+          if (process.env.NODE_ENV === 'development') {
+            console.debug('Progress parsing error:', err.message)
+          }
         }
       }
     })
