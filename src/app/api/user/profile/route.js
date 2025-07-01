@@ -40,8 +40,8 @@ export async function GET(request) {
     }
 
     return NextResponse.json(user)
-  } catch (error) {
-    console.error('Profile fetch error:', error)
+  } catch (_error) {
+    console.error('Profile fetch error:', _error)
     return NextResponse.json({ error: 'Failed to fetch user profile' }, { status: 500 })
   }
 }

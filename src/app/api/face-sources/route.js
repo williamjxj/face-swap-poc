@@ -17,23 +17,16 @@ const sanitizeBigInt = data => {
 // GET all face sources
 export async function GET() {
   try {
-    // Get current user ID
-    const userId = await getValidatedUserId()
-
+    // For demo version: show all active face sources to all users
     const sources = await db.faceSource.findMany({
       where: {
         isActive: true,
-        ...(userId ? { authorId: userId } : {}), // Only show user's own sources if authenticated
+        // Demo mode: show all sources regardless of user authentication
       },
       orderBy: { createdAt: 'desc' },
     })
 
-    console.log(
-      '[FACE-SOURCES] Filtering sources for user:',
-      userId || 'anonymous',
-      'Found:',
-      sources.length
-    )
+    console.log('[FACE-SOURCES] Demo mode: showing all sources. Found:', sources.length)
 
     const serializedSources = serializeBigInt(sources)
     return NextResponse.json({ files: serializedSources })

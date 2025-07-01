@@ -25,52 +25,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   },
 })
 
-// Storage helpers
-export const uploadFile = async (bucket, path, file, options = {}) => {
-  try {
-    const { data, error } = await supabase.storage.from(bucket).upload(path, file, {
-      cacheControl: '3600',
-      upsert: false,
-      ...options,
-    })
-
-    if (error) throw error
-    return data
-  } catch (error) {
-    console.error('Upload error:', error)
-    throw error
-  }
-}
-
-export const getPublicUrl = (bucket, path) => {
-  const { data } = supabase.storage.from(bucket).getPublicUrl(path)
-
-  return data.publicUrl
-}
-
-export const downloadFile = async (bucket, path) => {
-  try {
-    const { data, error } = await supabase.storage.from(bucket).download(path)
-
-    if (error) throw error
-    return data
-  } catch (error) {
-    console.error('Download error:', error)
-    throw error
-  }
-}
-
-export const deleteFile = async (bucket, path) => {
-  try {
-    const { data, error } = await supabase.storage.from(bucket).remove([path])
-
-    if (error) throw error
-    return data
-  } catch (error) {
-    console.error('Delete error:', error)
-    throw error
-  }
-}
+// Note: Storage helper functions are available in src/utils/storage-helper.js
 
 // Database helpers
 export const getCurrentUser = async () => {

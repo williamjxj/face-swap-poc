@@ -17,7 +17,8 @@ export const authOptions = {
       tenantId: process.env.AZURE_AD_TENANT_ID,
     }),
     CredentialsProvider({
-      name: 'Email',
+      id: 'credentials',
+      name: 'credentials',
       credentials: {
         email: {
           label: 'Email',
@@ -58,8 +59,8 @@ export const authOptions = {
             email: user.account,
             name: user.name || user.account.split('@')[0],
           }
-        } catch (error) {
-          console.error('Credentials auth error:', error)
+        } catch (_error) {
+          console.error('Credentials auth error:', _error)
           return null
         }
       },
@@ -94,7 +95,6 @@ export const authOptions = {
         return token
       } catch (error) {
         console.error('JWT callback error:', error)
-        // Return a fresh token on error
         return {}
       }
     },
@@ -175,8 +175,8 @@ export const getCurrentSession = async () => {
   try {
     const session = await getSession()
     return session
-  } catch (error) {
-    console.error('Get session error:', error)
+  } catch (_error) {
+    console.error('Get session error:', _error)
     return null
   }
 }
@@ -193,8 +193,8 @@ export const logout = async () => {
           where: { account: session.user.email },
           data: { lastLogout: new Date() },
         })
-      } catch (error) {
-        console.error('Logout update error:', error)
+      } catch (_error) {
+        console.error('Logout update error:', _error)
         // Continue with logout even if the update fails
       }
     }
@@ -225,14 +225,21 @@ export const loginWithEmail = async (email, password) => {
       redirect: false,
     })
 
-    if (result.error) {
+    if (result?.error) {
       return {
         success: false,
-        error: 'Invalid email or password 2',
+        error: 'Invalid email or password',
       }
     }
 
-    return { success: true }
+    if (result?.ok) {
+      return { success: true }
+    }
+
+    return {
+      success: false,
+      error: 'Login failed',
+    }
   } catch (error) {
     return {
       success: false,
