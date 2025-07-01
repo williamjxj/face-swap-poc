@@ -28,6 +28,15 @@ const getDatabaseConfig = () => {
     }
   }
 
+  // Add connection pooling configuration for production
+  if (process.env.NODE_ENV === 'production') {
+    config.connectionLimit = 1
+    config.transactionOptions = {
+      maxWait: 5000, // 5 seconds
+      timeout: 10000, // 10 seconds
+    }
+  }
+
   return config
 }
 
