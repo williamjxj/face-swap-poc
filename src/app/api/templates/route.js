@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server'
 import db from '@/lib/db'
 import { serializeBigInt } from '@/utils/helper'
-import { getValidatedUserId } from '@/utils/auth-helper'
 
 // GET all templates
 export async function GET() {
