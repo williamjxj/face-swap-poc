@@ -1,7 +1,7 @@
 import { PrismaClient } from '@prisma/client'
 
 // Create a global object for Prisma to prevent multiple instances
-const globalForPrisma = global || globalThis
+const globalForPrisma = globalThis
 
 // Database configuration based on environment
 const getDatabaseConfig = () => {
@@ -45,6 +45,11 @@ const getDatabaseConfig = () => {
   // Configure for serverless environments
   if (process.env.NODE_ENV === 'production') {
     config.errorFormat = 'minimal'
+    // Optimize for serverless cold starts
+    config.transactionOptions = {
+      maxWait: 5000, // 5 seconds
+      timeout: 10000, // 10 seconds
+    }
   }
 
   return config
