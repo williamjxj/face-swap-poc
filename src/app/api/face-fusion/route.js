@@ -6,6 +6,7 @@ import fetch from 'node-fetch'
 import { db } from '@/lib/db'
 import { optimizeVideo } from '@/utils/videoUtils'
 import { getValidatedUserId, logSessionDebugInfo } from '@/utils/auth-helper'
+import { uploadFile, getStorageUrl } from '@/utils/storage-helper'
 
 // Environment variables for API endpoints (configure in .env.local)
 const CREATE_API = process.env.MODAL_CREATE_API
@@ -58,30 +59,44 @@ export async function POST(request) {
       const { source, target } = await request.json()
       console.log('[API] Received JSON request with paths:', { source, target })
 
-      // Read files from public directory
-      const publicDir = path.join(process.cwd(), 'public')
+      // Read files from Supabase Storage
+      // Check if source is a Supabase Storage path (bucket/path format)
+      let sourceBuffer, targetBuffer
 
-      // Normalize paths
-      const sourcePathWithoutLeadingSlash = source.startsWith('/') ? source.substring(1) : source
-      const targetPathWithoutLeadingSlash = target.startsWith('/') ? target.substring(1) : target
+      try {
+        // Get source file from Supabase Storage
+        const sourceUrl = await getStorageUrl(source)
+        if (!sourceUrl) {
+          throw new Error(`Source file not found in storage: ${source}`)
+        }
 
-      const sourcePath = path.join(publicDir, sourcePathWithoutLeadingSlash)
-      const targetPath = path.join(publicDir, targetPathWithoutLeadingSlash)
+        const sourceResponse = await fetch(sourceUrl)
+        if (!sourceResponse.ok) {
+          throw new Error(`Failed to fetch source file: ${sourceResponse.status}`)
+        }
+        sourceBuffer = Buffer.from(await sourceResponse.arrayBuffer())
 
-      // Validate file existence
-      if (!fs.existsSync(sourcePath) || !fs.existsSync(targetPath)) {
+        // Get target file from Supabase Storage
+        const targetUrl = await getStorageUrl(target)
+        if (!targetUrl) {
+          throw new Error(`Target file not found in storage: ${target}`)
+        }
+
+        const targetResponse = await fetch(targetUrl)
+        if (!targetResponse.ok) {
+          throw new Error(`Failed to fetch target file: ${targetResponse.status}`)
+        }
+        targetBuffer = Buffer.from(await targetResponse.arrayBuffer())
+      } catch (error) {
         return NextResponse.json(
           {
             status: 'error',
             errorType: ERROR_TYPES.VALIDATION,
-            message: 'Source or target file not found',
+            message: 'Source or target file not found in storage',
             details: {
-              sourcePath: sourcePath,
-              targetPath: targetPath,
-              exists: {
-                source: fs.existsSync(sourcePath),
-                target: fs.existsSync(targetPath),
-              },
+              source: source,
+              target: target,
+              error: error.message,
             },
           },
           { status: 404 }
@@ -90,19 +105,17 @@ export async function POST(request) {
 
       // Create file-like objects
       sourceFile = {
-        name: path.basename(sourcePathWithoutLeadingSlash),
-        type: sourcePathWithoutLeadingSlash.endsWith('.png') ? 'image/png' : 'image/jpeg',
-        buffer: fs.readFileSync(sourcePath),
-        path: sourcePath,
+        name: path.basename(source),
+        type: source.endsWith('.png') ? 'image/png' : 'image/jpeg',
+        buffer: sourceBuffer,
+        path: source,
       }
 
       targetFile = {
-        name: path.basename(targetPathWithoutLeadingSlash),
-        type: targetPathWithoutLeadingSlash.match(/\.(mp4|webm|mov)$/i)
-          ? 'video/mp4'
-          : 'image/jpeg',
-        buffer: fs.readFileSync(targetPath),
-        path: targetPath,
+        name: path.basename(target),
+        type: target.match(/\.(mp4|webm|mov)$/i) ? 'video/mp4' : 'image/jpeg',
+        buffer: targetBuffer,
+        path: target,
       }
     } else if (contentType?.includes('multipart/form-data')) {
       // Handle multipart form data
@@ -396,28 +409,23 @@ async function pollAndProcessResult(outputPath, sourceFile, targetFile, request 
         const fileExtension = getFileExtensionFromContentType(contentType)
         const outputFilename = `${path.parse(sourceFile.name).name}_${Date.now()}${fileExtension}`
 
-        // Ensure outputs directory exists
-        const outputsDir = path.join(process.cwd(), 'public', 'outputs')
-        if (!fs.existsSync(outputsDir)) {
-          fs.mkdirSync(outputsDir, { recursive: true })
-        }
-
-        // File path for saving
-        const filePath = path.join(outputsDir, outputFilename)
-
         // Get file data
         const fileData = await response.arrayBuffer()
         const fileBuffer = Buffer.from(fileData)
         const fileSize = fileBuffer.length
 
-        // Write file to disk
-        fs.writeFileSync(filePath, fileBuffer)
-        console.log(`[POLL] File saved successfully at: ${filePath}`)
+        // Upload to Supabase Storage
+        const storagePath = `generated-outputs/${outputFilename}`
+        const uploadResult = await uploadFile(fileBuffer, storagePath, {
+          contentType: contentType || 'video/mp4',
+          fileName: outputFilename,
+        })
 
-        // Verify file exists
-        if (!fs.existsSync(filePath)) {
-          throw new Error(`Failed to save file to ${filePath}`)
+        if (!uploadResult.success) {
+          throw new Error(`Failed to upload file to storage: ${uploadResult.error}`)
         }
+
+        console.log(`[STORAGE] File uploaded successfully to: ${storagePath}`)
 
         // Extract file extension from target file
         const fileType = targetFile.name.match(/\.(mp4|webm|mov)$/i) ? 'video' : 'image'
@@ -463,28 +471,55 @@ async function pollAndProcessResult(outputPath, sourceFile, targetFile, request 
         }
 
         // For videos, apply optimization to improve loading performance
-        let finalFilePath = filePath
+        let finalStoragePath = storagePath
         let finalFileSize = fileSize
 
         if (fileType === 'video') {
           // Step 1: Optimize video if enabled
           if (VIDEO_OPTIMIZATION_ENABLED) {
             try {
-              console.log(`[OPTIMIZATION] Starting video optimization for: ${filePath}`)
+              console.log(`[OPTIMIZATION] Starting video optimization for: ${outputFilename}`)
 
-              // Create optimized version in outputs/optimized folder
-              const optimizedResult = await optimizeVideo(filePath, {
+              // Create a temporary file for optimization
+              const tempDir = path.join(process.cwd(), 'tmp')
+              if (!fs.existsSync(tempDir)) {
+                fs.mkdirSync(tempDir, { recursive: true })
+              }
+
+              const tempFilePath = path.join(tempDir, outputFilename)
+              fs.writeFileSync(tempFilePath, fileBuffer)
+
+              // Create optimized version in temp folder
+              const optimizedTempPath = path.join(tempDir, `opt_${outputFilename}`)
+              const optimizedResult = await optimizeVideo(tempFilePath, {
                 ...VIDEO_OPTIMIZATION_CONFIG,
-                outputPath: path.join(outputsDir, 'optimized', outputFilename),
+                outputPath: optimizedTempPath,
               })
 
-              console.log(
-                `[OPTIMIZATION] Video optimized successfully: ${optimizedResult.outputPath}`
+              // Upload optimized version to storage
+              const optimizedBuffer = fs.readFileSync(optimizedResult.outputPath)
+              const optimizedStoragePath = `generated-outputs/opt_${outputFilename}`
+
+              const optimizedUploadResult = await uploadFile(
+                optimizedBuffer,
+                optimizedStoragePath,
+                {
+                  contentType: 'video/mp4',
+                  fileName: `opt_${outputFilename}`,
+                }
               )
 
-              // Update to use the optimized version
-              finalFilePath = optimizedResult.outputPath
-              finalFileSize = fs.statSync(finalFilePath).size
+              if (optimizedUploadResult.success) {
+                console.log(
+                  `[OPTIMIZATION] Optimized video uploaded successfully: ${optimizedStoragePath}`
+                )
+                finalStoragePath = optimizedStoragePath
+                finalFileSize = optimizedBuffer.length
+              }
+
+              // Clean up temp files
+              fs.unlinkSync(tempFilePath)
+              fs.unlinkSync(optimizedResult.outputPath)
             } catch (optError) {
               console.error(`[OPTIMIZATION ERROR] Failed to optimize video: ${optError.message}`)
             }
@@ -496,7 +531,7 @@ async function pollAndProcessResult(outputPath, sourceFile, targetFile, request 
           outputFilename,
           fileType,
           outputPath,
-          finalFilePath,
+          finalStoragePath,
           finalFileSize,
           contentType: null, // No content type in this case
           faceSourceId,
@@ -508,7 +543,7 @@ async function pollAndProcessResult(outputPath, sourceFile, targetFile, request 
         return {
           status: 'success',
           message: 'Face fusion completed successfully',
-          filePath: `/outputs/${path.basename(finalFilePath)}`,
+          filePath: finalStoragePath,
           fileSize: Number(fileSize),
           id: dbRecord.id,
         }
@@ -580,44 +615,73 @@ async function processCompletedTask(outputUrl, sourceFile, targetFile, outputPat
     // Generate filename based on source file
     const outputFilename = `${path.parse(sourceFile.name).name}_${Date.now()}${fileExtension}`
 
-    // Ensure outputs directory exists
-    const outputsDir = path.join(process.cwd(), 'public', 'outputs')
-    if (!fs.existsSync(outputsDir)) {
-      fs.mkdirSync(outputsDir, { recursive: true })
-    }
-
     // Determine file type from content type
     const fileType = contentType?.includes('video') ? 'video' : 'image'
 
-    // Define file path
-    const filePath = path.join(outputsDir, outputFilename)
-
-    // Write the file to disk
+    // Get the file data
     const fileBuffer = await response.arrayBuffer()
-    fs.writeFileSync(filePath, Buffer.from(fileBuffer))
-    const fileSize = fs.statSync(filePath).size
+    const buffer = Buffer.from(fileBuffer)
+    const fileSize = buffer.length
+
+    // Upload to Supabase Storage
+    const storagePath = `generated-outputs/${outputFilename}`
+    const uploadResult = await uploadFile(buffer, storagePath, {
+      contentType: contentType || (fileType === 'video' ? 'video/mp4' : 'image/jpeg'),
+      fileName: outputFilename,
+    })
+
+    if (!uploadResult.success) {
+      throw new Error(`Failed to upload file to storage: ${uploadResult.error}`)
+    }
+
+    console.log(`[STORAGE] File uploaded successfully to: ${storagePath}`)
 
     // Process video-specific tasks (optimization, thumbnail generation)
-    let finalFilePath = filePath
+    let finalStoragePath = storagePath
     let finalFileSize = fileSize
 
     if (fileType === 'video') {
       // Step 1: Optimize video if enabled
       if (VIDEO_OPTIMIZATION_ENABLED) {
         try {
-          console.log(`[OPTIMIZATION] Starting video optimization for: ${filePath}`)
+          console.log(`[OPTIMIZATION] Starting video optimization for: ${outputFilename}`)
 
-          // Create optimized version in outputs/optimized folder
-          const optimizedResult = await optimizeVideo(filePath, {
+          // Create a temporary file for optimization
+          const tempDir = path.join(process.cwd(), 'tmp')
+          if (!fs.existsSync(tempDir)) {
+            fs.mkdirSync(tempDir, { recursive: true })
+          }
+
+          const tempFilePath = path.join(tempDir, outputFilename)
+          fs.writeFileSync(tempFilePath, buffer)
+
+          // Create optimized version in temp folder
+          const optimizedTempPath = path.join(tempDir, `opt_${outputFilename}`)
+          const optimizedResult = await optimizeVideo(tempFilePath, {
             ...VIDEO_OPTIMIZATION_CONFIG,
-            outputPath: path.join(outputsDir, 'optimized', outputFilename),
+            outputPath: optimizedTempPath,
           })
 
-          console.log(`[OPTIMIZATION] Video optimized successfully: ${optimizedResult.outputPath}`)
+          // Upload optimized version to storage
+          const optimizedBuffer = fs.readFileSync(optimizedResult.outputPath)
+          const optimizedStoragePath = `generated-outputs/opt_${outputFilename}`
 
-          // Update to use the optimized version
-          finalFilePath = optimizedResult.outputPath
-          finalFileSize = fs.statSync(finalFilePath).size
+          const optimizedUploadResult = await uploadFile(optimizedBuffer, optimizedStoragePath, {
+            contentType: 'video/mp4',
+            fileName: `opt_${outputFilename}`,
+          })
+
+          if (optimizedUploadResult.success) {
+            console.log(
+              `[OPTIMIZATION] Optimized video uploaded successfully: ${optimizedStoragePath}`
+            )
+            finalStoragePath = optimizedStoragePath
+            finalFileSize = optimizedBuffer.length
+          }
+
+          // Clean up temp files
+          fs.unlinkSync(tempFilePath)
+          fs.unlinkSync(optimizedResult.outputPath)
         } catch (optError) {
           console.error(`[OPTIMIZATION ERROR] Failed to optimize video: ${optError.message}`)
           // Continue with the original video if optimization fails
@@ -670,7 +734,7 @@ async function processCompletedTask(outputUrl, sourceFile, targetFile, outputPat
       outputFilename,
       fileType,
       outputPath,
-      finalFilePath,
+      finalStoragePath,
       finalFileSize,
       contentType,
       faceSourceId,
@@ -681,7 +745,7 @@ async function processCompletedTask(outputUrl, sourceFile, targetFile, outputPat
     // Return success response
     return {
       status: 'success',
-      filePath: `/outputs/${path.basename(finalFilePath)}`,
+      filePath: finalStoragePath,
       name: outputFilename,
       type: fileType,
       id: dbRecord.id,
@@ -704,23 +768,20 @@ async function createGeneratedMediaRecord({
   outputFilename,
   fileType,
   outputPath,
-  finalFilePath,
+  finalStoragePath,
   finalFileSize,
   contentType,
   faceSourceId,
   templateId,
   userId,
 }) {
-  // Prepare paths for database storage
-  const relativeFilePath = `/outputs/${path.basename(finalFilePath)}`
-
   // Create database record
   const dbRecord = await db.generatedMedia.create({
     data: {
       name: outputFilename,
       type: fileType,
       tempPath: outputPath,
-      filePath: relativeFilePath,
+      filePath: finalStoragePath,
       fileSize: BigInt(finalFileSize),
       mimeType: contentType || (fileType === 'video' ? 'video/mp4' : 'image/jpeg'),
       isPaid: false,

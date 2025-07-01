@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
-import fs from 'fs'
-import path from 'path'
+import prisma from '@/lib/db'
+import { deleteFile } from '@/utils/storage-helper'
 
 export async function DELETE(request) {
   try {
@@ -10,18 +10,26 @@ export async function DELETE(request) {
       return NextResponse.json({ error: 'Filename is required' }, { status: 400 })
     }
 
-    const filePath = path.join(process.cwd(), 'public', 'outputs', filename)
+    // Find the generated media record
+    const media = await prisma.generatedMedia.findFirst({
+      where: { name: filename },
+    })
 
-    try {
-      // Check if file exists before deleting
-      if (fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath)
-      } else {
-        console.warn(`Warning: File not found for deletion: ${filePath}`)
+    if (media && media.filePath) {
+      try {
+        // Delete from Supabase Storage
+        await deleteFile(media.filePath)
+      } catch (error) {
+        console.warn('Warning: Could not delete output file from storage:', error)
+        // Continue with operation even if file deletion fails
       }
-    } catch (error) {
-      console.warn('Warning: Could not delete output file:', error)
-      // Continue with operation even if file deletion fails
+
+      // Delete the database record
+      await prisma.generatedMedia.delete({
+        where: { id: media.id },
+      })
+    } else {
+      console.warn(`Warning: Media record not found for filename: ${filename}`)
     }
 
     return NextResponse.json({ success: true })

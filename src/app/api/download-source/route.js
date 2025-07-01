@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server'
-import prisma from '@/lib/db'
-import fs from 'fs'
-import path from 'path'
+import db from '@/lib/db'
+import { getStorageUrl } from '@/utils/storage-helper'
 
 export async function GET(request) {
   try {
@@ -13,7 +12,7 @@ export async function GET(request) {
     }
 
     // Check if the face source exists
-    const faceSource = await prisma.faceSource.findFirst({
+    const faceSource = await db.faceSource.findFirst({
       where: {
         filename: filename,
         isActive: true,
@@ -24,21 +23,15 @@ export async function GET(request) {
       return NextResponse.json({ error: 'Face source not found' }, { status: 404 })
     }
 
-    // Construct file path - face sources are stored in public/sources
-    const filePath = path.join(process.cwd(), 'public', 'sources', faceSource.filename)
+    // Get the public URL from Supabase Storage
+    const publicUrl = getStorageUrl(faceSource.filePath)
 
-    if (!fs.existsSync(filePath)) {
-      return NextResponse.json({ error: 'File not found' }, { status: 404 })
+    if (!publicUrl) {
+      return NextResponse.json({ error: 'File URL not available' }, { status: 404 })
     }
 
-    const fileBuffer = fs.readFileSync(filePath)
-
-    return new NextResponse(fileBuffer, {
-      headers: {
-        'Content-Type': faceSource.mimeType || 'image/jpeg',
-        'Content-Disposition': `attachment; filename="${faceSource.filename}"`,
-      },
-    })
+    // Redirect to the Supabase Storage public URL
+    return NextResponse.redirect(publicUrl)
   } catch (error) {
     console.error('Error downloading face source:', error)
     return NextResponse.json({ error: 'Failed to download face source' }, { status: 500 })

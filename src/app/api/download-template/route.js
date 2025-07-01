@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server'
 import prisma from '@/lib/db'
-import fs from 'fs'
-import path from 'path'
+import { getStorageUrl } from '@/utils/storage-helper'
 
 export async function GET(request) {
   try {
@@ -24,26 +23,15 @@ export async function GET(request) {
       return NextResponse.json({ error: 'Template not found' }, { status: 404 })
     }
 
-    // Construct file path - templates are stored in public/templates
-    const filePath = path.join(
-      process.cwd(),
-      'public',
-      'templates',
-      template.filename || template.name
-    )
+    // Get Supabase Storage public URL
+    const publicUrl = await getStorageUrl(template.filePath)
 
-    if (!fs.existsSync(filePath)) {
-      return NextResponse.json({ error: 'File not found' }, { status: 404 })
+    if (!publicUrl) {
+      return NextResponse.json({ error: 'File not found in storage' }, { status: 404 })
     }
 
-    const fileBuffer = fs.readFileSync(filePath)
-
-    return new NextResponse(fileBuffer, {
-      headers: {
-        'Content-Type': template.mimeType || 'video/mp4',
-        'Content-Disposition': `attachment; filename="${template.filename || template.name}"`,
-      },
-    })
+    // Redirect to Supabase Storage public URL
+    return NextResponse.redirect(publicUrl)
   } catch (error) {
     console.error('Error downloading template:', error)
     return NextResponse.json({ error: 'Failed to download template' }, { status: 500 })

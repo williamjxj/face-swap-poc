@@ -1,9 +1,7 @@
 import { NextResponse } from 'next/server'
-import { writeFile, mkdir } from 'fs/promises'
-import path from 'path'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/services/auth'
 import db from '@/lib/db'
+import { getValidatedUserId, logSessionDebugInfo } from '@/utils/auth-helper'
+import { uploadFile, deleteFile, STORAGE_BUCKETS } from '@/utils/storage-helper'
 import sharp from 'sharp'
 
 export async function POST(request) {
@@ -37,27 +35,19 @@ export async function POST(request) {
     const timestamp = Date.now()
     const filename = `${timestamp}_${file.name}`
 
-    // Save to public/sources directory
-    const publicDir = path.join(process.cwd(), 'public', 'sources')
+    // Upload to Supabase Storage
+    const filePath = `${STORAGE_BUCKETS.FACE_SOURCES}/${filename}`
 
-    // Ensure directory exists
-    try {
-      await mkdir(publicDir, { recursive: true })
-    } catch (error) {
-      console.error('Error creating directory:', error)
-      return NextResponse.json({ error: 'Failed to create required directories' }, { status: 500 })
+    const uploadResult = await uploadFile(buffer, filePath, {
+      contentType: file.type,
+      cacheControl: '3600',
+    })
+
+    if (!uploadResult.success) {
+      return NextResponse.json({ error: `Upload failed: ${uploadResult.error}` }, { status: 500 })
     }
 
-    const filePath = path.join(publicDir, filename)
-
-    // Write file to disk
-    try {
-      await writeFile(filePath, buffer)
-      console.log('File saved successfully:', filePath)
-    } catch (error) {
-      console.error('Error saving file:', error)
-      return NextResponse.json({ error: 'Failed to save uploaded file' }, { status: 500 })
-    }
+    console.log('File uploaded successfully to:', filePath)
 
     // Get image dimensions using sharp
     let width = 0
@@ -72,29 +62,11 @@ export async function POST(request) {
       // Continue with default dimensions
     }
 
-    // Get current user session
-    const session = await getServerSession(authOptions)
-    let authorId = null
-    if (session?.user?.id) {
-      // Verify that the user exists in the database before using the ID
-      try {
-        const userExists = await db.user.findUnique({
-          where: { id: session.user.id },
-          select: { id: true },
-        })
+    // Log session debug info to help troubleshoot
+    await logSessionDebugInfo()
 
-        if (userExists) {
-          authorId = session.user.id
-          console.log('Associating face source with user:', session.user.email)
-        } else {
-          console.log('User ID from session not found in database:', session.user.id)
-          console.log('Will create face source without author ID')
-        }
-      } catch (userCheckError) {
-        console.error('Error checking user existence:', userCheckError)
-        console.log('Will create face source without author ID')
-      }
-    }
+    // Get validated user ID from helper function
+    const authorId = await getValidatedUserId()
 
     // Create database record
     if (!db) {
@@ -106,7 +78,7 @@ export async function POST(request) {
       filename: filename,
       width: width,
       height: height,
-      filePath: `/sources/${filename}`,
+      filePath: filePath, // Store Supabase Storage path (e.g., "face-sources/123456_image.png")
       fileSize: BigInt(file.size),
       mimeType: file.type,
       authorId: authorId,
@@ -137,16 +109,20 @@ export async function POST(request) {
       console.error('Error creating database record:', error.message)
       console.error('Error stack:', error.stack)
 
-      // Return meaningful error but still indicate file was saved
+      // If database creation fails, try to clean up the uploaded file
+      try {
+        await deleteFile(filePath)
+        console.log('Cleaned up uploaded file after database error')
+      } catch (cleanupError) {
+        console.error('Failed to cleanup uploaded file:', cleanupError)
+      }
+
       return NextResponse.json(
         {
-          success: true,
-          filename: filename,
-          filePath: `/sources/${filename}`,
-          error: `File was saved but database record could not be created: ${error.message}`,
+          error: `Failed to create database record: ${error.message}`,
         },
-        { status: 207 }
-      ) // 207 Multi-Status indicates partial success
+        { status: 500 }
+      )
     }
   } catch (error) {
     console.error('Error uploading face source:', error)
@@ -211,18 +187,19 @@ export async function DELETE(request) {
       return NextResponse.json({ error: 'Face source not found' }, { status: 404 })
     }
 
-    // Delete file
+    // Delete file from Supabase Storage
     if (faceSource.filePath) {
-      const publicDir = path.join(process.cwd(), 'public')
-      const filePath = path.join(publicDir, faceSource.filePath.slice(1))
-
       try {
-        const fs = require('fs').promises
-        await fs.unlink(filePath)
-        console.log(`Successfully deleted file: ${filePath}`)
+        const deleteResult = await deleteFile(faceSource.filePath)
+        if (deleteResult.success) {
+          console.log(`Successfully deleted file from storage: ${faceSource.filePath}`)
+        } else {
+          console.error('Error deleting file from storage:', deleteResult.error)
+          // Continue with database deletion even if file removal fails
+        }
       } catch (error) {
-        console.error('Error deleting file:', error)
-        // Continue with deletion even if file removal fails
+        console.error('Error deleting file from storage:', error)
+        // Continue with database deletion even if file removal fails
       }
     }
 
