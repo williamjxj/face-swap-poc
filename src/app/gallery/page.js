@@ -133,7 +133,7 @@ export default function GalleryPage() {
     }
 
     fetchData()
-  }, [contentType])
+  }, [contentType, toast])
 
   // Handle payment success from URL params
   useEffect(() => {
@@ -153,7 +153,7 @@ export default function GalleryPage() {
       const newUrl = window.location.pathname
       window.history.replaceState({}, '', newUrl)
     }
-  }, [])
+  }, [toast])
 
   // Helper function to determine media type more reliably
   const getMediaType = media => {

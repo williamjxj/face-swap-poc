@@ -59,8 +59,8 @@ export const authOptions = {
             email: user.account,
             name: user.name || user.account.split('@')[0],
           }
-        } catch (_error) {
-          console.error('Credentials auth error:', _error)
+        } catch (error) {
+          console.error('Credentials auth error:', error)
           return null
         }
       },
@@ -175,8 +175,8 @@ export const getCurrentSession = async () => {
   try {
     const session = await getSession()
     return session
-  } catch (_error) {
-    console.error('Get session error:', _error)
+  } catch (error) {
+    console.error('Get session error:', error)
     return null
   }
 }
@@ -193,8 +193,8 @@ export const logout = async () => {
           where: { account: session.user.email },
           data: { lastLogout: new Date() },
         })
-      } catch (_error) {
-        console.error('Logout update error:', _error)
+      } catch (error) {
+        console.error('Logout update error:', error)
         // Continue with logout even if the update fails
       }
     }
