@@ -10,21 +10,18 @@ export async function GET() {
       throw new Error('Database client is not initialized')
     }
 
-    // Get current user ID
-    const userId = await getValidatedUserId()
-
-    console.log('Fetching templates for user:', userId || 'anonymous')
+    console.log('Fetching all active templates...')
     const templates = await db.targetTemplate.findMany({
       where: {
         isActive: true,
-        ...(userId ? { authorId: userId } : {}), // Only show user's own templates if authenticated
+        // Templates are shared resources - show all active templates to all users
       },
       orderBy: {
         createdAt: 'desc',
       },
     })
 
-    console.log(`Found ${templates.length} templates for user:`, userId || 'anonymous')
+    console.log(`Found ${templates.length} active templates`)
     // Serialize BigInt fields before returning
     const serializedTemplates = serializeBigInt(templates)
     return NextResponse.json({ templates: serializedTemplates })
