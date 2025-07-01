@@ -1,6 +1,7 @@
 import Image from 'next/image'
 import UploadBox from './UploadBox'
 import { formatDuration } from '@/utils/helper'
+import { getStorageUrl } from '@/utils/storage-helper'
 import { useState, useEffect, useRef } from 'react'
 import Loading from '@/components/Loading'
 
@@ -63,7 +64,7 @@ export default function TabContent({
     if (template.mimeType?.startsWith('video/')) {
       return (
         <Image
-          src={template.thumbnailPath}
+          src={getStorageUrl(template.thumbnailPath) || '/placeholder-thumbnail.svg'}
           alt={template.filename}
           className="object-cover rounded-lg target-dimensions"
           width={116}
@@ -74,7 +75,7 @@ export default function TabContent({
       // For images and GIFs, use the file path directly
       return (
         <Image
-          src={template.filePath}
+          src={getStorageUrl(template.filePath) || '/placeholder-thumbnail.svg'}
           alt={template.filename}
           className="object-cover rounded-lg target-dimensions"
           width={116}

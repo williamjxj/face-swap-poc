@@ -1,5 +1,6 @@
 import Image from 'next/image'
 import { Plus } from 'lucide-react'
+import { getStorageUrl } from '@/utils/storage-helper'
 import styles from './page.module.css'
 import { useState, useRef, useEffect } from 'react'
 
@@ -62,7 +63,10 @@ export default function FaceSelection({
           <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-gray-600">
             {selectedTemplate ? (
               <Image
-                src={selectedTemplate.thumbnailPath || selectedTemplate.filePath}
+                src={
+                  getStorageUrl(selectedTemplate.thumbnailPath || selectedTemplate.filePath) ||
+                  '/placeholder-thumbnail.svg'
+                }
                 alt="Template thumbnail"
                 width={96}
                 height={96}
@@ -127,7 +131,7 @@ export default function FaceSelection({
                 onMouseLeave={handleMouseLeave}
               >
                 <Image
-                  src={image.imagePath}
+                  src={getStorageUrl(image.imagePath) || '/placeholder-thumbnail.svg'}
                   alt={`Source ${image.id}`}
                   width={80}
                   height={80}

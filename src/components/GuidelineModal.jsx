@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Image from 'next/image'
+import { getStorageUrl } from '@/utils/storage-helper'
 import CloseButton from './CloseButton'
 import Loading from './Loading'
 
@@ -89,7 +90,7 @@ export default function FaceFusionGuidelinesModal({ isOpen, onClose }) {
                     {guidelines.allowed.map(guideline => (
                       <div key={guideline.id} className="overflow-hidden rounded-lg bg-gray-100">
                         <Image
-                          src={guideline.filePath}
+                          src={getStorageUrl(guideline.filePath) || '/placeholder-thumbnail.svg'}
                           alt={guideline.filename}
                           width={200}
                           height={200}
@@ -125,7 +126,7 @@ export default function FaceFusionGuidelinesModal({ isOpen, onClose }) {
                     {guidelines.notAllowed.map(guideline => (
                       <div key={guideline.id} className="overflow-hidden rounded-lg bg-gray-100">
                         <Image
-                          src={guideline.filePath}
+                          src={getStorageUrl(guideline.filePath) || '/placeholder-thumbnail.svg'}
                           alt={guideline.filename}
                           width={200}
                           height={200}

@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
 import { X, ChevronLeft, ChevronRight, Download, ShoppingCart, Info } from 'lucide-react'
+import { getStorageUrl } from '@/utils/storage-helper'
 import { PRICING_CONFIG } from '@/config/pricing'
 
 export default function VideoCarousel({
@@ -257,10 +258,10 @@ export default function VideoCarousel({
         <video
           key={`video-${currentIndex}-${currentVideo.id}`}
           id="carousel-video"
-          src={currentVideo.filePath}
+          src={getStorageUrl(currentVideo.filePath)}
           className="max-w-full max-h-full object-contain rounded-lg"
           controls
-          poster={currentVideo.thumbnailPath}
+          poster={getStorageUrl(currentVideo.thumbnailPath)}
           onPlay={() => setIsPlaying(true)}
           onPause={() => setIsPlaying(false)}
           onEnded={() => setIsPlaying(false)}

@@ -2,6 +2,7 @@
 import { Download, Trash2 } from 'lucide-react'
 import { useCallback, useState } from 'react'
 import { useToast } from '@/contexts/ToastContext'
+import { getStorageUrl } from '@/utils/storage-helper'
 import Image from 'next/image'
 import StripeCheckoutButton from './StripeCheckoutButton'
 import PayPalCheckoutButton from './PayPalCheckoutButton'
@@ -91,17 +92,17 @@ export default function VideoModal({ video, onClose, onDownload, onDelete }) {
 
         {video.type === 'video' ? (
           <VideoPlayerWithLoading
-            src={video.filePath}
+            src={getStorageUrl(video.filePath)}
             controls
             className="w-full rounded-lg mb-4 max-h-[70vh] object-contain"
             autoPlay
-            thumbnail={video.thumbnailPath}
+            thumbnail={getStorageUrl(video.thumbnailPath)}
             showDuration={true}
             optimizedLoading={true}
           />
         ) : (
           <Image
-            src={video.filePath}
+            src={getStorageUrl(video.filePath)}
             alt={video.name}
             className="rounded-lg mb-4 max-h-[70vh] object-contain"
             width={1280}

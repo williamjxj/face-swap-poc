@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { X, Download, ShoppingCart } from 'lucide-react'
+import { getStorageUrl } from '@/utils/storage-helper'
 import { PRICING_CONFIG } from '@/config/pricing'
 
 export default function VideoDetailsModal({ video, isOpen, onClose, onDownload, onPurchase }) {
@@ -72,10 +73,10 @@ export default function VideoDetailsModal({ video, isOpen, onClose, onDownload, 
       <div className="relative flex items-center justify-center w-full h-full max-w-[95vw] max-h-[90vh] mx-4">
         <video
           id="details-video"
-          src={video.filePath}
+          src={getStorageUrl(video.filePath)}
           className="max-w-full max-h-full object-contain rounded-lg"
           controls
-          poster={video.thumbnailPath}
+          poster={getStorageUrl(video.thumbnailPath)}
           onPlay={() => setIsPlaying(true)}
           onPause={() => setIsPlaying(false)}
           onEnded={() => setIsPlaying(false)}

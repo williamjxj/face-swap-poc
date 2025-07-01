@@ -1,6 +1,18 @@
 const path = require('path')
 
 const nextConfig = {
+  // Image optimization configuration
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'yunxidsqumhfushjcgyg.supabase.co',
+        port: '',
+        pathname: '/storage/v1/object/public/**',
+      },
+    ],
+  },
+
   // Path alias configuration for both Turbo and Webpack
   experimental: {
     turbo: {

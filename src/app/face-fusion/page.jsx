@@ -2,6 +2,7 @@
 
 import Image from 'next/image'
 import { Info, ArrowLeftRight, Download, Lock, ShoppingCart, ExternalLink } from 'lucide-react'
+import { getStorageUrl } from '@/utils/storage-helper'
 import FaceSelection from './FaceSelection'
 import { useState, useEffect } from 'react'
 import VideoModal from '@/components/VideoModal'
@@ -907,14 +908,14 @@ export default function FaceFusion() {
             <div className="w-full h-full flex items-center justify-center">
               {selectedTemplate.mimeType?.startsWith('video/') ? (
                 <video
-                  src={selectedTemplate.filePath}
+                  src={getStorageUrl(selectedTemplate.filePath)}
                   controls
                   className="w-full h-full object-contain rounded-lg"
-                  poster={selectedTemplate.thumbnailPath}
+                  poster={getStorageUrl(selectedTemplate.thumbnailPath)}
                 />
               ) : (
                 <Image
-                  src={selectedTemplate.filePath}
+                  src={getStorageUrl(selectedTemplate.filePath) || '/placeholder-thumbnail.svg'}
                   alt={selectedTemplate.filename}
                   className="object-contain rounded-lg"
                   width={800}
@@ -1117,17 +1118,17 @@ export default function FaceFusion() {
                           <div className="relative">
                             {media.type === 'video' ? (
                               <VideoPlayerWithLoading
-                                src={media.filePath}
+                                src={getStorageUrl(media.filePath)}
                                 className="w-full h-24 sm:h-32 md:h-40 rounded-md sm:rounded-lg mb-1 sm:mb-2"
                                 autoPlay={true}
                                 loop={true}
                                 muted={true}
                                 optimizedLoading={true}
-                                thumbnail={media.thumbnailPath}
+                                thumbnail={getStorageUrl(media.thumbnailPath)}
                               />
                             ) : (
                               <Image
-                                src={media.filePath}
+                                src={getStorageUrl(media.filePath) || '/placeholder-thumbnail.svg'}
                                 alt={media.name}
                                 width={300}
                                 height={160}

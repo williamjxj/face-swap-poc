@@ -144,7 +144,7 @@ const VideoThumbnail = ({
         {isPlaying ? (
           // Playing video
           <video
-            src={video.filePath}
+            src={getStorageUrl(video.filePath)}
             className="w-full h-full object-cover"
             controls
             autoPlay

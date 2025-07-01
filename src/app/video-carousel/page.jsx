@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { getStorageUrl } from '@/utils/storage-helper'
 import VideoCarousel from '@/components/VideoCarousel'
 import VideoThumbnail from '@/components/VideoThumbnail'
 import { useToast } from '@/contexts/ToastContext'
@@ -73,12 +74,8 @@ export default function VideoCarouselPage() {
             fileSize: item.fileSize ? item.fileSize.toString() : '0',
             downloadCount: item.downloadCount || 0,
             description: item.description || `Generated content: ${item.name}`,
-            // Ensure proper video path - try multiple approaches
-            filePath: item.filePath.startsWith('http')
-              ? item.filePath
-              : item.filePath.startsWith('/')
-                ? `${window.location.origin}${item.filePath}`
-                : `${window.location.origin}/${item.filePath}`,
+            // Use Supabase Storage URL helper for file paths
+            filePath: getStorageUrl(item.filePath) || item.filePath,
           }))
 
           // Filter for videos only (same logic as gallery)
