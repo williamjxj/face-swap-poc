@@ -71,7 +71,7 @@ switch_to_local() {
 # =============================================================================
 
 # Database Configuration
-DATABASE_URL="postgresql://postgres:password@localhost:5432/facefusion"
+DATABASE_URL="postgresql://postgres:William1!@localhost:5432/facefusion"
 
 # Next.js Configuration
 NODE_ENV=development
@@ -129,7 +129,7 @@ switch_to_supabase() {
 # =============================================================================
 
 # Database Configuration (Supabase)
-DATABASE_URL="${supabase_db_url:-postgresql://postgres:[PASSWORD]@db.[PROJECT-ID].supabase.co:5432/postgres}"
+DATABASE_URL="${supabase_db_url:-postgresql://postgres:William1!@db.[PROJECT-ID].supabase.co:5432/postgres}"
 
 # Supabase Configuration
 NEXT_PUBLIC_SUPABASE_URL="${supabase_url:-https://[PROJECT-ID].supabase.co}"

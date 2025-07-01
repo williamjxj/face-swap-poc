@@ -407,7 +407,6 @@ Error: Hydration failed because the initial UI does not match
    ```jsx
    // Use Next.js Image component
    import Image from 'next/image'
-
    ;<Image src="/path/to/image.jpg" alt="Description" width={400} height={300} />
    ```
 

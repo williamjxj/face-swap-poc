@@ -6,6 +6,7 @@ import { serializeBigInt } from '@/utils/helper'
 import { v4 as uuidv4 } from 'uuid'
 import sharp from 'sharp'
 import { getValidatedUserId, logSessionDebugInfo } from '@/utils/auth-helper'
+import { uploadFile, STORAGE_BUCKETS } from '@/utils/storage-helper'
 
 // Helper function to handle BigInt serialization
 const sanitizeBigInt = data => {
@@ -44,21 +45,30 @@ export async function POST(request) {
     const extension = path.extname(originalName)
     const filename = `${timestamp}_${uuidv4()}${extension}`
 
-    // Ensure the sources directory exists
-    const sourcesDir = path.join(process.cwd(), 'public', 'sources')
-    const fileBuffer = Buffer.from(await file.arrayBuffer())
-
     // Process image with Sharp
+    const fileBuffer = Buffer.from(await file.arrayBuffer())
     const image = sharp(fileBuffer)
     const metadata = await image.metadata()
 
-    // Save the processed image
-    await image.toFile(path.join(sourcesDir, filename))
+    // Optimize and compress the image
+    const processedBuffer = await image
+      .jpeg({ quality: 90 }) // Convert to JPEG for better compression
+      .toBuffer()
+
+    // Upload to Supabase Storage
+    const filePath = `${STORAGE_BUCKETS.FACE_SOURCES}/${filename}`
+    const uploadResult = await uploadFile(processedBuffer, filePath, {
+      contentType: 'image/jpeg',
+      overwrite: true,
+    })
+
+    if (!uploadResult.success) {
+      return NextResponse.json({ error: `Upload failed: ${uploadResult.error}` }, { status: 500 })
+    }
 
     // Get file metadata
-    const filePath = `/sources/${filename}`
-    const fileSize = file.size
-    const mimeType = file.type
+    const fileSize = processedBuffer.length
+    const mimeType = 'image/jpeg'
 
     // Log session debug info to help troubleshoot
     await logSessionDebugInfo()

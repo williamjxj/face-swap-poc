@@ -17,7 +17,7 @@ const getDatabaseConfig = () => {
     }
     config.datasources = {
       db: {
-        url: 'postgresql://user:password@localhost:5432/fallback_db',
+        url: 'postgresql://user:William1!@localhost:5432/fallback_db',
       },
     }
   } else {

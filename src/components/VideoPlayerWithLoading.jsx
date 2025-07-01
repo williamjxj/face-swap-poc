@@ -2,6 +2,7 @@
 import { useState, useRef, useEffect } from 'react'
 import Image from 'next/image'
 import { formatDuration } from '@/utils/helper'
+import { getStorageUrl } from '@/utils/storage-helper'
 
 // Inline ProgressLoader component (previously a separate component)
 function ProgressLoader({ progress, isIndeterminate = false, size = 'medium', color = 'blue' }) {
@@ -88,6 +89,9 @@ export default function VideoPlayerWithLoading({
   const [duration, setDuration] = useState(0)
   const videoRef = useRef(null)
   const [showVideo, setShowVideo] = useState(false)
+
+  // Convert storage path to full URL if needed
+  const videoUrl = getStorageUrl(src) || src
 
   useEffect(() => {
     // Reset states when src changes
@@ -187,7 +191,7 @@ export default function VideoPlayerWithLoading({
 
       <video
         ref={videoRef}
-        src={src}
+        src={videoUrl}
         className={`w-full ${className || ''}`}
         autoPlay={autoPlay}
         loop={loop}

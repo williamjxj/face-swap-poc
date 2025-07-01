@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server'
 import prisma from '@/lib/db'
-import fs from 'fs'
-import path from 'path'
+import { supabase } from '@/utils/storage-helper'
 
 export async function GET(request) {
   try {
@@ -25,13 +24,24 @@ export async function GET(request) {
       return NextResponse.json({ error: 'Media is not paid for' }, { status: 403 })
     }
 
-    const filePath = path.join(process.cwd(), 'public', 'outputs', filename)
+    // Download from Supabase Storage
+    const [bucket, ...pathParts] = media.filePath.split('/')
+    const path = pathParts.join('/')
 
-    if (!fs.existsSync(filePath)) {
-      return NextResponse.json({ error: 'File not found' }, { status: 404 })
+    if (!bucket || !path) {
+      return NextResponse.json({ error: 'Invalid file path' }, { status: 400 })
     }
 
-    const fileBuffer = fs.readFileSync(filePath)
+    const { data, error } = await supabase.storage.from(bucket).download(path)
+
+    if (error) {
+      console.error('Error downloading from Supabase Storage:', error)
+      return NextResponse.json({ error: 'File not found in storage' }, { status: 404 })
+    }
+
+    // Convert the blob to buffer
+    const arrayBuffer = await data.arrayBuffer()
+    const fileBuffer = Buffer.from(arrayBuffer)
 
     return new NextResponse(fileBuffer, {
       headers: {

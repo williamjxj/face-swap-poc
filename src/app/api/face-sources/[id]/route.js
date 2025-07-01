@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { deletePublicFile } from '@/utils/file-helper'
+import { deleteFile } from '@/utils/storage-helper'
 import { getValidatedUserId } from '@/utils/auth-helper'
 import { db as prisma } from '@/lib/db'
 
@@ -173,12 +173,15 @@ export async function DELETE(request, { params }) {
       }
     }
 
-    // Delete physical file
+    // Delete physical file from Supabase Storage
     if (faceSource.filePath) {
-      const fileDeleted = await deletePublicFile(faceSource.filePath)
+      const deleteResult = await deleteFile(faceSource.filePath)
       console.log(
-        `[DELETE] File deletion ${fileDeleted ? 'succeeded' : 'failed'} for: ${faceSource.filePath}`
+        `[DELETE] File deletion ${deleteResult.success ? 'succeeded' : 'failed'} for: ${faceSource.filePath}`
       )
+      if (!deleteResult.success) {
+        console.error(`[DELETE] Storage deletion error: ${deleteResult.error}`)
+      }
     }
 
     // Wait a brief moment to ensure database operations are complete

@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { Play } from 'lucide-react'
+import { getStorageUrl } from '@/utils/storage-helper'
 
 const VideoThumbnail = ({
   video,
@@ -72,9 +73,14 @@ const VideoThumbnail = ({
       videoElement.addEventListener('loadeddata', onLoadedData)
       videoElement.addEventListener('error', onError)
 
-      // Set video source and load
-      videoElement.src = video.filePath
-      videoElement.currentTime = 0.1 // Seek to 0.1s to get a frame
+      // Set video source and load - convert storage path to full URL
+      const videoUrl = getStorageUrl(video.filePath)
+      if (videoUrl) {
+        videoElement.src = videoUrl
+        videoElement.currentTime = 0.1 // Seek to 0.1s to get a frame
+      } else {
+        onError(new Error('Invalid video path'))
+      }
 
       return () => {
         videoElement.removeEventListener('loadeddata', onLoadedData)

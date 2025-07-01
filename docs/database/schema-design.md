@@ -226,3 +226,38 @@ npx prisma migrate diff --preview-feature
 ---
 
 **Note**: This schema design prioritizes data integrity, performance, and scalability while maintaining compatibility with NextAuth.js and Stripe integration requirements.
+
+## NextAuth vs Supabase
+
+### ✅ Google OAuth Configuration for Supabase + Next.js (Dev + Prod)
+
+1. Authorized JavaScript Origins
+
+| Purpose     | URL                                             | Notes                        |
+| ----------- | ----------------------------------------------- | ---------------------------- |
+| Production  | `https://nextjs-supabase-kappa-nine.vercel.app` | Required for frontend (prod) |
+| Development | `http://localhost:3000`                         | Required for frontend (dev)  |
+
+2. Authorized Redirect URIs (Based on Your Auth Strategy)
+
+✅ If using NextAuth.js + Supabase
+
+| Environment | Redirect URI                                                             | Notes                               |
+| ----------- | ------------------------------------------------------------------------ | ----------------------------------- |
+| Production  | `https://nextjs-supabase-kappa-nine.vercel.app/api/auth/callback/google` | Replace `google` with your provider |
+| Development | `http://localhost:3000/api/auth/callback/google`                         | Required for local dev              |
+
+✅ If using Supabase-hosted OAuth only
+
+| Environment | Redirect URI                                          | Notes                                       |
+| ----------- | ----------------------------------------------------- | ------------------------------------------- |
+| Production  | `https://<your-project>.supabase.co/auth/v1/callback` | Replace with your real Supabase project URL |
+| Development | `http://localhost:54321/auth/v1/callback`             | For Supabase CLI local dev                  |
+
+⚠️ Suggestions / Tips
+
+| Tip                                                                   | Reason                                  |
+| --------------------------------------------------------------------- | --------------------------------------- |
+| Only one of `localhost` or `127.0.0.1` is needed                      | Avoid redundancy/confusion              |
+| Use a **single Client ID** for dev and prod                           | Google recommends unified management    |
+| Always ensure your URIs match your actual flow (NextAuth vs Supabase) | Prevents `redirect_uri_mismatch` errors |
