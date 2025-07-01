@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { db as prisma } from '@/lib/db'
-import { deletePublicFile } from '@/utils/file-helper'
+import { deleteFile } from '@/utils/storage-helper'
 
 // GET single generated media
 export async function GET(request, { params }) {
@@ -149,20 +149,34 @@ export async function DELETE(request, { params }) {
       }
     }
 
-    // Delete the physical files
+    // Delete the physical files from Supabase Storage
     if (generatedMedia.filePath) {
-      const fileDeleted = await deletePublicFile(generatedMedia.filePath)
-      console.log(
-        `[DELETE] File deletion ${fileDeleted ? 'succeeded' : 'failed'} for: ${generatedMedia.filePath}`
-      )
+      try {
+        const deleteResult = await deleteFile(generatedMedia.filePath)
+        console.log(
+          `[DELETE] File deletion ${deleteResult.success ? 'succeeded' : 'failed'} for: ${generatedMedia.filePath}`
+        )
+        if (!deleteResult.success) {
+          console.error(`[DELETE] Storage deletion error: ${deleteResult.error}`)
+        }
+      } catch (error) {
+        console.error(`[DELETE] Error deleting file from storage:`, error)
+      }
     }
 
     // Delete the temporary file if it exists
     if (generatedMedia.tempPath) {
-      const tempDeleted = await deletePublicFile(generatedMedia.tempPath)
-      console.log(
-        `[DELETE] Temp file deletion ${tempDeleted ? 'succeeded' : 'failed'} for: ${generatedMedia.tempPath}`
-      )
+      try {
+        const deleteResult = await deleteFile(generatedMedia.tempPath)
+        console.log(
+          `[DELETE] Temp file deletion ${deleteResult.success ? 'succeeded' : 'failed'} for: ${generatedMedia.tempPath}`
+        )
+        if (!deleteResult.success) {
+          console.error(`[DELETE] Temp storage deletion error: ${deleteResult.error}`)
+        }
+      } catch (error) {
+        console.error(`[DELETE] Error deleting temp file from storage:`, error)
+      }
     }
 
     // Wait a brief moment to ensure database operations are complete

@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server'
-import { unlink, access } from 'fs/promises'
-import path from 'path'
 import db from '@/lib/db'
+import { deleteFile } from '@/utils/storage-helper'
 
 export async function DELETE(request) {
   try {
@@ -21,32 +20,34 @@ export async function DELETE(request) {
       return NextResponse.json({ error: 'Template not found' }, { status: 404 })
     }
 
-    // Delete files
-    const publicDir = path.join(process.cwd(), 'public')
-
+    // Delete files from Supabase Storage
     // Delete video file
     if (template.filePath) {
-      const videoPath = path.join(publicDir, template.filePath.slice(1))
       try {
-        // Check if file exists first
-        await access(videoPath)
-        await unlink(videoPath)
+        const deleteResult = await deleteFile(template.filePath)
+        console.log(
+          `[DELETE] Video file deletion ${deleteResult.success ? 'succeeded' : 'failed'} for: ${template.filePath}`
+        )
+        if (!deleteResult.success) {
+          console.error(`[DELETE] Video storage deletion error: ${deleteResult.error}`)
+        }
       } catch (error) {
-        // File doesn't exist or can't be deleted, continue with DB operation
-        console.warn('Warning: Could not delete video file:', error)
+        console.warn('Warning: Could not delete video file from storage:', error)
       }
     }
 
     // Delete thumbnail file
     if (template.thumbnailPath) {
-      const thumbnailPath = path.join(publicDir, template.thumbnailPath.slice(1))
       try {
-        // Check if file exists first
-        await access(thumbnailPath)
-        await unlink(thumbnailPath)
+        const deleteResult = await deleteFile(template.thumbnailPath)
+        console.log(
+          `[DELETE] Thumbnail file deletion ${deleteResult.success ? 'succeeded' : 'failed'} for: ${template.thumbnailPath}`
+        )
+        if (!deleteResult.success) {
+          console.error(`[DELETE] Thumbnail storage deletion error: ${deleteResult.error}`)
+        }
       } catch (error) {
-        // File doesn't exist or can't be deleted, continue with DB operation
-        console.warn('Warning: Could not delete thumbnail file:', error)
+        console.warn('Warning: Could not delete thumbnail file from storage:', error)
       }
     }
 

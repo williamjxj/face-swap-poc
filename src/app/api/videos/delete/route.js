@@ -1,9 +1,8 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
-import fs from 'fs'
-import path from 'path'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/services/auth'
+import { deleteFile } from '@/utils/storage-helper'
 
 export async function DELETE(request) {
   try {
@@ -39,21 +38,18 @@ export async function DELETE(request) {
       return NextResponse.json({ error: 'Video not found' }, { status: 404 })
     }
 
-    // 2. Delete the file from the outputs folder
+    // 2. Delete the file from Supabase Storage
     if (video.filePath) {
-      // Extract the filename from the path (/outputs/filename.mp4)
-      const filename = path.basename(video.filePath)
-      const filePath = path.join(process.cwd(), 'public', 'outputs', filename)
-
       try {
-        if (fs.existsSync(filePath)) {
-          fs.unlinkSync(filePath)
-          console.log(`[DELETE] Successfully deleted file: ${filePath}`)
-        } else {
-          console.log(`[DELETE] File not found at path: ${filePath}`)
+        const deleteResult = await deleteFile(video.filePath)
+        console.log(
+          `[DELETE] File deletion ${deleteResult.success ? 'succeeded' : 'failed'} for: ${video.filePath}`
+        )
+        if (!deleteResult.success) {
+          console.error(`[DELETE] Storage deletion error: ${deleteResult.error}`)
         }
       } catch (fileError) {
-        console.error(`[DELETE ERROR] Error deleting file: ${fileError.message}`)
+        console.error(`[DELETE ERROR] Error deleting file from storage: ${fileError.message}`)
         // We'll continue with the database deletion even if the file deletion fails
       }
     }

@@ -1,10 +1,8 @@
 import { NextResponse } from 'next/server'
-import fs from 'fs'
 import path from 'path'
 import FormData from 'form-data'
 import fetch from 'node-fetch'
 import { db } from '@/lib/db'
-import { optimizeVideo } from '@/utils/videoUtils'
 import { getValidatedUserId, logSessionDebugInfo } from '@/utils/auth-helper'
 import { uploadFile, getStorageUrl } from '@/utils/storage-helper'
 
@@ -16,15 +14,7 @@ const QUERY_API = process.env.MODAL_QUERY_API
 const MAX_RETRIES = 60 // 6 minutes maximum (8 seconds × 60)
 const POLLING_INTERVAL = 8000 // 8 seconds
 
-// Configuration for video optimization
-const VIDEO_OPTIMIZATION_ENABLED = true // Set to false to disable optimization
-const VIDEO_OPTIMIZATION_CONFIG = {
-  width: 720, // Target width
-  preset: 'veryfast', // FFmpeg preset - faster for better UX
-  crf: 23, // Quality (lower is better)
-  keyframeInterval: 1, // More keyframes for better seeking
-  generateThumbnail: true,
-}
+// Video optimization disabled for serverless compatibility
 
 // Error types for better client-side handling
 const ERROR_TYPES = {
@@ -474,57 +464,8 @@ async function pollAndProcessResult(outputPath, sourceFile, targetFile, request 
         let finalStoragePath = storagePath
         let finalFileSize = fileSize
 
-        if (fileType === 'video') {
-          // Step 1: Optimize video if enabled
-          if (VIDEO_OPTIMIZATION_ENABLED) {
-            try {
-              console.log(`[OPTIMIZATION] Starting video optimization for: ${outputFilename}`)
-
-              // Create a temporary file for optimization
-              const tempDir = path.join(process.cwd(), 'tmp')
-              if (!fs.existsSync(tempDir)) {
-                fs.mkdirSync(tempDir, { recursive: true })
-              }
-
-              const tempFilePath = path.join(tempDir, outputFilename)
-              fs.writeFileSync(tempFilePath, fileBuffer)
-
-              // Create optimized version in temp folder
-              const optimizedTempPath = path.join(tempDir, `opt_${outputFilename}`)
-              const optimizedResult = await optimizeVideo(tempFilePath, {
-                ...VIDEO_OPTIMIZATION_CONFIG,
-                outputPath: optimizedTempPath,
-              })
-
-              // Upload optimized version to storage
-              const optimizedBuffer = fs.readFileSync(optimizedResult.outputPath)
-              const optimizedStoragePath = `generated-outputs/opt_${outputFilename}`
-
-              const optimizedUploadResult = await uploadFile(
-                optimizedBuffer,
-                optimizedStoragePath,
-                {
-                  contentType: 'video/mp4',
-                  fileName: `opt_${outputFilename}`,
-                }
-              )
-
-              if (optimizedUploadResult.success) {
-                console.log(
-                  `[OPTIMIZATION] Optimized video uploaded successfully: ${optimizedStoragePath}`
-                )
-                finalStoragePath = optimizedStoragePath
-                finalFileSize = optimizedBuffer.length
-              }
-
-              // Clean up temp files
-              fs.unlinkSync(tempFilePath)
-              fs.unlinkSync(optimizedResult.outputPath)
-            } catch (optError) {
-              console.error(`[OPTIMIZATION ERROR] Failed to optimize video: ${optError.message}`)
-            }
-          }
-        }
+        // Video optimization disabled for serverless compatibility
+        // Videos are uploaded directly to storage without local processing
 
         // Create database record using helper function
         const dbRecord = await createGeneratedMediaRecord({
@@ -640,54 +581,8 @@ async function processCompletedTask(outputUrl, sourceFile, targetFile, outputPat
     let finalStoragePath = storagePath
     let finalFileSize = fileSize
 
-    if (fileType === 'video') {
-      // Step 1: Optimize video if enabled
-      if (VIDEO_OPTIMIZATION_ENABLED) {
-        try {
-          console.log(`[OPTIMIZATION] Starting video optimization for: ${outputFilename}`)
-
-          // Create a temporary file for optimization
-          const tempDir = path.join(process.cwd(), 'tmp')
-          if (!fs.existsSync(tempDir)) {
-            fs.mkdirSync(tempDir, { recursive: true })
-          }
-
-          const tempFilePath = path.join(tempDir, outputFilename)
-          fs.writeFileSync(tempFilePath, buffer)
-
-          // Create optimized version in temp folder
-          const optimizedTempPath = path.join(tempDir, `opt_${outputFilename}`)
-          const optimizedResult = await optimizeVideo(tempFilePath, {
-            ...VIDEO_OPTIMIZATION_CONFIG,
-            outputPath: optimizedTempPath,
-          })
-
-          // Upload optimized version to storage
-          const optimizedBuffer = fs.readFileSync(optimizedResult.outputPath)
-          const optimizedStoragePath = `generated-outputs/opt_${outputFilename}`
-
-          const optimizedUploadResult = await uploadFile(optimizedBuffer, optimizedStoragePath, {
-            contentType: 'video/mp4',
-            fileName: `opt_${outputFilename}`,
-          })
-
-          if (optimizedUploadResult.success) {
-            console.log(
-              `[OPTIMIZATION] Optimized video uploaded successfully: ${optimizedStoragePath}`
-            )
-            finalStoragePath = optimizedStoragePath
-            finalFileSize = optimizedBuffer.length
-          }
-
-          // Clean up temp files
-          fs.unlinkSync(tempFilePath)
-          fs.unlinkSync(optimizedResult.outputPath)
-        } catch (optError) {
-          console.error(`[OPTIMIZATION ERROR] Failed to optimize video: ${optError.message}`)
-          // Continue with the original video if optimization fails
-        }
-      }
-    }
+    // Video optimization disabled for serverless compatibility
+    // Videos are uploaded directly to storage without local processing
 
     // Try to extract IDs from file paths
     let faceSourceId = null
