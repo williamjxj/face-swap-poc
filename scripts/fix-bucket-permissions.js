@@ -23,13 +23,13 @@ async function fixBucketPermissions() {
     'template-thumbnails',
     'generated-outputs',
     'face-sources',
-    'template-videos'
+    'template-videos',
   ]
 
   try {
     // First, let's check current bucket status
     const { data: buckets, error: listError } = await supabase.storage.listBuckets()
-    
+
     if (listError) {
       console.error('❌ Error listing buckets:', listError)
       return
@@ -40,7 +40,9 @@ async function fixBucketPermissions() {
 
     for (const bucket of buckets) {
       const shouldBePublic = bucketsToMakePublic.includes(bucket.name)
-      console.log(`• ${bucket.name}: ${bucket.public ? '✅ Public' : '❌ Private'}${shouldBePublic ? ' (needs to be public)' : ''}`)
+      console.log(
+        `• ${bucket.name}: ${bucket.public ? '✅ Public' : '❌ Private'}${shouldBePublic ? ' (needs to be public)' : ''}`
+      )
     }
 
     console.log('\n🔧 Making buckets public...\n')
@@ -48,7 +50,7 @@ async function fixBucketPermissions() {
     // Make each bucket public
     for (const bucketName of bucketsToMakePublic) {
       const bucket = buckets.find(b => b.name === bucketName)
-      
+
       if (!bucket) {
         console.log(`⚠️  Bucket '${bucketName}' not found, skipping...`)
         continue
@@ -62,7 +64,7 @@ async function fixBucketPermissions() {
       try {
         // Update bucket to be public
         const { data, error } = await supabase.storage.updateBucket(bucketName, {
-          public: true
+          public: true,
         })
 
         if (error) {
@@ -79,7 +81,7 @@ async function fixBucketPermissions() {
 
     // Verify the changes
     const { data: updatedBuckets } = await supabase.storage.listBuckets()
-    
+
     for (const bucketName of bucketsToMakePublic) {
       const bucket = updatedBuckets.find(b => b.name === bucketName)
       if (bucket) {
@@ -90,13 +92,14 @@ async function fixBucketPermissions() {
     console.log('\n🧪 Testing image access...\n')
 
     // Test one of the guideline images
-    const testUrl = 'https://yunxidsqumhfushjcgyg.supabase.co/storage/v1/object/public/guideline-images/f1.png'
-    
+    const testUrl =
+      'https://yunxidsqumhfushjcgyg.supabase.co/storage/v1/object/public/guideline-images/f1.png'
+
     try {
       const response = await fetch(testUrl, { method: 'HEAD' })
       console.log(`🔗 Test URL: ${testUrl}`)
       console.log(`📡 Status: ${response.status} ${response.statusText}`)
-      
+
       if (response.status === 200) {
         console.log('🎉 SUCCESS! Images should now load properly.')
       } else {
@@ -105,7 +108,6 @@ async function fixBucketPermissions() {
     } catch (fetchError) {
       console.log(`❌ Test fetch error: ${fetchError.message}`)
     }
-
   } catch (error) {
     console.error('❌ Error:', error)
   }

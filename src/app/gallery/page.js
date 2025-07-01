@@ -1743,7 +1743,7 @@ export default function GalleryPage() {
                     const parsedDate = new Date(date)
                     if (isNaN(parsedDate.getTime())) return 'Invalid Date'
                     return parsedDate.toLocaleString()
-                  } catch (error) {
+                  } catch {
                     return 'Invalid Date'
                   }
                 })()}

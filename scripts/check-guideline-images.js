@@ -59,14 +59,13 @@ async function checkGuidelineImages() {
           try {
             const response = await fetch(urlData.publicUrl, { method: 'HEAD' })
             console.log(`  📡 HTTP Status: ${response.status} ${response.statusText}`)
-            
+
             if (response.status === 400) {
               console.log(`  ⚠️  This is the 400 error we're seeing!`)
             }
           } catch (fetchError) {
             console.log(`  ❌ Fetch error: ${fetchError.message}`)
           }
-
         } catch (e) {
           console.log(`  💥 Error checking file: ${e.message}`)
         }
@@ -76,20 +75,20 @@ async function checkGuidelineImages() {
 
     // Check bucket policy
     console.log('🔒 Checking bucket policy for guideline-images...\n')
-    
+
     try {
       const { data: buckets } = await supabase.storage.listBuckets()
       const guidelineBucket = buckets.find(b => b.name === 'guideline-images')
-      
+
       if (guidelineBucket) {
         console.log(`Bucket: ${guidelineBucket.name}`)
         console.log(`Public: ${guidelineBucket.public}`)
         console.log(`Created: ${new Date(guidelineBucket.created_at).toLocaleString()}`)
         console.log(`Updated: ${new Date(guidelineBucket.updated_at).toLocaleString()}`)
-        
+
         if (!guidelineBucket.public) {
           console.log('\n⚠️  ISSUE FOUND: The guideline-images bucket is NOT public!')
-          console.log('This is likely why you\'re getting 400 errors.')
+          console.log("This is likely why you're getting 400 errors.")
           console.log('\n🔧 TO FIX:')
           console.log('1. Go to Supabase Dashboard → Storage')
           console.log('2. Click on "guideline-images" bucket')
@@ -101,7 +100,6 @@ async function checkGuidelineImages() {
     } catch (bucketError) {
       console.log(`❌ Error checking bucket policy: ${bucketError.message}`)
     }
-
   } catch (error) {
     console.error('❌ Error:', error)
   } finally {

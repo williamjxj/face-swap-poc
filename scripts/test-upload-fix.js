@@ -13,19 +13,19 @@ async function testUploadFix() {
   // Test with a small dummy file
   const testFileName = 'test-video.mp4'
   const testFileContent = Buffer.from('dummy video content for testing')
-  
+
   // Create a temporary test file
   const tempFilePath = path.join(__dirname, testFileName)
   fs.writeFileSync(tempFilePath, testFileContent)
 
   try {
     console.log('📤 Testing first upload...')
-    
+
     // First upload
     const formData1 = new FormData()
     formData1.append('file', fs.createReadStream(tempFilePath), {
       filename: testFileName,
-      contentType: 'video/mp4'
+      contentType: 'video/mp4',
     })
     formData1.append('templateType', 'video')
 
@@ -47,12 +47,12 @@ async function testUploadFix() {
     }
 
     console.log('\n📤 Testing second upload (same file)...')
-    
+
     // Second upload with same file
     const formData2 = new FormData()
     formData2.append('file', fs.createReadStream(tempFilePath), {
       filename: testFileName,
-      contentType: 'video/mp4'
+      contentType: 'video/mp4',
     })
     formData2.append('templateType', 'video')
 
@@ -72,7 +72,6 @@ async function testUploadFix() {
       const error2 = await response2.text()
       console.log('❌ Second upload failed:', error2)
     }
-
   } catch (error) {
     console.error('❌ Test error:', error.message)
   } finally {
@@ -90,7 +89,7 @@ async function testUploadFix() {
 async function checkServer() {
   try {
     const response = await fetch('http://localhost:3000/api/upload-template', {
-      method: 'GET'
+      method: 'GET',
     })
     return response.status !== 404
   } catch (error) {
@@ -100,7 +99,7 @@ async function checkServer() {
 
 async function main() {
   const serverRunning = await checkServer()
-  
+
   if (!serverRunning) {
     console.log('❌ Server is not running on http://localhost:3000')
     console.log('Please start the server with: npm run dev')

@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server'
-import fs from 'fs/promises'
 import path from 'path'
 import db from '@/lib/db'
 import { serializeBigInt } from '@/utils/helper'
