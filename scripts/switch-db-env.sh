@@ -132,7 +132,7 @@ switch_to_supabase() {
 DATABASE_URL="${supabase_db_url:-postgresql://postgres:William1!@db.[PROJECT-ID].supabase.co:5432/postgres}"
 
 # Supabase Configuration
-NEXT_PUBLIC_SUPABASE_URL="${supabase_url:-https://[PROJECT-ID].supabase.co}"
+NEXT_PUBLIC_SUPABASE_URL="${supabase_url:-https://prj_oDXPr4Y1ZQEKXp8hwx5Y5LKYqhMI.supabase.co}"
 NEXT_PUBLIC_SUPABASE_ANON_KEY="${supabase_anon_key:-[SUPABASE-ANON-KEY]}"
 SUPABASE_SERVICE_ROLE_KEY="[SUPABASE-SERVICE-ROLE-KEY]"
 
