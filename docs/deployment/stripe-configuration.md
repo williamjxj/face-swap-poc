@@ -97,7 +97,6 @@ If `STRIPE_PRICE_ID` is not set, the system will fall back to:
    ```
 
 3. **Test the integration**
-
    - Go to gallery page
    - Try purchasing a video
    - Should use your Stripe Dashboard price

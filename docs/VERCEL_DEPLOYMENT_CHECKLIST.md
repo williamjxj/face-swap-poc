@@ -72,13 +72,11 @@ STORAGE_PATH="/tmp/storage"
 ### Environment Variables Setup in Vercel
 
 1. **Navigate to Vercel Dashboard**
-
    - Go to your project
    - Click on "Settings" tab
    - Select "Environment Variables"
 
 2. **Add Variables by Environment**
-
    - **Production**: Set all variables above
    - **Preview**: Copy from production, adjust URLs if needed
    - **Development**: Optional, usually use local .env.local
@@ -129,7 +127,6 @@ STORAGE_PATH="/tmp/storage"
 ### Functionality Tests
 
 - [ ] **Authentication**
-
   - [ ] Google OAuth login works
   - [ ] Azure AD login works (if configured)
   - [ ] Credentials login works
@@ -137,7 +134,6 @@ STORAGE_PATH="/tmp/storage"
   - [ ] Logout works properly
 
 - [ ] **Database Operations**
-
   - [ ] User registration creates database records
   - [ ] File uploads work correctly
   - [ ] Face fusion API calls succeed
@@ -151,7 +147,6 @@ STORAGE_PATH="/tmp/storage"
 ### Performance Tests
 
 - [ ] **Page Load Times**
-
   - [ ] Home page loads < 3 seconds
   - [ ] Authentication pages load quickly
   - [ ] Dashboard loads efficiently

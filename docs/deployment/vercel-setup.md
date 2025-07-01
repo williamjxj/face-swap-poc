@@ -178,13 +178,11 @@ Monitor database performance in Supabase dashboard under **Reports**.
 ### Common Issues:
 
 1. **Database Connection Error**
-
    - Check DATABASE_URL format
    - Verify Supabase project is active
    - Check firewall/network settings
 
 2. **File Upload Errors**
-
    - Verify storage buckets exist
    - Check RLS policies
    - Ensure correct file permissions

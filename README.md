@@ -170,7 +170,6 @@ The project uses different environment files for different setups:
    ```
 
    This will start:
-
    - API URL: http://localhost:54321
    - DB URL: postgresql://postgres:postgres@localhost:54322/postgres
    - Studio: http://localhost:54323
@@ -223,7 +222,6 @@ The project uses different environment files for different setups:
 For all setups, configure OAuth providers:
 
 1. **Google OAuth**
-
    - Go to [Google Cloud Console](https://console.developers.google.com/)
    - Create OAuth 2.0 credentials
    - Add redirect URIs: `http://localhost:3000/api/auth/callback/google`
@@ -312,7 +310,6 @@ Open <http://localhost:3000> in your browser.
    ```
 
 4. **Update OAuth Redirect URIs**
-
    - **Google**: Add `https://face-swap-poc.vercel.app/api/auth/callback/google`
    - **Azure**: Add `https://face-swap-poc.vercel.app/api/auth/callback/azure-ad`
 
@@ -428,13 +425,11 @@ server {
 ## Application Workflow
 
 1. **Authentication**
-
    - User signs in via Google or Microsoft
    - JWT session established
    - Session persisted via cookies
 
 2. **FaceFusion Video Generation**
-
    - User provides prompt and style
    - Request sent to image generation API
    - Generated image URL returned

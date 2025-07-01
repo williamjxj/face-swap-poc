@@ -34,7 +34,6 @@ The project is configured for GitHub Codespaces with automatic environment setup
    ```
 
 2. **Automatic Setup:**
-
    - Node.js and dependencies installed
    - Supabase CLI configured
    - Environment variables loaded from secrets

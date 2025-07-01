@@ -193,18 +193,15 @@ node -e "const { db } = require('./src/lib/db.js'); db.user.findMany().then(cons
 ### Common Issues
 
 1. **Build fails with "Can't reach database server"**
-
    - Ensure DATABASE_URL is set in build environment
    - Check `next.config.js` fallback configuration
 
 2. **Authentication not working**
-
    - Verify OAuth redirect URIs match your domain
    - Check NEXTAUTH_URL and NEXTAUTH_SECRET
    - Ensure database schema includes NextAuth tables
 
 3. **Prisma client errors**
-
    - Run `npm run db:generate` after schema changes
    - Ensure database is accessible and schema is up to date
 

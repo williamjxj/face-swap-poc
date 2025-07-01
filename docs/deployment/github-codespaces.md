@@ -7,7 +7,6 @@ This guide covers development setup and best practices when using GitHub Codespa
 ### 1. Launch Codespace
 
 1. **From GitHub Repository:**
-
    - Navigate to the repository
    - Click **Code** → **Codespaces** → **Create codespace on main**
 

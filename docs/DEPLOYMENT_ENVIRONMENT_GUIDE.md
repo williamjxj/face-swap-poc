@@ -76,12 +76,10 @@ NEXT_PUBLIC_BASE_URL=https://your-production-domain.vercel.app
 ## Best Practices
 
 1. **Never commit sensitive .env files**
-
    - `.env.local` should be in .gitignore
    - `.env.production` can be committed if it only contains non-sensitive defaults
 
 2. **Use environment-specific variables**
-
    - Different DATABASE_URL for dev/staging/production
    - Different API endpoints for different environments
 

@@ -32,13 +32,11 @@ Successfully migrated the entire face-swap-poc application from local filesystem
 #### Upload Endpoints
 
 - **`/api/upload-template/route.js`** ✅
-
   - Now uploads to `template-videos/` bucket
   - Stores correct bucket path in database
   - Uses `uploadFile` from storage helper
 
 - **`/api/upload-source/route.js`** ✅
-
   - Now uploads to `face-sources/` bucket
   - Stores correct bucket path in database
   - Uses `uploadFile` from storage helper
@@ -50,12 +48,10 @@ Successfully migrated the entire face-swap-poc application from local filesystem
 #### Download Endpoints
 
 - **`/api/download-source/route.js`** ✅
-
   - Now redirects to Supabase Storage public URLs
   - Uses `getStorageUrl` from storage helper
 
 - **`/api/download-template/route.js`** ✅
-
   - Now redirects to Supabase Storage public URLs
   - Uses `getStorageUrl` from storage helper
 
@@ -74,7 +70,6 @@ Successfully migrated the entire face-swap-poc application from local filesystem
 #### Management Endpoints
 
 - **`/api/delete-output/route.js`** ✅
-
   - Deletes files from Supabase Storage
   - Removes database records
 
