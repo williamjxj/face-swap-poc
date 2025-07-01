@@ -9,28 +9,41 @@ const getDatabaseConfig = () => {
     log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],
   }
 
-  // Ensure DATABASE_URL is available for all environments
-  if (!process.env.DATABASE_URL) {
+  // Get database URL with fallback for build time
+  let databaseUrl = process.env.DATABASE_URL
+
+  if (!databaseUrl) {
     // During build time, provide a fallback URL to prevent build failures
     if (process.env.NODE_ENV !== 'production') {
       console.warn('DATABASE_URL not found, using fallback for build process')
     }
-    config.datasources = {
-      db: {
-        url: 'postgresql://user:William1!@localhost:5432/fallback_db',
-      },
-    }
-  } else {
-    config.datasources = {
-      db: {
-        url: process.env.DATABASE_URL,
-      },
+    databaseUrl = 'postgresql://user:William1!@localhost:5432/fallback_db'
+  }
+
+  // For production, ensure we're using connection pooling
+  if (process.env.NODE_ENV === 'production' && databaseUrl.includes('supabase.co')) {
+    // If using direct connection, switch to pooler
+    if (databaseUrl.includes('db.yunxidsqumhfushjcgyg.supabase.co:5432')) {
+      console.log('Switching to connection pooler for production')
+      databaseUrl = databaseUrl.replace(
+        'db.yunxidsqumhfushjcgyg.supabase.co:5432',
+        'aws-0-us-west-1.pooler.supabase.com:6543'
+      )
+      // Add pooling parameters if not present
+      if (!databaseUrl.includes('pgbouncer=true')) {
+        databaseUrl += databaseUrl.includes('?') ? '&pgbouncer=true' : '?pgbouncer=true'
+      }
     }
   }
 
-  // Add connection pooling configuration for production
+  config.datasources = {
+    db: {
+      url: databaseUrl,
+    },
+  }
+
+  // Configure for serverless environments
   if (process.env.NODE_ENV === 'production') {
-    // Configure connection timeout for serverless environments
     config.errorFormat = 'minimal'
   }
 
