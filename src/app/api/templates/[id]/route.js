@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { getValidatedUserId } from '@/utils/auth-helper'
-import { deletePublicFile } from '@/utils/file-helper'
+import { deleteFile } from '@/utils/storage-helper'
 
 /**
  * GET template by ID
@@ -159,20 +159,34 @@ export async function DELETE(request, { params }) {
       }
     }
 
-    // Delete physical files
+    // Delete files from Supabase Storage
     if (template.filePath) {
-      const fileDeleted = await deletePublicFile(template.filePath)
-      console.log(
-        `[DELETE] File deletion ${fileDeleted ? 'succeeded' : 'failed'} for: ${template.filePath}`
-      )
+      try {
+        const deleteResult = await deleteFile(template.filePath)
+        console.log(
+          `[DELETE] File deletion ${deleteResult.success ? 'succeeded' : 'failed'} for: ${template.filePath}`
+        )
+        if (!deleteResult.success) {
+          console.error(`[DELETE] File deletion error:`, deleteResult.error)
+        }
+      } catch (error) {
+        console.error(`[DELETE] Error deleting file from storage:`, error)
+      }
     }
 
     // Also delete thumbnail if it exists
     if (template.thumbnailPath) {
-      const thumbDeleted = await deletePublicFile(template.thumbnailPath)
-      console.log(
-        `[DELETE] Thumbnail deletion ${thumbDeleted ? 'succeeded' : 'failed'} for: ${template.thumbnailPath}`
-      )
+      try {
+        const deleteResult = await deleteFile(template.thumbnailPath)
+        console.log(
+          `[DELETE] Thumbnail deletion ${deleteResult.success ? 'succeeded' : 'failed'} for: ${template.thumbnailPath}`
+        )
+        if (!deleteResult.success) {
+          console.error(`[DELETE] Thumbnail deletion error:`, deleteResult.error)
+        }
+      } catch (error) {
+        console.error(`[DELETE] Error deleting thumbnail from storage:`, error)
+      }
     }
 
     // Wait a brief moment to ensure database operations are complete

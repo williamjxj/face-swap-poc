@@ -7,6 +7,11 @@ export function serializeBigInt(data) {
     return data.toString()
   }
 
+  // Handle Date objects properly
+  if (data instanceof Date) {
+    return data.toISOString()
+  }
+
   if (Array.isArray(data)) {
     return data.map(serializeBigInt)
   }

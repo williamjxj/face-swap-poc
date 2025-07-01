@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import path from 'path'
 import db from '@/lib/db'
 import { getValidatedUserId, logSessionDebugInfo } from '@/utils/auth-helper'
 import { uploadFile, deleteFile, STORAGE_BUCKETS } from '@/utils/storage-helper'
@@ -31,9 +32,21 @@ export async function POST(request) {
     const bytes = await file.arrayBuffer()
     const buffer = Buffer.from(bytes)
 
-    // Create unique filename
+    // Create unique filename with sanitized name (remove non-ASCII characters)
     const timestamp = Date.now()
-    const filename = `${timestamp}_${file.name}`
+    const fileExtension = path.extname(file.name)
+    const baseName = path.basename(file.name, fileExtension)
+
+    // Sanitize filename by removing non-ASCII characters and replacing with safe characters
+    const sanitizedBaseName =
+      baseName
+        .replace(/[^\x00-\x7F]/g, '') // Remove non-ASCII characters
+        .replace(/[^a-zA-Z0-9._-]/g, '_') // Replace remaining special chars with underscore
+        .replace(/_{2,}/g, '_') // Replace multiple underscores with single
+        .replace(/^_+|_+$/g, '') || // Remove leading/trailing underscores
+      'image' // Fallback if name becomes empty
+
+    const filename = `${timestamp}_${sanitizedBaseName}${fileExtension}`
 
     // Upload to Supabase Storage
     const filePath = `${STORAGE_BUCKETS.FACE_SOURCES}/${filename}`
@@ -41,6 +54,7 @@ export async function POST(request) {
     const uploadResult = await uploadFile(buffer, filePath, {
       contentType: file.type,
       cacheControl: '3600',
+      overwrite: true, // Allow overwriting files with same name
     })
 
     if (!uploadResult.success) {

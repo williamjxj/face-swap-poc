@@ -157,22 +157,28 @@ export const createVideoThumbnail = videoFile => {
     }
 
     video.onseeked = () => {
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+      try {
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
 
-      canvas.toBlob(
-        blob => {
-          if (blob) {
-            resolve(blob)
-          } else {
-            reject(new Error('Failed to create thumbnail'))
-          }
-        },
-        'image/jpeg',
-        0.8
-      )
+        canvas.toBlob(
+          blob => {
+            if (blob) {
+              resolve(blob)
+            } else {
+              reject(new Error('Failed to create thumbnail'))
+            }
+          },
+          'image/jpeg',
+          0.8
+        )
+      } catch (canvasError) {
+        console.warn('Canvas tainted in createVideoThumbnail:', canvasError.message)
+        reject(new Error('Canvas tainted - cannot create thumbnail'))
+      }
     }
 
     video.onerror = () => reject(new Error('Failed to load video'))
+    video.crossOrigin = 'anonymous'
     video.src = URL.createObjectURL(videoFile)
   })
 }

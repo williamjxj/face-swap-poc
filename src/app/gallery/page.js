@@ -3,6 +3,7 @@ import { useState, useEffect, useMemo } from 'react'
 import Image from 'next/image'
 import Loading from '@/components/Loading'
 import VideoPlayerWithLoading from '@/components/VideoPlayerWithLoading'
+import { getStorageUrl } from '@/utils/storage-helper'
 import {
   Download,
   Play,
@@ -168,7 +169,15 @@ export default function GalleryPage() {
       if (media.mimeType.startsWith('image/')) return 'image'
     }
 
-    // Finally check file extension
+    // Check filename extension as fallback
+    const filename = media.filename || media.filePath || ''
+    if (filename) {
+      if (filename.match(/\.(mp4|webm|mov|avi)$/i)) return 'video'
+      if (filename.match(/\.gif$/i)) return 'gif'
+      if (filename.match(/\.(jpg|jpeg|png|webp|svg)$/i)) return 'image'
+    }
+
+    // Finally check file path
     if (media.filePath) {
       if (media.filePath.match(/\.(mp4|webm|mov|avi)$/i)) return 'video'
       if (media.filePath.match(/\.gif$/i)) return 'gif'
@@ -1365,11 +1374,11 @@ export default function GalleryPage() {
                               <Play className="w-8 h-8 md:w-12 md:h-12 text-white opacity-70 group-hover:opacity-90 transition-opacity" />
                             </div>
                             <video
-                              src={
+                              src={getStorageUrl(
                                 contentType === 'generatedMedia' && !item.isPaid
                                   ? item.watermarkPath || item.filePath
                                   : item.filePath
-                              }
+                              )}
                               className="w-full h-auto object-cover"
                               autoPlay
                               loop
@@ -1377,7 +1386,21 @@ export default function GalleryPage() {
                               playsInline
                               onLoadedMetadata={e => handleVideoLoadedMetadata(e.target, item.id)}
                               onError={e => {
-                                console.error('Video error:', e)
+                                const video = e.target
+                                const error = video.error
+                                console.error('Video loading error:', {
+                                  src: video.src,
+                                  error: error
+                                    ? {
+                                        code: error.code,
+                                        message: error.message,
+                                        MEDIA_ERR_ABORTED: error.code === 1,
+                                        MEDIA_ERR_NETWORK: error.code === 2,
+                                        MEDIA_ERR_DECODE: error.code === 3,
+                                        MEDIA_ERR_SRC_NOT_SUPPORTED: error.code === 4,
+                                      }
+                                    : 'No error details available',
+                                })
                                 const fallbackDiv = document.createElement('div')
                                 fallbackDiv.className =
                                   'w-full h-48 flex items-center justify-center bg-[#2a2d34]'
@@ -1401,9 +1424,9 @@ export default function GalleryPage() {
                           <Image
                             src={
                               item.thumbnailPath
-                                ? item.thumbnailPath
+                                ? getStorageUrl(item.thumbnailPath)
                                 : item.filePath && !item.filePath.match(/\.(mp4|webm|mov|avi)$/i)
-                                  ? item.filePath
+                                  ? getStorageUrl(item.filePath)
                                   : '/placeholder-thumbnail.svg'
                             }
                             alt={item.name || item.filename || 'Media item'}
@@ -1496,11 +1519,11 @@ export default function GalleryPage() {
                                 <Play className="w-8 h-8 text-white opacity-70 group-hover:opacity-90 transition-opacity" />
                               </div>
                               <video
-                                src={
+                                src={getStorageUrl(
                                   contentType === 'generatedMedia' && !item.isPaid
                                     ? item.watermarkPath || item.filePath
                                     : item.filePath
-                                }
+                                )}
                                 className="w-full h-full object-cover"
                                 autoPlay
                                 loop
@@ -1522,9 +1545,9 @@ export default function GalleryPage() {
                             <Image
                               src={
                                 item.thumbnailPath
-                                  ? item.thumbnailPath
+                                  ? getStorageUrl(item.thumbnailPath)
                                   : item.filePath && !item.filePath.match(/\.(mp4|webm|mov|avi)$/i)
-                                    ? item.filePath
+                                    ? getStorageUrl(item.filePath)
                                     : '/placeholder-thumbnail.svg'
                               }
                               alt={item.name || item.filename || 'Media item'}
@@ -1644,7 +1667,7 @@ export default function GalleryPage() {
             <div className="p-4">
               {getMediaType(selectedMedia) === 'video' ? (
                 <VideoPlayerWithLoading
-                  src={selectedMedia.filePath}
+                  src={getStorageUrl(selectedMedia.filePath)}
                   controls
                   autoPlay
                   className="w-full max-h-[70vh] object-contain"
@@ -1662,16 +1685,19 @@ export default function GalleryPage() {
                   <div className="relative max-w-full max-h-[70vh]">
                     {selectedMedia.filePath &&
                     (getMediaType(selectedMedia) === 'image' ||
-                      getMediaType(selectedMedia) === 'gif') ? (
+                      getMediaType(selectedMedia) === 'gif' ||
+                      (getMediaType(selectedMedia) === 'unknown' &&
+                        selectedMedia.mimeType?.startsWith('image/')) ||
+                      selectedMedia.mimeType?.startsWith('image/')) ? (
                       <Image
-                        src={selectedMedia.filePath}
+                        src={getStorageUrl(selectedMedia.filePath) || '/placeholder-thumbnail.svg'}
                         alt={selectedMedia.name || selectedMedia.filename || 'Media item'}
                         width={800}
                         height={800}
                         className="max-h-[70vh] object-contain"
                         priority={true}
                         onError={e => {
-                          // Handle image load errors
+                          // Handle image load errors gracefully
                           e.target.onerror = null
                           e.target.src = '/placeholder-thumbnail.svg'
                         }}
@@ -1709,7 +1735,18 @@ export default function GalleryPage() {
               </div>
 
               <div className="mt-2 text-sm text-gray-400">
-                Created: {new Date(selectedMedia.createdAt).toLocaleString()}
+                Created:{' '}
+                {(() => {
+                  try {
+                    const date = selectedMedia.createdAt || selectedMedia.uploadedAt
+                    if (!date) return 'Unknown'
+                    const parsedDate = new Date(date)
+                    if (isNaN(parsedDate.getTime())) return 'Invalid Date'
+                    return parsedDate.toLocaleString()
+                  } catch (error) {
+                    return 'Invalid Date'
+                  }
+                })()}
               </div>
             </div>
           </div>

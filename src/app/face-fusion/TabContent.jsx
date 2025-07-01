@@ -62,14 +62,28 @@ export default function TabContent({
 
   const renderTemplatePreview = template => {
     if (template.mimeType?.startsWith('video/')) {
+      // For videos, use a video element with poster fallback instead of trying to load non-existent thumbnails
       return (
-        <Image
-          src={getStorageUrl(template.thumbnailPath) || '/placeholder-thumbnail.svg'}
-          alt={template.filename}
-          className="object-cover rounded-lg target-dimensions"
-          width={116}
-          height={176}
-        />
+        <div className="relative w-[116px] h-[176px] bg-gray-800 rounded-lg overflow-hidden">
+          <video
+            src={getStorageUrl(template.filePath)}
+            className="w-full h-full object-cover"
+            muted
+            preload="metadata"
+            onLoadedData={e => {
+              // Seek to 1 second to get a better frame
+              e.target.currentTime = 1
+            }}
+          />
+          {/* Play icon overlay */}
+          <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+            <div className="w-8 h-8 bg-white/80 rounded-full flex items-center justify-center">
+              <svg className="w-4 h-4 text-gray-800 ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M8 5v14l11-7z" />
+              </svg>
+            </div>
+          </div>
+        </div>
       )
     } else {
       // For images and GIFs, use the file path directly

@@ -199,8 +199,16 @@ export default function VideoCarousel({
       video.onseeked = () => {
         try {
           context.drawImage(video, 0, 0, canvas.width, canvas.height)
-          const thumbnailDataUrl = canvas.toDataURL('image/jpeg', 0.7)
-          resolve(thumbnailDataUrl)
+          try {
+            const thumbnailDataUrl = canvas.toDataURL('image/jpeg', 0.7)
+            resolve(thumbnailDataUrl)
+          } catch (canvasError) {
+            console.warn(
+              'Canvas tainted in VideoCarousel, using null thumbnail:',
+              canvasError.message
+            )
+            resolve(null) // Return null instead of rejecting
+          }
         } catch (error) {
           reject(error)
         }

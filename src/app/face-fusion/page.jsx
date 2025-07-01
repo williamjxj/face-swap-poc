@@ -175,7 +175,8 @@ export default function FaceFusion() {
             .map(file => ({
               id: file.id,
               name: file.filename,
-              imagePath: file.filePath,
+              imagePath: file.filePath, // This should match what FaceSelection expects
+              filePath: file.filePath, // Keep both for compatibility
               createdAt: file.createdAt || 0,
             }))
             .sort((a, b) => b.createdAt - a.createdAt) // Sort by creation time descending
@@ -214,54 +215,25 @@ export default function FaceFusion() {
         }
 
         const data = await response.json()
+        console.log('Upload response:', data)
 
-        // Check if we got a partial success (file saved but database record not created)
-        let newImage
-        if (response.status === 207 && data.success && data.error) {
-          // This means the file was saved but database record wasn't created
-          console.warn('Partial success:', data.error)
-
-          const sourcePath = `/sources/${data.filename}`
-
-          // Update selected source and path
-          const newSource = {
-            preview: sourcePath,
-            name: data.filename,
-            // Add a flag to indicate this is a file-only source (not in database)
-            fileOnly: true,
-          }
-          setSelectedSource(newSource)
-          setSourcePath(sourcePath)
-
-          // Add to imageSources with fileOnly flag
-          newImage = {
-            id: Date.now(), // Use timestamp as temporary id
-            name: data.filename,
-            imagePath: sourcePath,
-            createdAt: Date.now(),
-            fileOnly: true, // Flag to indicate this isn't in the database
-          }
-        } else {
-          // Normal success - database record was created
-          const sourcePath = `/sources/${data.filename}`
-
-          // Update selected source and path
-          const newSource = {
-            preview: sourcePath,
-            name: data.filename,
-            id: data.id,
-          }
-          setSelectedSource(newSource)
-          setSourcePath(sourcePath)
-
-          // Add to imageSources with database ID
-          newImage = {
-            id: data.id, // Use the real database ID
-            name: data.filename,
-            imagePath: sourcePath,
-            createdAt: Date.now(),
-          }
+        // Create new image object with proper Supabase storage path
+        const newImage = {
+          id: data.id,
+          name: data.filename,
+          imagePath: data.filePath, // Use the Supabase storage path
+          filePath: data.filePath,
+          createdAt: Date.now(),
         }
+
+        // Update selected source with proper preview URL
+        const newSource = {
+          preview: data.filePath, // Use storage path for preview (will be converted to URL in UI)
+          name: data.filename,
+          id: data.id,
+        }
+        setSelectedSource(newSource)
+        setSourcePath(data.filePath) // Use storage path
 
         // Add the new image to the beginning of imageSources
         setImageSources(prev => [newImage, ...prev])
@@ -276,10 +248,10 @@ export default function FaceFusion() {
 
   const handleSourceSelect = image => {
     setSelectedSource({
-      preview: image.imagePath,
+      preview: image.imagePath, // This is the storage path (will be converted to URL in UI)
       name: image.name,
     })
-    setSourcePath(image.imagePath)
+    setSourcePath(image.imagePath) // Use storage path for processing
   }
 
   const handleSubmit = async () => {
@@ -911,7 +883,11 @@ export default function FaceFusion() {
                   src={getStorageUrl(selectedTemplate.filePath)}
                   controls
                   className="w-full h-full object-contain rounded-lg"
-                  poster={getStorageUrl(selectedTemplate.thumbnailPath)}
+                  poster={
+                    selectedTemplate.thumbnailPath
+                      ? getStorageUrl(selectedTemplate.thumbnailPath)
+                      : undefined
+                  }
                 />
               ) : (
                 <Image

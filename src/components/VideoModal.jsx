@@ -96,7 +96,7 @@ export default function VideoModal({ video, onClose, onDownload, onDelete }) {
             controls
             className="w-full rounded-lg mb-4 max-h-[70vh] object-contain"
             autoPlay
-            thumbnail={getStorageUrl(video.thumbnailPath)}
+            thumbnail={video.thumbnailPath ? getStorageUrl(video.thumbnailPath) : null}
             showDuration={true}
             optimizedLoading={true}
           />

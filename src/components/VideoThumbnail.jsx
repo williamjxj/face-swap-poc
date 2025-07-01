@@ -48,10 +48,18 @@ const VideoThumbnail = ({
           // Draw first frame to canvas
           context.drawImage(videoElement, 0, 0, videoWidth, videoHeight)
 
-          // Convert canvas to data URL
-          const thumbnailDataUrl = canvas.toDataURL('image/jpeg', 0.8)
-          setThumbnail(thumbnailDataUrl)
-          setIsLoading(false)
+          // Try to convert canvas to data URL
+          try {
+            const thumbnailDataUrl = canvas.toDataURL('image/jpeg', 0.8)
+            setThumbnail(thumbnailDataUrl)
+            setIsLoading(false)
+          } catch (canvasError) {
+            console.warn('Canvas tainted, using video element directly:', canvasError.message)
+            // Fallback: use the video element directly instead of canvas thumbnail
+            setThumbnail(null) // This will trigger the fallback UI
+            setHasError(false) // Don't show error state, just use fallback
+            setIsLoading(false)
+          }
 
           // Apply aspect ratio to container
           if (containerRef.current) {
@@ -135,7 +143,7 @@ const VideoThumbnail = ({
         style={{ aspectRatio: `${aspectRatio}` }}
       >
         {/* Hidden video element for thumbnail generation */}
-        <video ref={videoRef} className="hidden" muted preload="metadata" />
+        <video ref={videoRef} className="hidden" muted preload="metadata" crossOrigin="anonymous" />
 
         {/* Hidden canvas for thumbnail generation */}
         <canvas ref={canvasRef} className="hidden" />
@@ -149,6 +157,7 @@ const VideoThumbnail = ({
             controls
             autoPlay
             muted={false}
+            crossOrigin="anonymous"
             onClick={handleVideoClick}
             onPause={() => setIsPlaying(false)}
             onEnded={() => setIsPlaying(false)}
@@ -161,7 +170,7 @@ const VideoThumbnail = ({
               <div className="w-full h-full bg-gray-800 flex items-center justify-center">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
               </div>
-            ) : hasError || !thumbnail ? (
+            ) : hasError ? (
               // Error state - fallback
               <div className="w-full h-full bg-gray-800 flex items-center justify-center">
                 <div className="text-center">
@@ -171,6 +180,16 @@ const VideoThumbnail = ({
                   <p className="text-sm text-gray-400">Video Preview</p>
                 </div>
               </div>
+            ) : !thumbnail ? (
+              // No thumbnail (canvas tainted) - show video element as preview
+              <video
+                src={getStorageUrl(video.filePath)}
+                className="w-full h-full object-cover"
+                muted
+                preload="metadata"
+                crossOrigin="anonymous"
+                style={{ pointerEvents: 'none' }}
+              />
             ) : (
               // Thumbnail image
               <img

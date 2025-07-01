@@ -1,26 +1,27 @@
 import { createClient } from '@supabase/supabase-js'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+const supabaseKey =
+  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-if (!supabaseUrl) {
-  throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL environment variable')
+let supabase = null
+
+if (supabaseUrl && supabaseKey) {
+  supabase = createClient(supabaseUrl, supabaseKey)
+} else {
+  console.warn('Supabase environment variables not found. Some features may not work properly.')
 }
 
-if (!supabaseKey) {
-  throw new Error('Missing Supabase key environment variable')
-}
-
-export const supabase = createClient(supabaseUrl, supabaseKey)
+export { supabase }
 
 // Bucket mapping for different file types
 export const STORAGE_BUCKETS = {
   GENERATED_OUTPUTS: 'generated-outputs',
-  TEMPLATE_VIDEOS: 'template-videos', 
+  TEMPLATE_VIDEOS: 'template-videos',
   TEMPLATE_THUMBNAILS: 'template-thumbnails',
   FACE_SOURCES: 'face-sources',
   GUIDELINE_IMAGES: 'guideline-images',
-  ASSETS: 'assets'
+  ASSETS: 'assets',
 }
 
 /**
@@ -30,23 +31,36 @@ export const STORAGE_BUCKETS = {
  */
 export function getStorageUrl(filePath) {
   if (!filePath) return null
-  
+
   // If it's already a full URL, return as-is
   if (filePath.startsWith('http')) {
     return filePath
   }
-  
+
   // Extract bucket and path
   const [bucket, ...pathParts] = filePath.split('/')
   const path = pathParts.join('/')
-  
+
   if (!bucket || !path) {
     console.warn('Invalid file path format:', filePath)
     return null
   }
-  
-  const { data } = supabase.storage.from(bucket).getPublicUrl(path)
-  return data.publicUrl
+
+  // Fallback to direct URL construction if Supabase client is not available
+  try {
+    if (!supabase) {
+      throw new Error('Supabase client not initialized')
+    }
+    const { data } = supabase.storage.from(bucket).getPublicUrl(path)
+    return data.publicUrl
+  } catch (error) {
+    console.warn('Supabase client not available, using fallback URL construction:', error.message)
+
+    // Fallback: construct URL manually using known Supabase URL format
+    const supabaseUrl =
+      process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://yunxidsqumhfushjcgyg.supabase.co'
+    return `${supabaseUrl}/storage/v1/object/public/${bucket}/${path}`
+  }
 }
 
 /**
@@ -56,25 +70,23 @@ export function getStorageUrl(filePath) {
  * @returns {Promise<string>} Signed URL
  */
 export async function getSignedUrl(filePath, expiresIn = 3600) {
-  if (!filePath) return null
-  
+  if (!filePath || !supabase) return null
+
   const [bucket, ...pathParts] = filePath.split('/')
   const path = pathParts.join('/')
-  
+
   if (!bucket || !path) {
     console.warn('Invalid file path format:', filePath)
     return null
   }
-  
-  const { data, error } = await supabase.storage
-    .from(bucket)
-    .createSignedUrl(path, expiresIn)
-    
+
+  const { data, error } = await supabase.storage.from(bucket).createSignedUrl(path, expiresIn)
+
   if (error) {
     console.error('Error creating signed URL:', error)
     return null
   }
-  
+
   return data.signedUrl
 }
 
@@ -87,25 +99,27 @@ export async function getSignedUrl(filePath, expiresIn = 3600) {
  */
 export async function uploadFile(file, filePath, options = {}) {
   try {
+    if (!supabase) {
+      return { success: false, error: 'Supabase client not initialized' }
+    }
+
     const [bucket, ...pathParts] = filePath.split('/')
     const path = pathParts.join('/')
-    
+
     if (!bucket || !path) {
       return { success: false, error: 'Invalid file path format' }
     }
-    
-    const { data, error } = await supabase.storage
-      .from(bucket)
-      .upload(path, file, {
-        cacheControl: '3600',
-        upsert: options.overwrite || false,
-        ...options
-      })
-      
+
+    const { data, error } = await supabase.storage.from(bucket).upload(path, file, {
+      cacheControl: '3600',
+      upsert: options.overwrite || false,
+      ...options,
+    })
+
     if (error) {
       return { success: false, error: error.message }
     }
-    
+
     return { success: true, data }
   } catch (error) {
     return { success: false, error: error.message }
@@ -119,21 +133,23 @@ export async function uploadFile(file, filePath, options = {}) {
  */
 export async function deleteFile(filePath) {
   try {
+    if (!supabase) {
+      return { success: false, error: 'Supabase client not initialized' }
+    }
+
     const [bucket, ...pathParts] = filePath.split('/')
     const path = pathParts.join('/')
-    
+
     if (!bucket || !path) {
       return { success: false, error: 'Invalid file path format' }
     }
-    
-    const { error } = await supabase.storage
-      .from(bucket)
-      .remove([path])
-      
+
+    const { error } = await supabase.storage.from(bucket).remove([path])
+
     if (error) {
       return { success: false, error: error.message }
     }
-    
+
     return { success: true }
   } catch (error) {
     return { success: false, error: error.message }

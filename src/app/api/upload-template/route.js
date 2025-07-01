@@ -34,19 +34,37 @@ export async function POST(request) {
       )
     }
 
-    // Use original filename
-    const filename = file.name
+    // Generate unique filename to avoid conflicts with sanitized name
+    const timestamp = Date.now()
+    const originalName = file.name
+    const fileExtension = originalName.substring(originalName.lastIndexOf('.'))
+    const baseName = originalName.substring(0, originalName.lastIndexOf('.'))
+
+    // Sanitize filename by removing non-ASCII characters and replacing with safe characters
+    const sanitizedBaseName =
+      baseName
+        .replace(/[^\x00-\x7F]/g, '') // Remove non-ASCII characters
+        .replace(/[^a-zA-Z0-9._-]/g, '_') // Replace remaining special chars with underscore
+        .replace(/_{2,}/g, '_') // Replace multiple underscores with single
+        .replace(/^_+|_+$/g, '') || // Remove leading/trailing underscores
+      'template' // Fallback if name becomes empty
+
+    const filename = `${sanitizedBaseName}_${timestamp}${fileExtension}`
+
+    console.log('Generated unique filename:', filename)
+
     const fileBuffer = Buffer.from(await file.arrayBuffer())
 
     // Determine storage bucket and file paths
     const isVideo = file.type.startsWith('video/')
-    const bucket = isVideo ? STORAGE_BUCKETS.TEMPLATE_VIDEOS : STORAGE_BUCKETS.ASSETS
+    const bucket = isVideo ? STORAGE_BUCKETS.TEMPLATE_VIDEOS : STORAGE_BUCKETS.GUIDELINE_IMAGES
     const filePath = `${bucket}/${filename}`
 
     // Upload main file to Supabase Storage
     const uploadResult = await uploadFile(fileBuffer, filePath, {
       contentType: file.type,
       cacheControl: '3600',
+      overwrite: true, // Allow overwriting files with same name
     })
 
     if (!uploadResult.success) {
@@ -61,11 +79,12 @@ export async function POST(request) {
 
     if (isVideo) {
       try {
-        // For now, we'll set these as null since video processing is complex
+        // For now, we'll set thumbnailPath as null since we're not generating actual thumbnails
+        // The UI will handle video preview using the video element directly
         // In a production app, you'd want to use a service like AWS Lambda or similar
-        // to process videos and generate thumbnails
-        thumbnailPath = `${STORAGE_BUCKETS.TEMPLATE_THUMBNAILS}/${filename.replace(/\.(mp4|wav)$/i, '_thumbnail.webp')}`
-        console.log('Video uploaded, thumbnail processing would happen here')
+        // to process videos and generate actual thumbnails
+        thumbnailPath = null
+        console.log('Video uploaded, thumbnail will be generated dynamically by UI')
       } catch (error) {
         console.error('Error processing video:', error)
         console.log('Continuing upload process without thumbnail/duration')
@@ -105,7 +124,7 @@ export async function POST(request) {
     }
 
     const templateData = {
-      filename: filename,
+      filename: originalName, // Store original filename for display
       type: templateType,
       filePath: filePath,
       thumbnailPath: thumbnailPath,

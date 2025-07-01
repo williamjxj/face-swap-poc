@@ -76,7 +76,7 @@ export default function VideoDetailsModal({ video, isOpen, onClose, onDownload, 
           src={getStorageUrl(video.filePath)}
           className="max-w-full max-h-full object-contain rounded-lg"
           controls
-          poster={getStorageUrl(video.thumbnailPath)}
+          poster={video.thumbnailPath ? getStorageUrl(video.thumbnailPath) : undefined}
           onPlay={() => setIsPlaying(true)}
           onPause={() => setIsPlaying(false)}
           onEnded={() => setIsPlaying(false)}

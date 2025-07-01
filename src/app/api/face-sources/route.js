@@ -6,7 +6,7 @@ import { serializeBigInt } from '@/utils/helper'
 import { v4 as uuidv4 } from 'uuid'
 import sharp from 'sharp'
 import { getValidatedUserId, logSessionDebugInfo } from '@/utils/auth-helper'
-import { uploadFile, STORAGE_BUCKETS } from '@/utils/storage-helper'
+import { uploadFile, deleteFile, STORAGE_BUCKETS } from '@/utils/storage-helper'
 
 // Helper function to handle BigInt serialization
 const sanitizeBigInt = data => {
@@ -132,7 +132,7 @@ export async function DELETE(request) {
     }
 
     // Find the face source record
-    const faceSource = await prisma.faceSource.findFirst({
+    const faceSource = await db.faceSource.findFirst({
       where: {
         filename: filename,
         isActive: true,
@@ -143,32 +143,33 @@ export async function DELETE(request) {
       return NextResponse.json({ error: 'Source not found' }, { status: 404 })
     }
 
-    // Soft delete by setting isActive to false
-    await prisma.faceSource.update({
+    // Delete file from Supabase Storage first
+    if (faceSource.filePath) {
+      try {
+        const deleteResult = await deleteFile(faceSource.filePath)
+        if (deleteResult.success) {
+          console.log(`Successfully deleted file from storage: ${faceSource.filePath}`)
+        } else {
+          console.error('Error deleting file from storage:', deleteResult.error)
+          // Continue with database deletion even if file removal fails
+        }
+      } catch (error) {
+        console.error('Error deleting file from storage:', error)
+        // Continue with database deletion even if file removal fails
+      }
+    }
+
+    // Hard delete from database (completely remove the record)
+    await db.faceSource.delete({
       where: {
         id: faceSource.id,
       },
-      data: {
-        isActive: false,
-      },
     })
 
-    // Delete physical file if it exists
-    const filePath = path.join(process.cwd(), 'public', faceSource.filePath)
-    try {
-      // Check if file exists before attempting to delete
-      await fs.access(filePath)
-      await fs.unlink(filePath)
-    } catch (error) {
-      // File doesn't exist or can't be deleted, continue with the DB operation
-      console.warn('Warning: Could not delete physical file:', error)
-    }
-
+    console.log(`Successfully deleted face source: ${faceSource.filename}`)
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('Error deleting source:', error)
     return NextResponse.json({ error: 'Failed to delete source' }, { status: 500 })
-  } finally {
-    await prisma.$disconnect()
   }
 }

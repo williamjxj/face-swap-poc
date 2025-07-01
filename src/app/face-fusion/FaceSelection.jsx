@@ -62,16 +62,36 @@ export default function FaceSelection({
         <div className="flex gap-4 justify-center relative">
           <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-gray-600">
             {selectedTemplate ? (
-              <Image
-                src={
-                  getStorageUrl(selectedTemplate.thumbnailPath || selectedTemplate.filePath) ||
-                  '/placeholder-thumbnail.svg'
-                }
-                alt="Template thumbnail"
-                width={96}
-                height={96}
-                className="w-full h-full object-cover"
-              />
+              selectedTemplate.thumbnailPath ? (
+                // If we have a thumbnail, use it
+                <Image
+                  src={
+                    getStorageUrl(selectedTemplate.thumbnailPath) || '/placeholder-thumbnail.svg'
+                  }
+                  alt="Template thumbnail"
+                  width={96}
+                  height={96}
+                  className="w-full h-full object-cover"
+                />
+              ) : selectedTemplate.mimeType?.startsWith('video/') ? (
+                // If it's a video without thumbnail, show video element
+                <video
+                  src={getStorageUrl(selectedTemplate.filePath)}
+                  className="w-full h-full object-cover"
+                  muted
+                  playsInline
+                  preload="metadata"
+                />
+              ) : (
+                // If it's an image/gif, show as image
+                <Image
+                  src={getStorageUrl(selectedTemplate.filePath) || '/placeholder-thumbnail.svg'}
+                  alt="Template thumbnail"
+                  width={96}
+                  height={96}
+                  className="w-full h-full object-cover"
+                />
+              )
             ) : (
               <div className="w-full h-full bg-[#2a2d34] flex items-center justify-center">
                 <Plus className="w-8 h-8 text-gray-400" />
@@ -82,7 +102,7 @@ export default function FaceSelection({
           <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-gray-600">
             {selectedSource ? (
               <Image
-                src={selectedSource.preview}
+                src={getStorageUrl(selectedSource.preview) || '/placeholder-thumbnail.svg'}
                 alt="Selected face"
                 width={96}
                 height={96}
