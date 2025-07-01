@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import db from '@/lib/db'
 import { serializeBigInt } from '@/utils/helper'
+import { getValidatedUserId } from '@/utils/auth-helper'
 
 // GET all templates
 export async function GET() {
@@ -9,17 +10,21 @@ export async function GET() {
       throw new Error('Database client is not initialized')
     }
 
-    console.log('Fetching templates...')
+    // Get current user ID
+    const userId = await getValidatedUserId()
+
+    console.log('Fetching templates for user:', userId || 'anonymous')
     const templates = await db.targetTemplate.findMany({
       where: {
         isActive: true,
+        ...(userId ? { authorId: userId } : {}), // Only show user's own templates if authenticated
       },
       orderBy: {
         createdAt: 'desc',
       },
     })
 
-    console.log(`Found ${templates.length} templates`)
+    console.log(`Found ${templates.length} templates for user:`, userId || 'anonymous')
     // Serialize BigInt fields before returning
     const serializedTemplates = serializeBigInt(templates)
     return NextResponse.json({ templates: serializedTemplates })

@@ -1,21 +1,28 @@
 import { NextResponse } from 'next/server'
 import prisma from '@/lib/db'
 import { deleteFile } from '@/utils/storage-helper'
+import { getValidatedUserId } from '@/utils/auth-helper'
 
 // GET all generated media
 export async function GET(request) {
   try {
+    // Get current user ID
+    const userId = await getValidatedUserId()
+
     // Parse query parameters
     const { searchParams } = new URL(request.url)
     const typeFilter = searchParams.get('type')
     const limitParam = searchParams.get('limit')
     const limit = limitParam ? parseInt(limitParam, 10) : undefined
 
-    // Construct where clause with isActive filter and optional type filter
+    // Construct where clause with isActive filter, user filter, and optional type filter
     const whereClause = {
       isActive: true,
+      ...(userId ? { authorId: userId } : {}), // Only show user's own media if authenticated
       ...(typeFilter ? { type: typeFilter } : {}),
     }
+
+    console.log('[GENERATED-MEDIA] Filtering media for user:', userId || 'anonymous')
 
     const media = await prisma.generatedMedia.findMany({
       where: whereClause,
