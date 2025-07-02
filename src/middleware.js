@@ -2,7 +2,13 @@ import { NextResponse } from 'next/server'
 import { getToken } from 'next-auth/jwt'
 
 // Define allowed origins
-const allowedOrigins = ['localhost:3000']
+const allowedOrigins = [
+  'http://localhost:3000',
+  'https://localhost:3000',
+  process.env.NEXTAUTH_URL,
+  process.env.NEXT_PUBLIC_BASE_URL,
+  process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null,
+].filter(Boolean)
 
 export async function middleware(request) {
   const { pathname } = request.nextUrl
@@ -26,7 +32,12 @@ export async function middleware(request) {
     response.headers.set('Access-Control-Max-Age', '86400')
 
     // Set CORS headers for allowed origins
-    if (origin && (allowedOrigins.includes(origin) || origin.startsWith('http://localhost'))) {
+    if (
+      origin &&
+      (allowedOrigins.includes(origin) ||
+        origin.startsWith('http://localhost') ||
+        origin.includes('.vercel.app'))
+    ) {
       response.headers.set('Access-Control-Allow-Origin', origin)
       response.headers.set('Access-Control-Allow-Credentials', 'true')
     }
@@ -39,7 +50,12 @@ export async function middleware(request) {
     const response = NextResponse.next()
 
     // Set CORS headers for allowed origins
-    if (origin && (allowedOrigins.includes(origin) || origin.startsWith('http://localhost'))) {
+    if (
+      origin &&
+      (allowedOrigins.includes(origin) ||
+        origin.startsWith('http://localhost') ||
+        origin.includes('.vercel.app'))
+    ) {
       response.headers.set('Access-Control-Allow-Origin', origin)
       response.headers.set('Access-Control-Allow-Credentials', 'true')
     }

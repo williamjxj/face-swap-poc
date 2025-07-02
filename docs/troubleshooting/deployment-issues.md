@@ -2,6 +2,52 @@
 
 This guide covers common deployment issues specific to Vercel, Supabase, and production environments.
 
+## 🚨 Critical Vercel Issues
+
+### 1. Login User Can't Login (Credential 401)
+
+**Problem**: Users get 401 errors when trying to log in on Vercel deployment.
+
+**Root Cause**: CORS configuration in middleware.js blocks production requests.
+
+**Quick Fix**:
+
+```javascript
+// src/middleware.js - Line 6
+const allowedOrigins = [
+  'http://localhost:3000',
+  'https://your-app.vercel.app', // Add your Vercel domain
+  process.env.NEXTAUTH_URL, // Use environment variable
+]
+```
+
+**Additional Checks**:
+
+- Verify `NEXTAUTH_URL=https://your-app.vercel.app` in Vercel environment variables
+- Update OAuth redirect URIs in Google Console and Azure Portal
+- Generate new `NEXTAUTH_SECRET` for production
+
+### 2. View Videos and Images Are Empty
+
+**Problem**: Media content doesn't display on Vercel deployment.
+
+**Root Causes**:
+
+1. **Database Connection**: Verify Supabase environment variables
+2. **Storage Access**: Check Supabase Storage configuration
+3. **Image Domains**: Update `next.config.mjs` with Supabase domain
+
+**Quick Fix**:
+
+```javascript
+// next.config.mjs
+const nextConfig = {
+  images: {
+    domains: ['your-project.supabase.co'],
+  },
+}
+```
+
 ## 🌐 Vercel Deployment Issues
 
 ### Environment Configuration Problems

@@ -1,10 +1,6 @@
-# 📖 Face Swap POC Documenta### 🗂️ Directory Structure
+# 📖 Face Swap POC Documentation
 
 Welcome to the Face Swap POC documentation. This directory contains comprehensive guides for setup, development, deployment, and maintenance.
-
-```bash
-$ sudo -u postgres pg_ctl stop -D /Library/PostgreSQL/17/data
-```
 
 ## 📚 Documentation Index
 
@@ -27,8 +23,6 @@ $ sudo -u postgres pg_ctl stop -D /Library/PostgreSQL/17/data
 
 ### 🔍 Maintenance & Troubleshooting
 
-- **[CODE_CLEANUP_SUMMARY.md](./CODE_CLEANUP_SUMMARY.md)** - Recent code improvements and fixes
-- **[ESLINT_FIXES.md](./ESLINT_FIXES.md)** - ESLint configuration and fixes applied
 - **[troubleshooting/](./troubleshooting/)** - Common issues and solutions
 
 ### 📋 Product & Planning
@@ -51,7 +45,7 @@ $ sudo -u postgres pg_ctl stop -D /Library/PostgreSQL/17/data
 ### Troubleshooting?
 
 1. Check **[troubleshooting/common-issues.md](./troubleshooting/common-issues.md)**
-2. Review recent fixes in **[CODE_CLEANUP_SUMMARY.md](./CODE_CLEANUP_SUMMARY.md)**
+2. Review **[troubleshooting/deployment-issues.md](./troubleshooting/deployment-issues.md)** for Vercel-specific problems
 
 ## 📝 Documentation Standards
 
@@ -63,7 +57,7 @@ $ sudo -u postgres pg_ctl stop -D /Library/PostgreSQL/17/data
 
 ## 🔄 Last Updated
 
-This documentation structure was reorganized on **$(date)** to provide clearer navigation and up-to-date information reflecting the current project state.
+This documentation was last updated on **January 2025** to reflect the current project state and fix deployment issues.
 
 ---
 
