@@ -19,8 +19,8 @@ export default async function handler(req, res) {
         account: true,
         name: true,
         createdAt: true,
-        email: true
-      }
+        email: true,
+      },
     })
     console.log('Sample users:', users)
 
@@ -30,16 +30,15 @@ export default async function handler(req, res) {
         connected: true,
         userCount,
         sampleUsers: users,
-        timestamp: new Date().toISOString()
-      }
+        timestamp: new Date().toISOString(),
+      },
     })
-
   } catch (error) {
     console.error('Database test error:', error)
     return res.status(500).json({
       success: false,
       error: error.message,
-      details: 'Database connection failed'
+      details: 'Database connection failed',
     })
   }
 }

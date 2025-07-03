@@ -7,7 +7,7 @@ export default async function handler(req, res) {
     return res.status(200).json({
       message: 'Debug Auth Endpoint Ready',
       usage: 'Send POST request with { email, password } in body',
-      testUrl: '/debug-auth.html'
+      testUrl: '/debug-auth.html',
     })
   }
 
