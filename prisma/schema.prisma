@@ -1,12 +1,12 @@
 generator client {
-  provider = "prisma-client-js"
-  output   = "../node_modules/.prisma/client"
+  provider      = "prisma-client-js"
+  output        = "../node_modules/.prisma/client"
   binaryTargets = ["native", "rhel-openssl-3.0.x"]
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
 
@@ -14,11 +14,11 @@ model User {
   id              String           @id @default(uuid())
   account         String           @unique
   name            String?
-  email           String?
   passwordHash    String?          @map("password_hash")
   lastLogin       DateTime?        @map("last_login")
   lastLogout      DateTime?        @map("last_logout")
   createdAt       DateTime         @default(now()) @map("created_at")
+  email           String?
   updatedAt       DateTime         @updatedAt @map("updated_at")
   faceSources     FaceSource[]
   generatedMedia  GeneratedMedia[]

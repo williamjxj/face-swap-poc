@@ -6,6 +6,7 @@ import { db } from '@/lib/db'
 import bcrypt from 'bcryptjs'
 
 export const authOptions = {
+  debug: process.env.NODE_ENV === 'development',
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID,
@@ -70,6 +71,17 @@ export const authOptions = {
     strategy: 'jwt',
     // Keep session active for 30 days
     maxAge: 30 * 24 * 60 * 60, // 30 days in seconds
+  },
+  cookies: {
+    sessionToken: {
+      name: `__Secure-next-auth.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
+      },
+    },
   },
   pages: {
     signIn: '/auth/signin',
