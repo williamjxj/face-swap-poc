@@ -14,9 +14,12 @@ model User {
   id              String           @id @default(uuid())
   account         String           @unique
   name            String?
+  email           String?
   passwordHash    String?          @map("password_hash")
   lastLogin       DateTime?        @map("last_login")
   lastLogout      DateTime?        @map("last_logout")
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
   faceSources     FaceSource[]
   generatedMedia  GeneratedMedia[]
   Payment         Payment[]
