@@ -2,6 +2,15 @@ import { db } from '@/lib/db'
 import bcrypt from 'bcryptjs'
 
 export default async function handler(req, res) {
+  // Handle GET requests for quick testing
+  if (req.method === 'GET') {
+    return res.status(200).json({
+      message: 'Debug Auth Endpoint Ready',
+      usage: 'Send POST request with { email, password } in body',
+      testUrl: '/debug-auth.html'
+    })
+  }
+
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' })
   }
