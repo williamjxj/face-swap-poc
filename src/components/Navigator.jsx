@@ -2,7 +2,7 @@
 import { useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
-import { logout } from '@/services/auth'
+import { logout } from '@/services/auth-client'
 import MoreMenu from './MoreMenu'
 import { FaMagic, FaImages, FaSignOutAlt, FaPlay } from 'react-icons/fa'
 import { useSession } from 'next-auth/react'

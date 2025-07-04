@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server'
-import { db } from '@/lib/db'
 import { getValidatedUserId } from '@/utils/auth-helper'
 import { deleteFile } from '@/utils/storage-helper'
+import { getTargetTemplateById, updateTargetTemplate } from '@/lib/supabase-db'
+import { supabase } from '@/lib/supabase'
 
 /**
  * GET template by ID
@@ -16,12 +17,7 @@ export async function GET(request, { params }) {
       return NextResponse.json({ error: 'Template ID is required' }, { status: 400 })
     }
 
-    const template = await db.targetTemplate.findUnique({
-      where: {
-        id,
-        isActive: true,
-      },
-    })
+    const template = await getTargetTemplateById(id)
 
     if (!template) {
       return NextResponse.json({ error: 'Template not found' }, { status: 404 })
@@ -61,12 +57,7 @@ export async function DELETE(request, { params }) {
     console.log(`[DELETE] User ID from validation: ${userId || 'Not authenticated'}`)
 
     // Find the template to make sure it exists and belongs to the user (if applicable)
-    const template = await db.targetTemplate.findUnique({
-      where: {
-        id,
-        isActive: true,
-      },
-    })
+    const template = await getTargetTemplateById(id)
 
     if (!template) {
       console.log(`[DELETE] Template with ID ${id} not found or already inactive`)
@@ -92,13 +83,10 @@ export async function DELETE(request, { params }) {
     }
 
     // First, check if there are any associated generatedMedia records
-    const references = await db.$queryRaw`
-      SELECT COUNT(*) as count 
-      FROM "GeneratedMedia" 
-      WHERE "template_id" = ${id}
-    `
-
-    const referenceCount = Number(references[0]?.count || 0)
+    const { count: referenceCount } = await supabase
+      .from('generated_media')
+      .select('*', { count: 'exact', head: true })
+      .eq('template_id', id)
     console.log(`[DELETE] SQL check found ${referenceCount} references to template ${id}`)
 
     let deleteType = 'none'
@@ -108,54 +96,37 @@ export async function DELETE(request, { params }) {
         `[DELETE] Template ${id} has ${referenceCount} associated media records. Performing soft delete.`
       )
       // If media exists, just do a soft delete
-      await db.targetTemplate.update({
-        where: { id },
-        data: { isActive: false },
-      })
+      await updateTargetTemplate(id, { is_active: false })
       console.log(`[DELETE] Successfully marked template ${id} as inactive`)
       deleteType = 'soft'
     } else {
       // If no associated media, perform a hard delete with careful handling
       try {
         // First ensure there are no references by nullifying them
-        await db.$executeRaw`
-          UPDATE "GeneratedMedia" 
-          SET "template_id" = NULL 
-          WHERE "template_id" = ${id}
-        `
+        await supabase.from('generated_media').update({ template_id: null }).eq('template_id', id)
 
         console.log(`[DELETE] Nullified any potential references to template ${id}`)
 
-        // Now perform the actual delete with raw SQL for maximum control
-        const deleteResult = await db.$executeRaw`
-          DELETE FROM "TargetTemplate" 
-          WHERE "id" = ${id}
-        `
+        // Now perform the actual delete
+        const { data: deleteResult, error: deleteError } = await supabase
+          .from('target_templates')
+          .delete()
+          .eq('id', id)
+          .select()
 
-        console.log(`[DELETE] Raw SQL delete affected ${deleteResult} rows`)
-        deleteType = deleteResult > 0 ? 'hard-sql' : 'failed'
-      } catch (sqlError) {
-        console.error(`[DELETE] SQL delete failed:`, sqlError)
-
-        // Try the Prisma delete as fallback
-        try {
-          console.log(`[DELETE] Attempting Prisma delete as fallback`)
-          await db.targetTemplate.delete({
-            where: { id },
-          })
-          console.log(`[DELETE] Prisma delete succeeded`)
-          deleteType = 'hard-prisma'
-        } catch (prismaError) {
-          console.error(`[DELETE] Prisma delete failed:`, prismaError)
-
-          // Ultimate fallback to soft delete
-          await db.targetTemplate.update({
-            where: { id },
-            data: { isActive: false },
-          })
-          console.log(`[DELETE] Fallback: marked template ${id} as inactive`)
-          deleteType = 'soft-fallback'
+        if (deleteError) {
+          throw deleteError
         }
+
+        console.log(`[DELETE] Supabase delete successful`)
+        deleteType = deleteResult && deleteResult.length > 0 ? 'hard-supabase' : 'failed'
+      } catch (deleteError) {
+        console.error(`[DELETE] Supabase delete failed:`, deleteError)
+
+        // Ultimate fallback to soft delete
+        await updateTargetTemplate(id, { is_active: false })
+        console.log(`[DELETE] Fallback: marked template ${id} as inactive`)
+        deleteType = 'soft-fallback'
       }
     }
 
@@ -197,8 +168,8 @@ export async function DELETE(request, { params }) {
       try {
         // Use raw SQL to verify deletion to bypass any caching
         const checkExists = await db.$queryRaw`
-          SELECT COUNT(*) as count 
-          FROM "TargetTemplate" 
+          SELECT COUNT(*) as count
+          FROM "TargetTemplate"
           WHERE "id" = ${id}
         `
 
@@ -215,8 +186,8 @@ export async function DELETE(request, { params }) {
 
             // Verify again
             const finalCheck = await db.$queryRaw`
-              SELECT COUNT(*) as count 
-              FROM "TargetTemplate" 
+              SELECT COUNT(*) as count
+              FROM "TargetTemplate"
               WHERE "id" = ${id}
             `
 

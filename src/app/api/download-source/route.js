@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server'
-import db from '@/lib/db'
 import { getStorageUrl } from '@/utils/storage-helper'
 
 export async function GET(request) {

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
-import prisma from '@/lib/db'
 import { getStorageUrl } from '@/utils/storage-helper'
+import { getTargetTemplateByName } from '@/lib/supabase-db'
 
 export async function GET(request) {
   try {
@@ -12,12 +12,7 @@ export async function GET(request) {
     }
 
     // Check if the template exists
-    const template = await prisma.targetTemplate.findFirst({
-      where: {
-        OR: [{ name: filename }, { filename: filename }],
-        isActive: true,
-      },
-    })
+    const template = await getTargetTemplateByName(filename)
 
     if (!template) {
       return NextResponse.json({ error: 'Template not found' }, { status: 404 })

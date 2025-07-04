@@ -5,6 +5,7 @@ This guide covers how to integrate Vercel deployment with Supabase using the cur
 ## Current Stack
 
 Based on `package.json`:
+
 - **Next.js**: 15.2.4 with App Router
 - **Supabase**: @supabase/supabase-js v2.49.8
 - **Prisma**: 6.7.0 for database ORM
@@ -50,6 +51,7 @@ datasource db {
 ### 2. Connection Pooling Setup
 
 **Environment Variables**:
+
 ```bash
 # Connection pooling for application queries
 DATABASE_URL="postgresql://postgres.[ref]:[password]@aws-0-[region].pooler.supabase.com:6543/postgres?pgbouncer=true&connection_limit=1"
@@ -89,8 +91,8 @@ The project uses NextAuth.js v4 with Supabase as the database adapter:
 
 ```javascript
 // src/services/auth.js
-import { PrismaAdapter } from "@next-auth/prisma-adapter"
-import { prisma } from "@/lib/db"
+import { PrismaAdapter } from '@next-auth/prisma-adapter'
+import { prisma } from '@/lib/db'
 
 export const authOptions = {
   adapter: PrismaAdapter(prisma),
@@ -101,7 +103,7 @@ export const authOptions = {
     }),
   ],
   session: {
-    strategy: "jwt",
+    strategy: 'jwt',
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   pages: {
@@ -149,6 +151,7 @@ CREATE TABLE accounts (
 ### 1. Environment Variables in Vercel
 
 **Required Variables**:
+
 ```bash
 # Database
 DATABASE_URL="postgresql://postgres.[ref]:[password]@aws-0-[region].pooler.supabase.com:6543/postgres?pgbouncer=true&connection_limit=1"
@@ -238,13 +241,13 @@ export async function POST(request) {
   try {
     const formData = await request.formData()
     const file = formData.get('file')
-    
+
     const { data, error } = await supabase.storage
       .from('media')
       .upload(`uploads/${Date.now()}-${file.name}`, file)
-    
+
     if (error) throw error
-    
+
     return Response.json({ data })
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 })
@@ -275,12 +278,15 @@ export async function GET() {
 // src/app/api/data/route.js
 export async function GET() {
   const data = await prisma.user.findMany()
-  
-  return Response.json({ data }, {
-    headers: {
-      'Cache-Control': 's-maxage=60, stale-while-revalidate=300'
+
+  return Response.json(
+    { data },
+    {
+      headers: {
+        'Cache-Control': 's-maxage=60, stale-while-revalidate=300',
+      },
     }
-  })
+  )
 }
 ```
 
@@ -295,18 +301,21 @@ import { prisma } from '@/lib/db'
 export async function GET() {
   try {
     await prisma.$queryRaw`SELECT 1`
-    
+
     return Response.json({
       status: 'healthy',
       database: 'connected',
       timestamp: new Date().toISOString(),
-      environment: process.env.NODE_ENV
+      environment: process.env.NODE_ENV,
     })
   } catch (error) {
-    return Response.json({
-      status: 'unhealthy',
-      error: error.message
-    }, { status: 500 })
+    return Response.json(
+      {
+        status: 'unhealthy',
+        error: error.message,
+      },
+      { status: 500 }
+    )
   }
 }
 ```
@@ -320,11 +329,11 @@ export async function POST(request) {
     // Your logic here
   } catch (error) {
     console.error('API Error:', error)
-    
+
     if (error.code === 'P2002') {
       return Response.json({ error: 'Duplicate entry' }, { status: 409 })
     }
-    
+
     return Response.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -333,18 +342,21 @@ export async function POST(request) {
 ## Best Practices
 
 ### 1. Environment Management
+
 - Use different Supabase projects for development/production
 - Rotate secrets regularly
 - Use connection pooling for production
 - Monitor connection limits
 
 ### 2. Security
+
 - Use Row Level Security (RLS) in Supabase
 - Validate all inputs in API routes
 - Use service role keys only server-side
 - Implement rate limiting
 
 ### 3. Performance
+
 - Use Prisma's connection pooling
 - Implement proper caching headers
 - Optimize database queries

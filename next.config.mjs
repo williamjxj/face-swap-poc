@@ -29,9 +29,9 @@ const nextConfig = {
 
   // Environment variable configuration
   env: {
-    // Database URL for build process
-    DATABASE_URL:
-      process.env.DATABASE_URL || 'postgresql://fallback:password@localhost:5432/fallback_db',
+    // Supabase configuration for build process
+    NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
+    NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
   },
 
   // Logging configuration for development

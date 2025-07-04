@@ -64,12 +64,6 @@ export function getStorageUrl(filePath) {
   }
 }
 
-/**
- * Get a signed URL for private files (if needed)
- * @param {string} filePath - The file path in the bucket
- * @param {number} expiresIn - Expiration time in seconds (default: 1 hour)
- * @returns {Promise<string>} Signed URL
- */
 export async function getSignedUrl(filePath, expiresIn = 3600) {
   if (!filePath || !supabase) return null
 
@@ -91,13 +85,6 @@ export async function getSignedUrl(filePath, expiresIn = 3600) {
   return data.signedUrl
 }
 
-/**
- * Upload a file to Supabase Storage
- * @param {File|Buffer} file - The file to upload
- * @param {string} filePath - The destination path (e.g., "generated-outputs/video.mp4")
- * @param {Object} options - Upload options
- * @returns {Promise<{success: boolean, data?: any, error?: string}>}
- */
 export async function uploadFile(file, filePath, options = {}) {
   try {
     if (!supabase) {

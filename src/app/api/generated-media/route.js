@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
-import prisma from '@/lib/db'
+import { getGeneratedMediaByUser, deleteGeneratedMedia } from '@/lib/supabase-db'
 import { deleteFile } from '@/utils/storage-helper'
+import { getValidatedUserId } from '@/utils/auth-helper'
 
 // GET all generated media
 export async function GET(request) {
@@ -11,30 +12,25 @@ export async function GET(request) {
     const limitParam = searchParams.get('limit')
     const limit = limitParam ? parseInt(limitParam, 10) : undefined
 
-    // For demo version: show all active media to all users
-    const whereClause = {
-      isActive: true,
-      // Demo mode: show all media regardless of user authentication
-      ...(typeFilter ? { type: typeFilter } : {}),
+    // For demo/POC: Show all generated media regardless of user to maximize content visibility
+    console.log('[GENERATED-MEDIA] Showing all media (demo mode - all users)')
+
+    let media = await getGeneratedMediaByUser(null) // null = get all media
+
+    // Apply filters
+    if (typeFilter) {
+      media = media.filter(item => item.type === typeFilter)
     }
 
-    console.log('[GENERATED-MEDIA] Demo mode: showing all media')
+    if (limit) {
+      media = media.slice(0, limit)
+    }
 
-    const media = await prisma.generatedMedia.findMany({
-      where: whereClause,
-      orderBy: { createdAt: 'desc' },
-      ...(limit ? { take: limit } : {}),
-      include: {
-        targetTemplate: { select: { type: true } },
-        faceSource: { select: { id: true, filename: true } },
-      },
-    })
-
-    // Convert BigInt values to strings
+    // Convert BigInt values to strings and format response
     const serializedMedia = media.map(item => ({
       ...item,
-      fileSize: item.fileSize.toString(),
-      mimeType: item.mimeType || 'video/mp4', // Provide default mimeType if not set
+      file_size: item.file_size.toString(),
+      mime_type: item.mime_type || 'video/mp4', // Provide default mimeType if not set
       // GeneratedMedia doesn't have thumbnailPath field, so always use placeholder
       thumbnailPath: '/placeholder-thumbnail.svg',
     }))
@@ -55,17 +51,22 @@ export async function DELETE(request) {
       return NextResponse.json({ error: 'Filename is required' }, { status: 400 })
     }
 
-    // Find the generated media record to get the file path
-    const media = await prisma.generatedMedia.findFirst({
-      where: { name: filename },
-    })
+    const authorId = await getValidatedUserId()
 
-    if (media && media.filePath) {
+    if (!authorId) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+    }
+
+    // Find the generated media record to get the file path
+    const mediaList = await getGeneratedMediaByUser(authorId)
+    const media = mediaList.find(item => item.name === filename)
+
+    if (media && media.file_path) {
       try {
         // Delete from Supabase Storage
-        const deleteResult = await deleteFile(media.filePath)
+        const deleteResult = await deleteFile(media.file_path)
         console.log(
-          `[DELETE] File deletion ${deleteResult.success ? 'succeeded' : 'failed'} for: ${media.filePath}`
+          `[DELETE] File deletion ${deleteResult.success ? 'succeeded' : 'failed'} for: ${media.file_path}`
         )
         if (!deleteResult.success) {
           console.error(`[DELETE] Storage deletion error: ${deleteResult.error}`)
@@ -76,8 +77,10 @@ export async function DELETE(request) {
       }
     }
 
-    // Delete from generatedMedia table
-    await prisma.generatedMedia.deleteMany({ where: { name: filename } })
+    if (media) {
+      // Soft delete from generatedMedia table
+      await deleteGeneratedMedia(media.id)
+    }
 
     return NextResponse.json({ success: true })
   } catch (error) {

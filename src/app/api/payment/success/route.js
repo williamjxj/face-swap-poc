@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server'
 import stripe from '@/lib/stripe'
-import prisma from '@/lib/db'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/services/auth'
+import { getGeneratedMediaById, updateGeneratedMedia, createPayment } from '@/lib/supabase-db'
+import { supabase } from '@/lib/supabase'
 
 export async function GET(request) {
   const searchParams = request.nextUrl.searchParams
@@ -75,64 +76,56 @@ export async function GET(request) {
           console.log('Attempting fallback update of isPaid status')
 
           // Check if video exists and is already paid
-          const video = await prisma.generatedMedia.findUnique({
-            where: { id: videoId },
-          })
+          const video = await getGeneratedMediaById(videoId)
 
           if (!video) {
             console.error(`Video with ID ${videoId} not found in database`)
-          } else if (video.isPaid) {
+          } else if (video.is_paid) {
             console.log(`Video ${videoId} is already marked as paid`)
           } else {
             // Update the video to mark it as paid
-            await prisma.generatedMedia.update({
-              where: { id: videoId },
-              data: { isPaid: true },
-            })
+            await updateGeneratedMedia(videoId, { is_paid: true })
 
             console.log(`Fallback: Video ${videoId} marked as paid`)
 
-            // Create payment record if it doesn't exist and Payment model is available
-            if (prisma.payment) {
-              try {
-                const existingPayment = await prisma.payment.findFirst({
-                  where: {
-                    generatedMediaId: videoId,
+            // Create payment record if it doesn't exist
+            try {
+              // Check if payment already exists
+              const { data: existingPayments } = await supabase
+                .from('payments')
+                .select('*')
+                .eq('generated_media_id', videoId)
+                .eq('status', 'completed')
+                .limit(1)
+
+              if (!existingPayments || existingPayments.length === 0) {
+                // Determine which user ID to use (current user takes priority over video author)
+                const userId = currentUserId || video.author_id
+
+                if (userId) {
+                  // Common payment data
+                  const paymentData = {
+                    amount: parseFloat(session.amount_total) / 100,
+                    currency: session.currency.toUpperCase(),
                     status: 'completed',
-                  },
-                })
-
-                if (!existingPayment) {
-                  // Determine which user ID to use (current user takes priority over video author)
-                  const userId = currentUserId || video.authorId
-
-                  if (userId) {
-                    // Common payment data
-                    const paymentData = {
-                      amount: parseFloat(session.amount_total) / 100,
-                      currency: session.currency.toUpperCase(),
-                      status: 'completed',
-                      type: 'fiat',
-                      userId,
-                      generatedMediaId: videoId,
-                    }
-
-                    await prisma.payment.create({ data: paymentData })
-
-                    const userSource = currentUserId ? 'current user' : 'video author'
-                    console.log(`Fallback: Created payment record for ${userSource}: ${userId}`)
-                  } else {
-                    console.log('Cannot create payment record: No valid user ID found')
+                    type: 'fiat',
+                    user_id: userId,
+                    generated_media_id: videoId,
                   }
+
+                  await createPayment(paymentData)
+
+                  const userSource = currentUserId ? 'current user' : 'video author'
+                  console.log(`Fallback: Created payment record for ${userSource}: ${userId}`)
+                } else {
+                  console.log('Cannot create payment record: No valid user ID found')
                 }
-              } catch (paymentError) {
-                console.error('Error handling payment record:', paymentError.message)
-                // Continue execution even if payment record handling fails
+              } else {
+                console.log('Payment record already exists for this video')
               }
-            } else {
-              console.log(
-                'Payment model not available in Prisma client, skipping payment record creation'
-              )
+            } catch (paymentError) {
+              console.error('Error handling payment record:', paymentError.message)
+              // Continue execution even if payment record handling fails
             }
           }
         } catch (dbError) {

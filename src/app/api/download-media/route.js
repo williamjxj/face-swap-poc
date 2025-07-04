@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
-import prisma from '@/lib/db'
 import { supabase } from '@/utils/storage-helper'
+import { getGeneratedMediaByName } from '@/lib/supabase-db'
 
 export async function GET(request) {
   try {
@@ -12,9 +12,7 @@ export async function GET(request) {
     }
 
     // Check if the video exists and is paid
-    const media = await prisma.generatedMedia.findFirst({
-      where: { name: filename },
-    })
+    const media = await getGeneratedMediaByName(filename)
 
     if (!media) {
       return NextResponse.json({ error: 'Media not found' }, { status: 404 })

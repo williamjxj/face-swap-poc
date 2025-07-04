@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server'
 import path from 'path'
 import FormData from 'form-data'
 import fetch from 'node-fetch'
-import { db } from '@/lib/db'
 import { getValidatedUserId, logSessionDebugInfo } from '@/utils/auth-helper'
 import { uploadFile, getStorageUrl } from '@/utils/storage-helper'
 

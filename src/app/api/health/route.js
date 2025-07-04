@@ -1,18 +1,20 @@
 import { NextResponse } from 'next/server'
-import db from '@/lib/db'
+import { supabase } from '@/lib/supabase'
 
 export async function GET() {
   const startTime = Date.now()
 
   try {
-    // Log the actual DATABASE_URL being used (masked for security)
-    const dbUrl = process.env.DATABASE_URL
-    const maskedUrl = dbUrl ? dbUrl.replace(/:([^:@]+)@/, ':***@') : 'NOT_SET'
-    console.log('Using DATABASE_URL:', maskedUrl)
+    // Log the actual Supabase URL being used (masked for security)
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const maskedUrl = supabaseUrl
+      ? supabaseUrl.replace(/\/\/(.+)\.supabase\.co/, '//***')
+      : 'NOT_SET'
+    console.log('Using Supabase URL:', maskedUrl)
 
     // Test database connection with timeout
     const connectionTest = Promise.race([
-      db.$queryRaw`SELECT 1 as test, NOW() as server_time`,
+      supabase.from('users').select('id').limit(1),
       new Promise((_, reject) =>
         setTimeout(() => reject(new Error('Database connection timeout')), 10000)
       ),

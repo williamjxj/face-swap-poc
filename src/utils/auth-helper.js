@@ -1,7 +1,7 @@
 // Auth helper utilities
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/services/auth'
-import { db } from '@/lib/db'
+import { findUserById, findUserByEmail } from '@/lib/supabase-db'
 
 /**
  * Gets a validated user ID from the session, ensuring the user exists in the database
@@ -17,20 +17,14 @@ export async function getValidatedUserId() {
     }
 
     // Verify the user exists in database
-    const user = await db.user.findUnique({
-      where: { id: session.user.id },
-      select: { id: true },
-    })
+    const user = await findUserById(session.user.id)
 
     if (!user) {
       console.log('[AUTH] User ID from session not found in database:', session.user.id)
 
       // If we have an email, try to find the user by email as fallback
       if (session.user.email) {
-        const userByEmail = await db.user.findUnique({
-          where: { account: session.user.email },
-          select: { id: true },
-        })
+        const userByEmail = await findUserByEmail(session.user.email)
 
         if (userByEmail) {
           console.log('[AUTH] Found user by email instead:', userByEmail.id)

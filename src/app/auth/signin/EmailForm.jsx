@@ -1,7 +1,7 @@
 'use client'
 import { useState } from 'react'
 import styles from './emailform.module.css'
-import { loginWithEmail, registerUser } from '@/services/auth'
+import { loginWithEmail, registerUser } from '@/services/auth-client'
 import { useRouter } from 'next/navigation'
 import './form-fix.css'
 

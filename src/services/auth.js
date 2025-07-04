@@ -1,12 +1,15 @@
-import { signIn, signOut, getSession } from 'next-auth/react'
+// Server-side auth configuration - do not import client-side functions
 import GoogleProvider from 'next-auth/providers/google'
 import AzureADProvider from 'next-auth/providers/azure-ad'
 import CredentialsProvider from 'next-auth/providers/credentials'
-import { db } from '@/lib/db'
+import { findUserByEmail, updateUserLastLogin } from '@/lib/supabase-db'
 import bcrypt from 'bcryptjs'
+
+// Environment variables validated during build
 
 export const authOptions = {
   debug: process.env.NODE_ENV === 'development',
+  // Removed Supabase adapter to use pure JWT strategy with our own user management
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID,
@@ -38,28 +41,38 @@ export const authOptions = {
 
         try {
           // Find user in database
-          const user = await db.user.findUnique({
-            where: { account: credentials.email },
-          })
+          const user = await findUserByEmail(credentials.email)
+          console.log(
+            '[CREDENTIALS] User found:',
+            user ? { id: user.id, email: user.email } : 'null'
+          )
 
           // If user doesn't exist or password doesn't match
-          if (!user || !user.passwordHash) {
+          if (!user || !user.password_hash) {
             return null
           }
 
           // Compare plain password with stored hash
-          const isValidPassword = await bcrypt.compare(credentials.password, user.passwordHash)
+          const isValidPassword = await bcrypt.compare(credentials.password, user.password_hash)
 
           if (!isValidPassword) {
             return null
           }
 
-          // Return user object that will be saved in JWT
-          return {
-            id: user.id,
-            email: user.account,
-            name: user.name || user.account.split('@')[0],
+          // Update last login
+          try {
+            await updateUserLastLogin(user.email)
+          } catch (error) {
+            console.error('Login update error:', error)
           }
+
+          // Return user object that will be saved in JWT
+          const userResult = {
+            id: user.id,
+            email: user.email,
+            name: user.name || user.email.split('@')[0],
+          }
+          return userResult
         } catch (error) {
           console.error('Credentials auth error:', error)
           return null
@@ -74,12 +87,16 @@ export const authOptions = {
   },
   cookies: {
     sessionToken: {
-      name: `__Secure-next-auth.session-token`,
+      name:
+        process.env.NODE_ENV === 'production'
+          ? `__Secure-next-auth.session-token`
+          : `next-auth.session-token`,
       options: {
         httpOnly: true,
         sameSite: 'lax',
         path: '/',
         secure: process.env.NODE_ENV === 'production',
+        domain: process.env.NODE_ENV === 'production' ? undefined : 'localhost',
       },
     },
   },
@@ -97,52 +114,67 @@ export const authOptions = {
     async jwt({ token, user, account, profile }) {
       try {
         // Initial sign in
-        if (account && profile) {
-          // Store user email in the token
-          token.email = profile.email || profile.mail
+        if (account && user) {
+          console.log('[JWT] Initial sign in with account:', account.provider, 'user:', user.email)
+
+          // For OAuth providers, get the user from our database
+          if (account.provider === 'google' || account.provider === 'azure-ad') {
+            const email = user.email || profile?.email || profile?.mail
+            if (email) {
+              const dbUser = await findUserByEmail(email)
+              if (dbUser) {
+                token.id = dbUser.id
+                token.email = dbUser.email
+                token.name = dbUser.name
+                console.log('[JWT] OAuth user token set:', { id: token.id, email: token.email })
+              }
+            }
+          } else {
+            // For credentials provider
+            token.id = user.id
+            token.email = user.email
+            token.name = user.name
+            console.log('[JWT] Credentials user token set:', { id: token.id, email: token.email })
+          }
         }
-        if (user) {
-          token.id = user.id
+
+        // Always ensure we have the token data
+        if (!token.id && token.email) {
+          console.log('[JWT] Token missing ID, trying to find user by email:', token.email)
+          const dbUser = await findUserByEmail(token.email)
+          if (dbUser) {
+            token.id = dbUser.id
+            token.email = dbUser.email
+            token.name = dbUser.name
+            console.log('[JWT] Found user and updated token:', { id: token.id, email: token.email })
+          }
         }
+
         return token
       } catch (error) {
         console.error('JWT callback error:', error)
-        return {}
+        return token
       }
     },
     async session({ session, token }) {
       try {
         // Handle case where token might be corrupted or empty
         if (!token || Object.keys(token).length === 0) {
-          console.log('Empty or corrupted token, returning null session')
+          console.log('[SESSION] Empty or corrupted token, returning null session')
           return null
         }
 
-        // Pass user ID to the client session
+        console.log('[SESSION] Token data:', { id: token.id, email: token.email, name: token.name })
+
+        // Pass user data from token to session
         session.user.id = token.id
+        session.user.email = token.email
+        session.user.name = token.name
 
-        // If we have an email, ensure the user exists in the database
-        if (session?.user?.email) {
-          try {
-            // Use upsert but retrieve the user information to get the correct ID
-            const user = await db.user.upsert({
-              where: { account: session.user.email },
-              update: { lastLogin: new Date() },
-              create: {
-                account: session.user.email,
-                lastLogin: new Date(),
-                name: session.user.name || session.user.email.split('@')[0],
-              },
-            })
-
-            // Always ensure we have the correct user ID from the database
-            session.user.id = user.id
-            console.log('Auth session updated with user ID:', user.id)
-          } catch (error) {
-            console.error('Error updating user session:', error)
-            // Continue session but log the error
-          }
-        }
+        console.log('[SESSION] Final session user:', {
+          id: session.user.id,
+          email: session.user.email,
+        })
 
         return session
       } catch (error) {
@@ -151,16 +183,48 @@ export const authOptions = {
         return null
       }
     },
-    async signIn({ profile, user }) {
-      // Allow credential authentication where user is returned from authorize callback
-      if (user) {
-        return true
+    async signIn({ user, account, profile }) {
+      try {
+        // For credentials provider, user is already validated
+        if (account?.provider === 'credentials') {
+          return true
+        }
+
+        // For OAuth providers (Google, Azure), ensure user exists in our users table
+        if (account?.provider === 'google' || account?.provider === 'azure-ad') {
+          const email = user?.email || profile?.email || profile?.mail
+
+          if (!email) {
+            console.error('No email found in OAuth profile')
+            return false
+          }
+
+          // Check if user exists in our users table
+          let existingUser = await findUserByEmail(email)
+
+          if (!existingUser) {
+            // Create user in our users table
+            const { createUser } = await import('@/lib/supabase-db')
+            try {
+              existingUser = await createUser({
+                email: email,
+                name: user?.name || profile?.name || email.split('@')[0],
+              })
+              console.log(`[AUTH] Created new user for OAuth: ${email}`)
+            } catch (createError) {
+              console.error('Error creating OAuth user:', createError)
+              return false
+            }
+          }
+
+          return true
+        }
+
+        return false
+      } catch (error) {
+        console.error('SignIn callback error:', error)
+        return false
       }
-      // Allow OAuth authentication where profile contains email
-      if (profile?.email || profile?.mail) {
-        return true
-      }
-      return false
     },
   },
 }
@@ -183,105 +247,6 @@ export const loginWithMicrosoft = async () => {
   }
 }
 
-export const getCurrentSession = async () => {
-  try {
-    const session = await getSession()
-    return session
-  } catch (error) {
-    console.error('Get session error:', error)
-    return null
-  }
-}
+// Client-side functions moved to @/services/auth-client.js
 
-export const logout = async () => {
-  try {
-    // Get current session to know which user is logging out
-    const session = await getSession()
-
-    // If we have an email, update the logout time
-    if (session?.user?.email) {
-      try {
-        await db.user.update({
-          where: { account: session.user.email },
-          data: { lastLogout: new Date() },
-        })
-      } catch (error) {
-        console.error('Logout update error:', error)
-        // Continue with logout even if the update fails
-      }
-    }
-
-    // Clear client-side storage
-    window.localStorage.removeItem('nextauth.message')
-    window.sessionStorage.clear()
-
-    // Sign out via NextAuth
-    await signOut({ callbackUrl: '/' })
-
-    return { success: true }
-  } catch (error) {
-    return { success: false, error: error.message }
-  }
-}
-
-export const isAuthenticated = async () => {
-  const session = await getCurrentSession()
-  return !!session?.user
-}
-
-export const loginWithEmail = async (email, password) => {
-  try {
-    const result = await signIn('credentials', {
-      email,
-      password,
-      redirect: false,
-    })
-
-    if (result?.error) {
-      return {
-        success: false,
-        error: 'Invalid email or password',
-      }
-    }
-
-    if (result?.ok) {
-      return { success: true }
-    }
-
-    return {
-      success: false,
-      error: 'Login failed',
-    }
-  } catch (error) {
-    return {
-      success: false,
-      error: error.message || 'Login failed',
-    }
-  }
-}
-
-export const registerUser = async (email, password, name = '') => {
-  try {
-    const response = await fetch('/api/auth/register', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ email, password, name }),
-    })
-
-    const data = await response.json()
-
-    if (!response.ok) {
-      throw new Error(data.error || 'Registration failed')
-    }
-
-    // Auto login after successful registration
-    return loginWithEmail(email, password)
-  } catch (error) {
-    return {
-      success: false,
-      error: error.message || 'Registration failed',
-    }
-  }
-}
+// All client-side functions have been moved to @/services/auth-client.js

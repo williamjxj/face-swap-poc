@@ -6,26 +6,20 @@
     "dev": "next dev --turbopack",
     "dev:cloud": "next dev --turbopack",
     "dev:local": "supabase start && next dev --turbopack",
-    "build": "prisma generate && next build",
+    "build": "next build",
     "start": "next start",
-    "postinstall": "prisma generate",
     "lint": "next lint",
     "format": "prettier --write .",
     "check-format": "prettier --check .",
     "lint-fix": "eslint --fix --ext .js,.jsx,.ts,.tsx .",
     "lint-src": "eslint --fix \"src/**/*.{js,jsx,ts,tsx}\"",
-    "db:generate": "prisma generate",
-    "db:push": "prisma db push",
-    "db:studio": "prisma studio",
-    "db:migrate": "prisma migrate dev",
-    "db:seed": "prisma db seed",
-    "setup": "npm install && prisma generate",
+    "setup": "npm install",
     "setup:cloud": "npm run setup && echo 'Using cloud Supabase - ready to start development'",
     "setup:local": "npm run setup && supabase start && echo 'Local Supabase started - ready for development'"
   },
   "dependencies": {
+    "@auth/supabase-adapter": "^1.10.0",
     "@headlessui/react": "^2.2.0",
-    "@prisma/client": "^6.7.0",
     "@stripe/stripe-js": "^7.3.0",
     "@supabase/supabase-js": "^2.49.8",
     "autoprefixer": "^10.4.21",
@@ -57,7 +51,6 @@
     "eslint-plugin-unused-imports": "^4.1.4",
     "npm-check": "^6.0.1",
     "prettier": "^3.5.3",
-    "prisma": "^6.7.0",
     "tailwindcss": "^4.1.5"
   }
 }

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
-import { db } from '@/lib/db'
+import { findUserByEmail, createUser } from '@/lib/supabase-db'
 import bcrypt from 'bcryptjs'
+import { v4 as uuidv4 } from 'uuid'
 
 export async function POST(request) {
   try {
@@ -13,9 +14,7 @@ export async function POST(request) {
     }
 
     // Check if user already exists
-    const existingUser = await db.user.findUnique({
-      where: { account: email },
-    })
+    const existingUser = await findUserByEmail(email)
 
     if (existingUser) {
       return NextResponse.json({ error: 'User with this email already exists' }, { status: 409 })
@@ -25,17 +24,15 @@ export async function POST(request) {
     const passwordHash = await bcrypt.hash(password, 10)
 
     // Create user
-    const user = await db.user.create({
-      data: {
-        account: email,
-        passwordHash,
-        name: name || email.split('@')[0],
-        lastLogin: new Date(),
-      },
+    const user = await createUser({
+      id: uuidv4(),
+      email: email,
+      password_hash: passwordHash,
+      name: name || email.split('@')[0],
     })
 
     // Don't include the password hash in the response
-    const { passwordHash: _, ...userWithoutPassword } = user
+    const { password_hash: _, ...userWithoutPassword } = user
 
     return NextResponse.json(
       {

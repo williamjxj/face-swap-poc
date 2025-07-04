@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import prisma from '@/lib/db'
+import { updateGeneratedMedia, createPayment } from '@/lib/supabase-db'
 
 export async function POST(request) {
   try {
@@ -65,36 +65,29 @@ export async function POST(request) {
       console.log('PayPal payment verified successfully')
 
       // Update the video to mark it as paid
-      const updatedVideo = await prisma.generatedMedia.update({
-        where: { id: videoId },
-        data: { isPaid: true },
-      })
+      const updatedVideo = await updateGeneratedMedia(videoId, { is_paid: true })
 
       console.log(`Video ${videoId} marked as paid via PayPal`)
 
-      // Create payment record if Payment model exists
-      if (prisma.payment) {
-        try {
-          const paymentAmount = parseFloat(orderData.purchase_units[0].amount.value)
-          const paymentCurrency = orderData.purchase_units[0].amount.currency_code
+      // Create payment record
+      try {
+        const paymentAmount = parseFloat(orderData.purchase_units[0].amount.value)
+        const paymentCurrency = orderData.purchase_units[0].amount.currency_code
 
-          await prisma.payment.create({
-            data: {
-              amount: paymentAmount,
-              currency: paymentCurrency,
-              status: 'completed',
-              type: 'paypal',
-              userId: updatedVideo.authorId,
-              generatedMediaId: videoId,
-              paypalOrderId: orderID,
-            },
-          })
+        await createPayment({
+          amount: paymentAmount,
+          currency: paymentCurrency,
+          status: 'completed',
+          type: 'paypal',
+          user_id: updatedVideo.author_id,
+          generated_media_id: videoId,
+          paypal_order_id: orderID,
+        })
 
-          console.log('PayPal payment record created successfully')
-        } catch (paymentError) {
-          console.error('Error creating PayPal payment record:', paymentError)
-          // Continue even if payment record creation fails
-        }
+        console.log('PayPal payment record created successfully')
+      } catch (paymentError) {
+        console.error('Error creating PayPal payment record:', paymentError)
+        // Continue even if payment record creation fails
       }
 
       return NextResponse.json({

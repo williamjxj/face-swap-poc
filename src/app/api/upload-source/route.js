@@ -1,9 +1,15 @@
 import { NextResponse } from 'next/server'
 import path from 'path'
-import db from '@/lib/db'
+import {
+  createFaceSource,
+  getFaceSourcesByUser,
+  getFaceSourceById,
+  deleteFaceSource,
+} from '@/lib/supabase-db'
 import { getValidatedUserId, logSessionDebugInfo } from '@/utils/auth-helper'
 import { uploadFile, deleteFile, STORAGE_BUCKETS } from '@/utils/storage-helper'
 import sharp from 'sharp'
+import { v4 as uuidv4 } from 'uuid'
 
 export async function POST(request) {
   try {
@@ -82,42 +88,39 @@ export async function POST(request) {
     // Get validated user ID from helper function
     const authorId = await getValidatedUserId()
 
-    // Create database record
-    if (!db) {
-      console.error('Database client is not initialized')
-      return NextResponse.json({ error: 'Database client is not initialized' }, { status: 500 })
+    if (!authorId) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
     }
 
     const faceSourceData = {
+      id: uuidv4(),
       filename: filename,
       width: width,
       height: height,
-      filePath: filePath, // Store Supabase Storage path (e.g., "face-sources/123456_image.png")
-      fileSize: BigInt(file.size),
-      mimeType: file.type,
-      authorId: authorId,
+      file_path: filePath, // Store Supabase Storage path (e.g., "face-sources/123456_image.png")
+      file_size: file.size,
+      mime_type: file.type,
+      author_id: authorId,
     }
 
     console.log('Creating face source record with data:', {
       ...faceSourceData,
-      fileSize: faceSourceData.fileSize.toString(), // Convert BigInt to string for logging
+      file_size: faceSourceData.file_size.toString(), // Convert BigInt to string for logging
     })
 
     try {
-      const faceSource = await db.faceSource.create({
-        data: faceSourceData,
-      })
+      const faceSource = await createFaceSource(faceSourceData)
 
       console.log('FaceSource created successfully:', faceSource)
 
       return NextResponse.json({
         id: faceSource.id,
         filename: faceSource.filename,
-        filePath: faceSource.filePath,
+        filePath: faceSource.file_path,
         width: faceSource.width,
         height: faceSource.height,
-        fileSize: faceSource.fileSize.toString(),
-        mimeType: faceSource.mimeType,
+        fileSize: faceSource.file_size.toString(),
+        mimeType: faceSource.mime_type,
       })
     } catch (error) {
       console.error('Error creating database record:', error.message)
@@ -160,19 +163,15 @@ export async function POST(request) {
 // Add GET endpoint to list face sources
 export async function GET() {
   try {
-    // Get all face sources, ordered by most recent first
-    const faceSources = await db.faceSource.findMany({
-      orderBy: {
-        createdAt: 'desc',
-      },
-    })
+    // Get all face sources, ordered by most recent first (for demo purposes, showing all to all users)
+    const faceSources = await getFaceSourcesByUser(null) // null means get all
 
     // Convert BigInt to strings for JSON response
     const faceSourcesWithStringFileSize = faceSources.map(source => ({
       ...source,
-      fileSize: source.fileSize.toString(),
-      createdAt: source.createdAt.toISOString(),
-      lastUsedAt: source.lastUsedAt ? source.lastUsedAt.toISOString() : null,
+      file_size: source.file_size.toString(),
+      created_at: source.created_at,
+      last_used_at: source.last_used_at,
     }))
 
     return NextResponse.json({ faceSources: faceSourcesWithStringFileSize })
@@ -193,20 +192,18 @@ export async function DELETE(request) {
     }
 
     // Get face source details before deletion
-    const faceSource = await db.faceSource.findUnique({
-      where: { id: id },
-    })
+    const faceSource = await getFaceSourceById(id)
 
     if (!faceSource) {
       return NextResponse.json({ error: 'Face source not found' }, { status: 404 })
     }
 
     // Delete file from Supabase Storage
-    if (faceSource.filePath) {
+    if (faceSource.file_path) {
       try {
-        const deleteResult = await deleteFile(faceSource.filePath)
+        const deleteResult = await deleteFile(faceSource.file_path)
         if (deleteResult.success) {
-          console.log(`Successfully deleted file from storage: ${faceSource.filePath}`)
+          console.log(`Successfully deleted file from storage: ${faceSource.file_path}`)
         } else {
           console.error('Error deleting file from storage:', deleteResult.error)
           // Continue with database deletion even if file removal fails
@@ -218,9 +215,7 @@ export async function DELETE(request) {
     }
 
     // Delete database record
-    await db.faceSource.delete({
-      where: { id: id },
-    })
+    await deleteFaceSource(id)
 
     return NextResponse.json({
       success: true,

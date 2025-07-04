@@ -17,6 +17,7 @@ const VideoThumbnail = ({
   const [isLoading, setIsLoading] = useState(true)
   const [hasError, setHasError] = useState(false)
   const [aspectRatio, setAspectRatio] = useState(16 / 9) // Default aspect ratio
+  const [videoDuration, setVideoDuration] = useState(video.duration || 0)
   const videoRef = useRef(null)
   const canvasRef = useRef(null)
   const containerRef = useRef(null)
@@ -40,6 +41,21 @@ const VideoThumbnail = ({
           // Calculate and set aspect ratio
           const ratio = videoWidth / videoHeight
           setAspectRatio(ratio)
+
+          // Update duration if available and different from current
+          if (videoElement.duration && videoElement.duration > 0) {
+            const newDuration = videoElement.duration
+            if (!videoDuration || Math.abs(newDuration - videoDuration) > 1) {
+              setVideoDuration(newDuration)
+
+              // Update duration in database if significantly different from stored value
+              if (!video.duration || Math.abs(newDuration - video.duration) > 1) {
+                updateVideoDurationInDB(video.id, newDuration).catch(error => {
+                  console.warn('Failed to update video duration in DB:', error)
+                })
+              }
+            }
+          }
 
           // Set canvas dimensions to match video
           canvas.width = videoWidth
@@ -135,6 +151,25 @@ const VideoThumbnail = ({
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
   }
 
+  // Function to update video duration in database
+  const updateVideoDurationInDB = async (videoId, duration) => {
+    try {
+      const response = await fetch(`/api/generated-media/${videoId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ duration }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to update video duration')
+      }
+    } catch (error) {
+      console.error('Error updating video duration:', error)
+    }
+  }
+
   return (
     <div className="group bg-[#1a1d24] rounded-xl overflow-hidden cursor-pointer hover:bg-[#1f2228] transition-all duration-200 shadow-lg hover:shadow-xl w-[60%] mx-auto">
       <div
@@ -223,7 +258,7 @@ const VideoThumbnail = ({
 
         {/* Duration */}
         <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
-          {formatDuration(video.duration)}
+          {formatDuration(videoDuration)}
         </div>
 
         {/* Action buttons */}

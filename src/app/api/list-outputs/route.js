@@ -1,13 +1,12 @@
 import { NextResponse } from 'next/server'
-import db from '@/lib/db'
 import { serializeBigInt } from '@/utils/helper'
+import { getGeneratedMediaByUser } from '@/lib/supabase-db'
 
 export async function GET() {
   try {
-    const outputs = await db.generatedMedia.findMany({
-      where: { isActive: true },
-      orderBy: { createdAt: 'desc' },
-    })
+    // Get all generated media (for demo purposes, showing all to all users)
+    // In production, you might want to filter by user
+    const outputs = await getGeneratedMediaByUser(null) // null means get all
     const serializedOutputs = serializeBigInt(outputs)
     return NextResponse.json({ files: serializedOutputs })
   } catch (error) {

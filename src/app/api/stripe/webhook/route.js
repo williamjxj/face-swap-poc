@@ -1,17 +1,13 @@
 import { NextResponse } from 'next/server'
 import { headers } from 'next/headers'
 import stripe from '@/lib/stripe'
-import prisma from '@/lib/db'
+import { getGeneratedMediaById, updateGeneratedMedia, createPayment } from '@/lib/supabase-db'
 
 // This is your Stripe CLI webhook secret for testing your endpoint locally
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET
 
 // Configure the route to handle raw body for webhook signature verification
 export const runtime = 'nodejs'
-
-// Check if Payment model exists in Prisma schema
-const paymentModelExists = !!prisma.payment
-console.log(`Payment model exists in Prisma: ${paymentModelExists}`)
 
 export async function POST(req) {
   console.log('Stripe webhook received')
@@ -91,10 +87,7 @@ export async function POST(req) {
 
         try {
           // Check if video exists first
-          const videoExists = await prisma.generatedMedia.findUnique({
-            where: { id: videoId },
-            select: { id: true },
-          })
+          const videoExists = await getGeneratedMediaById(videoId)
 
           if (!videoExists) {
             console.error(`Video with ID ${videoId} not found in database`)
@@ -107,42 +100,32 @@ export async function POST(req) {
           }
 
           // Update the video to mark it as paid
-          const updatedVideo = await prisma.generatedMedia.update({
-            where: { id: videoId },
-            data: { isPaid: true },
-          })
+          const updatedVideo = await updateGeneratedMedia(videoId, { is_paid: true })
 
           console.log(`Payment successful, video marked as paid:`, updatedVideo)
 
           // Also create a payment record in the database
-          // Skip payment creation if there's no Payment model available
-          if (prisma.payment) {
-            try {
-              // Only try to create a payment record if we have a valid author ID
-              if (updatedVideo.authorId) {
-                // Common payment data
-                const paymentData = {
-                  amount: parseFloat(session.amount_total) / 100,
-                  currency: session.currency.toUpperCase(),
-                  status: 'completed',
-                  type: 'fiat',
-                  userId: updatedVideo.authorId,
-                  generatedMediaId: videoId,
-                }
-
-                await prisma.payment.create({ data: paymentData })
-                console.log(`Payment record created successfully`)
-              } else {
-                console.log('Cannot create payment record: No valid authorId found for video')
+          try {
+            // Only try to create a payment record if we have a valid author ID
+            if (updatedVideo.author_id) {
+              // Common payment data
+              const paymentData = {
+                amount: parseFloat(session.amount_total) / 100,
+                currency: session.currency.toUpperCase(),
+                status: 'completed',
+                type: 'fiat',
+                user_id: updatedVideo.author_id,
+                generated_media_id: videoId,
               }
-            } catch (paymentError) {
-              // Don't fail the whole process if payment record creation fails
-              console.error(`Error creating payment record: ${paymentError.message}`)
+
+              await createPayment(paymentData)
+              console.log(`Payment record created successfully`)
+            } else {
+              console.log('Cannot create payment record: No valid author_id found for video')
             }
-          } else {
-            console.log(
-              'Payment model not available in Prisma client, skipping payment record creation'
-            )
+          } catch (paymentError) {
+            // Don't fail the whole process if payment record creation fails
+            console.error(`Error creating payment record: ${paymentError.message}`)
           }
 
           console.log(`Payment record created successfully`)

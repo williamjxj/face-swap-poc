@@ -195,30 +195,33 @@ validate_config() {
     
     # Test database connection
     log_info "Testing database connection..."
-    if command -v npx >/dev/null 2>&1; then
-        if npx prisma db pull --print > /dev/null 2>&1; then
+    if command -v psql >/dev/null 2>&1; then
+        if psql "$DATABASE_URL" -c "SELECT 1;" > /dev/null 2>&1; then
             log_success "Database connection successful"
         else
             log_error "Database connection failed"
             return 1
         fi
     else
-        log_warning "npx not available, skipping database test"
+        log_info "psql not available, skipping connection test"
     fi
     
     log_success "Configuration validation passed"
 }
 
-# Generate Prisma client
-generate_client() {
-    log_info "Generating Prisma client..."
-    
-    if command -v npx >/dev/null 2>&1; then
-        npx prisma generate
-        log_success "Prisma client generated"
+# Test Supabase connection
+test_supabase_connection() {
+    log_info "Testing Supabase connection..."
+
+    if command -v curl >/dev/null 2>&1; then
+        if curl -s "$NEXT_PUBLIC_SUPABASE_URL/rest/v1/" -H "apikey: $NEXT_PUBLIC_SUPABASE_ANON_KEY" > /dev/null 2>&1; then
+            log_success "Supabase connection successful"
+        else
+            log_error "Supabase connection failed"
+            return 1
+        fi
     else
-        log_error "npx not available"
-        return 1
+        log_info "curl not available, skipping Supabase test"
     fi
 }
 
@@ -261,14 +264,14 @@ interactive_menu() {
     case $choice in
         1)
             switch_to_local
-            generate_client
+            test_supabase_connection
             ;;
         2)
             switch_to_supabase
             echo ""
-            read -p "Generate Prisma client now? (y/n): " gen_client
-            if [[ "$gen_client" == "y" || "$gen_client" == "Y" ]]; then
-                generate_client
+            read -p "Test Supabase connection now? (y/n): " test_conn
+            if [[ "$test_conn" == "y" || "$test_conn" == "Y" ]]; then
+                test_supabase_connection
             fi
             ;;
         3)

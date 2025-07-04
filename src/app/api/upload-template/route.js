@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server'
-import db from '@/lib/db'
 import { getValidatedUserId, logSessionDebugInfo } from '@/utils/auth-helper'
 import { uploadFile, deleteFile, STORAGE_BUCKETS } from '@/utils/storage-helper'
 

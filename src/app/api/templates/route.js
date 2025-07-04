@@ -1,34 +1,12 @@
 import { NextResponse } from 'next/server'
-import db from '@/lib/db'
+import { getTargetTemplates, createTargetTemplate } from '@/lib/supabase-db'
 import { serializeBigInt } from '@/utils/helper'
 
 // GET all templates
 export async function GET() {
   try {
-    // Check environment variables
-    console.log('Environment check:', {
-      DATABASE_URL: !!process.env.DATABASE_URL,
-      NODE_ENV: process.env.NODE_ENV,
-    })
-
-    if (!db) {
-      throw new Error('Database client is not initialized')
-    }
-
-    // Test database connection first
-    await db.$queryRaw`SELECT 1`
-    console.log('Database connection successful')
-
     console.log('Fetching all active templates...')
-    const templates = await db.targetTemplate.findMany({
-      where: {
-        isActive: true,
-        // Templates are shared resources - show all active templates to all users
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    })
+    const templates = await getTargetTemplates(false) // false = exclude guidelines
 
     console.log(`Found ${templates.length} active templates`)
     // Serialize BigInt fields before returning
@@ -59,17 +37,15 @@ export async function GET() {
 export async function POST(request) {
   try {
     const data = await request.json()
-    const template = await db.targetTemplate.create({
-      data: {
-        name: data.name,
-        type: data.type,
-        filePath: data.filePath,
-        thumbnailPath: data.thumbnailPath,
-        fileSize: data.fileSize,
-        duration: data.duration,
-        mimeType: data.mimeType,
-        authorId: data.authorId,
-      },
+    const template = await createTargetTemplate({
+      filename: data.name,
+      type: data.type,
+      file_path: data.filePath,
+      thumbnail_path: data.thumbnailPath,
+      file_size: data.fileSize,
+      duration: data.duration,
+      mime_type: data.mimeType,
+      author_id: data.authorId,
     })
     return NextResponse.json(template, { status: 201 })
   } catch (error) {
