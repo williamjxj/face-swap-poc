@@ -11,9 +11,7 @@ export async function DELETE(request) {
     }
 
     // Get template details before deletion
-    const template = await db.targetTemplate.findUnique({
-      where: { id: id },
-    })
+    const template = await getTargetTemplateById(id)
 
     if (!template) {
       return NextResponse.json({ error: 'Template not found' }, { status: 404 })
@@ -51,9 +49,7 @@ export async function DELETE(request) {
     }
 
     // Delete database record
-    await db.targetTemplate.delete({
-      where: { id: id },
-    })
+    await deleteTargetTemplate(id)
 
     return NextResponse.json({ success: true })
   } catch (error) {

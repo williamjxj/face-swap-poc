@@ -9,7 +9,6 @@ import {
 import { getValidatedUserId, logSessionDebugInfo } from '@/utils/auth-helper'
 import { uploadFile, deleteFile, STORAGE_BUCKETS } from '@/utils/storage-helper'
 import sharp from 'sharp'
-import { v4 as uuidv4 } from 'uuid'
 
 export async function POST(request) {
   try {
@@ -93,14 +92,12 @@ export async function POST(request) {
     }
 
     const faceSourceData = {
-      id: uuidv4(),
-      filename: filename,
-      width: width,
-      height: height,
+      original_filename: filename, // Correct database field name
       file_path: filePath, // Store Supabase Storage path (e.g., "face-sources/123456_image.png")
       file_size: file.size,
       mime_type: file.type,
       author_id: authorId,
+      is_active: true, // Set as active by default
     }
 
     console.log('Creating face source record with data:', {
@@ -115,10 +112,10 @@ export async function POST(request) {
 
       return NextResponse.json({
         id: faceSource.id,
-        filename: faceSource.filename,
+        filename: faceSource.original_filename, // Use correct database field
         filePath: faceSource.file_path,
-        width: faceSource.width,
-        height: faceSource.height,
+        width: width, // Use calculated dimensions
+        height: height, // Use calculated dimensions
         fileSize: faceSource.file_size.toString(),
         mimeType: faceSource.mime_type,
       })

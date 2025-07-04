@@ -81,6 +81,13 @@ export const updateUserLastLogout = async email => {
   return data
 }
 
+export const getUserByEmail = async email => {
+  const { data, error } = await supabase.from('users').select('*').eq('email', email).single()
+
+  if (error && error.code !== 'PGRST116') throw error // PGRST116 is "not found"
+  return data
+}
+
 export const upsertUser = async userData => {
   const { data, error } = await supabase
     .from('users')
@@ -166,6 +173,47 @@ export const getFaceSourcesByUser = async userId => {
 
 export const getFaceSourceById = async id => {
   const { data, error } = await supabase.from('face_sources').select('*').eq('id', id).single()
+
+  if (error) throw error
+
+  if (!data) return null
+
+  // Apply same transformation as getFaceSourcesByUser for consistency
+  const source = data
+
+  // Determine type from mimeType if not set
+  let type = source.type
+  if (!type && source.mime_type) {
+    if (source.mime_type.startsWith('image/')) {
+      type = source.mime_type === 'image/gif' ? 'gif' : 'image'
+    } else if (source.mime_type.startsWith('video/')) {
+      type = 'video'
+    }
+  }
+
+  return {
+    ...source,
+    filePath: source.file_path,
+    filename: source.original_filename,
+    authorId: source.author_id,
+    originalFilename: source.original_filename,
+    fileSize: source.file_size,
+    mimeType: source.mime_type,
+    isActive: source.is_active,
+    lastUsedAt: source.last_used_at,
+    createdAt: source.created_at,
+    updatedAt: source.updated_at,
+    type: type,
+  }
+}
+
+export const getFaceSourceByFilename = async filename => {
+  const { data, error } = await supabase
+    .from('face_sources')
+    .select('*')
+    .eq('original_filename', filename)
+    .eq('is_active', true)
+    .single()
 
   if (error) throw error
   return data
@@ -274,7 +322,58 @@ export const getTargetTemplateById = async id => {
     .single()
 
   if (error && error.code !== 'PGRST116') throw error // PGRST116 is "not found"
-  return data
+
+  if (!data) return null
+
+  // Apply same transformation as getTargetTemplates for consistency
+  const template = data
+
+  // Determine type and mimeType from file extension if not set
+  let type = template.type
+  let mimeType = template.mime_type
+
+  if (!type || !mimeType) {
+    const fileName = template.name || template.file_path || ''
+    const extension = fileName.toLowerCase().split('.').pop()
+
+    switch (extension) {
+      case 'mp4':
+      case 'mov':
+      case 'avi':
+      case 'webm':
+        type = 'video'
+        mimeType = `video/${extension === 'mov' ? 'quicktime' : extension}`
+        break
+      case 'jpg':
+      case 'jpeg':
+      case 'png':
+      case 'webp':
+        type = 'image'
+        mimeType = `image/${extension === 'jpg' ? 'jpeg' : extension}`
+        break
+      case 'gif':
+        type = 'gif'
+        mimeType = 'image/gif'
+        break
+      default:
+        type = 'unknown'
+        mimeType = 'application/octet-stream'
+    }
+  }
+
+  return {
+    ...template,
+    filePath: template.file_path,
+    thumbnailPath: template.thumbnail_url,
+    videoUrl: template.video_url,
+    filename: template.name,
+    createdAt: template.created_at,
+    updatedAt: template.updated_at,
+    isActive: template.is_active,
+    fileSize: template.file_size,
+    type: type,
+    mimeType: mimeType,
+  }
 }
 
 export const createTargetTemplate = async templateData => {
@@ -542,6 +641,7 @@ const db = {
   createUser,
   findUserByEmail,
   findUserById,
+  getUserByEmail,
   updateUser,
   updateUserLastLogin,
   updateUserLastLogout,
@@ -551,6 +651,7 @@ const db = {
   createFaceSource,
   getFaceSourcesByUser,
   getFaceSourceById,
+  getFaceSourceByFilename,
   updateFaceSource,
   deleteFaceSource,
 

@@ -46,13 +46,13 @@ export default function SignInPage() {
 
         {!showEmailForm ? (
           <div className={styles.providers}>
-            <AuthButton provider="google" />
-            <div className={styles.divider}>or</div>
-            <AuthButton provider="azure-ad" />
-            <div className={styles.divider}>or</div>
             <button onClick={() => setShowEmailForm(true)} className={styles.emailButton}>
               Continue with Email
             </button>
+            <div className={styles.divider}>or</div>
+            <AuthButton provider="google" />
+            <div className={styles.divider}>or</div>
+            <AuthButton provider="azure-ad" />
           </div>
         ) : (
           <>
@@ -66,6 +66,11 @@ export default function SignInPage() {
         )}
 
         <div className={styles.footer}>
+          <div className={styles.demoCredentials}>
+            <p className={styles.demoText}>
+              <strong>Test Account:</strong> demo@example.com / 123456
+            </p>
+          </div>
           <p className={styles.terms}>
             By continuing, you agree to our{' '}
             <a href="/terms" className={styles.link}>

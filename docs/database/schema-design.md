@@ -1,5 +1,17 @@
 # 💾 Database Schema Design
 
+## Latest Update
+
+### Question
+
+There is always issues when local macbook pro working version app deployed to vercel! `Prisma + Supabase + NextAuth v4 + Vercel deployment`
+
+### Solution
+
+Remove `prisma`, let `supabase` + `next-auth v4` handle all database operations directly, this changes immediately make the authentication (login/signup) work in Vercel!
+
+**The following are old original design, worked locally, but not in Vercel**
+
 This document outlines the database schema design for the Face Swap POC application using Prisma ORM with PostgreSQL and Supabase.
 
 ## 🏗️ Schema Overview

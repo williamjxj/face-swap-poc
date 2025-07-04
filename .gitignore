@@ -43,5 +43,3 @@ yarn-error.log*
 .DS_Store
 .vscode/
 storage/
-prisma/migrations/
-fs-docs/*.pdf

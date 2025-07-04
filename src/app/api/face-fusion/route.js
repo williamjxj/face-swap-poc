@@ -4,6 +4,7 @@ import FormData from 'form-data'
 import fetch from 'node-fetch'
 import { getValidatedUserId, logSessionDebugInfo } from '@/utils/auth-helper'
 import { uploadFile, getStorageUrl } from '@/utils/storage-helper'
+import { getFaceSourceById, getTargetTemplateById, createGeneratedMedia } from '@/lib/supabase-db'
 
 // Environment variables for API endpoints (configure in .env.local)
 const CREATE_API = process.env.MODAL_CREATE_API
@@ -428,10 +429,7 @@ async function pollAndProcessResult(outputPath, sourceFile, targetFile, request 
           const sourcePathMatch = sourceFile.path.match(/\/sources\/([a-f0-9-]+)/i)
           if (sourcePathMatch && sourcePathMatch[1]) {
             try {
-              const faceSource = await db.faceSource.findUnique({
-                where: { id: sourcePathMatch[1] },
-                select: { id: true },
-              })
+              const faceSource = await getFaceSourceById(sourcePathMatch[1])
               if (faceSource) {
                 faceSourceId = faceSource.id
               }
@@ -446,10 +444,7 @@ async function pollAndProcessResult(outputPath, sourceFile, targetFile, request 
           const targetPathMatch = targetFile.path.match(/\/templates\/([a-f0-9-]+)/i)
           if (targetPathMatch && targetPathMatch[1]) {
             try {
-              const template = await db.targetTemplate.findUnique({
-                where: { id: targetPathMatch[1] },
-                select: { id: true },
-              })
+              const template = await getTargetTemplateById(targetPathMatch[1])
               if (template) {
                 templateId = template.id
               }
@@ -592,10 +587,7 @@ async function processCompletedTask(outputUrl, sourceFile, targetFile, outputPat
       const sourcePathMatch = sourceFile.path.match(/\/sources\/([a-f0-9-]+)/i)
       if (sourcePathMatch && sourcePathMatch[1]) {
         try {
-          const faceSource = await db.faceSource.findUnique({
-            where: { id: sourcePathMatch[1] },
-            select: { id: true },
-          })
+          const faceSource = await getFaceSourceById(sourcePathMatch[1])
           if (faceSource) {
             faceSourceId = faceSource.id
           }
@@ -610,10 +602,7 @@ async function processCompletedTask(outputUrl, sourceFile, targetFile, outputPat
       const targetPathMatch = targetFile.path.match(/\/templates\/([a-f0-9-]+)/i)
       if (targetPathMatch && targetPathMatch[1]) {
         try {
-          const template = await db.targetTemplate.findUnique({
-            where: { id: targetPathMatch[1] },
-            select: { id: true },
-          })
+          const template = await getTargetTemplateById(targetPathMatch[1])
           if (template) {
             templateId = template.id
           }
@@ -670,19 +659,17 @@ async function createGeneratedMediaRecord({
   userId,
 }) {
   // Create database record
-  const dbRecord = await db.generatedMedia.create({
-    data: {
-      name: outputFilename,
-      type: fileType,
-      tempPath: outputPath,
-      filePath: finalStoragePath,
-      fileSize: BigInt(finalFileSize),
-      mimeType: contentType || (fileType === 'video' ? 'video/mp4' : 'image/jpeg'),
-      isPaid: false,
-      faceSourceId: faceSourceId,
-      templateId: templateId,
-      authorId: userId, // Set the author ID from the validated user ID
-    },
+  const dbRecord = await createGeneratedMedia({
+    name: outputFilename,
+    type: fileType,
+    tempPath: outputPath,
+    filePath: finalStoragePath,
+    fileSize: finalFileSize, // Remove BigInt wrapper for Supabase
+    mimeType: contentType || (fileType === 'video' ? 'video/mp4' : 'image/jpeg'),
+    isPaid: false,
+    faceSourceId: faceSourceId,
+    templateId: templateId,
+    authorId: userId, // Set the author ID from the validated user ID
   })
 
   if (userId) {

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/services/auth'
 import { deleteFile } from '@/utils/storage-helper'
+import { getGeneratedMediaById, deleteGeneratedMediaById } from '@/lib/supabase-db'
 
 export async function DELETE(request) {
   try {
@@ -29,9 +30,7 @@ export async function DELETE(request) {
     console.log(`[DELETE] Attempting to delete video with ID: ${id}`)
 
     // 1. Find the video in the database
-    const video = await db.generatedMedia.findUnique({
-      where: { id },
-    })
+    const video = await getGeneratedMediaById(id)
 
     if (!video) {
       return NextResponse.json({ error: 'Video not found' }, { status: 404 })
@@ -54,9 +53,7 @@ export async function DELETE(request) {
     }
 
     // 3. Delete the record from the database
-    await db.generatedMedia.delete({
-      where: { id },
-    })
+    await deleteGeneratedMediaById(id)
 
     console.log(`[DELETE] Successfully deleted video record with ID: ${id}`)
 

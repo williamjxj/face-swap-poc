@@ -1,6 +1,12 @@
 import { NextResponse } from 'next/server'
 import { getValidatedUserId, logSessionDebugInfo } from '@/utils/auth-helper'
 import { uploadFile, deleteFile, STORAGE_BUCKETS } from '@/utils/storage-helper'
+import {
+  createTargetTemplate,
+  getTargetTemplates,
+  getTargetTemplateById,
+  deleteTargetTemplate,
+} from '@/lib/supabase-db'
 
 export async function POST(request) {
   try {
@@ -55,8 +61,8 @@ export async function POST(request) {
     const fileBuffer = Buffer.from(await file.arrayBuffer())
 
     // Determine storage bucket and file paths
-    const isVideo = file.type.startsWith('video/')
-    const bucket = isVideo ? STORAGE_BUCKETS.TEMPLATE_VIDEOS : STORAGE_BUCKETS.GUIDELINE_IMAGES
+    // All templates (both images and videos) should go to template-videos bucket
+    const bucket = STORAGE_BUCKETS.TEMPLATE_VIDEOS
     const filePath = `${bucket}/${filename}`
 
     // Upload main file to Supabase Storage
@@ -71,6 +77,9 @@ export async function POST(request) {
     }
 
     console.log('File uploaded successfully to:', filePath)
+
+    // Determine if file is a video
+    const isVideo = file.type.startsWith('video/')
 
     // Generate thumbnail for video files
     let thumbnailPath = null
@@ -91,10 +100,6 @@ export async function POST(request) {
     }
 
     // Create database record
-    if (!db) {
-      console.error('Database client is not initialized')
-      return NextResponse.json({ error: 'Database client is not initialized' }, { status: 500 })
-    }
 
     // Get template type from formData or infer it from file type
     let templateType = formData.get('templateType')
@@ -123,38 +128,33 @@ export async function POST(request) {
     }
 
     const templateData = {
-      filename: originalName, // Store original filename for display
-      type: templateType,
-      filePath: filePath,
-      thumbnailPath: thumbnailPath,
-      fileSize: BigInt(file.size),
-      mimeType: file.type,
+      name: originalName, // Store original filename for display
+      description: templateType, // Use template type as description
+      video_url: filePath, // Main file path
+      thumbnail_url: thumbnailPath, // Thumbnail path
+      file_path: filePath, // File path
+      file_size: file.size, // Use regular number instead of BigInt
       duration: duration,
-      authorId: authorId,
+      is_active: true, // Set as active by default
     }
 
     console.log('Creating template record with data:', templateData)
 
     try {
-      console.log('Attempting to create template with data:', {
-        ...templateData,
-        fileSize: templateData.fileSize.toString(),
-      })
+      console.log('Attempting to create template with data:', templateData)
 
-      const template = await db.targetTemplate.create({
-        data: templateData,
-      })
+      const template = await createTargetTemplate(templateData)
 
       console.log('Template created successfully:', template)
 
       return NextResponse.json({
         id: template.id,
-        filename: template.filename,
-        filePath: template.filePath,
-        thumbnailPath: template.thumbnailPath,
+        filename: template.name, // Database field is 'name'
+        filePath: template.file_path, // Database field is 'file_path'
+        thumbnailPath: template.thumbnail_url, // Database field is 'thumbnail_url'
         duration: template.duration,
-        fileSize: template.fileSize.toString(),
-        mimeType: template.mimeType,
+        fileSize: template.file_size ? template.file_size.toString() : '0', // Database field is 'file_size'
+        mimeType: file.type, // Use original file type since it's not stored in DB
       })
     } catch (error) {
       console.error('Error creating database record:', error.message)
@@ -183,11 +183,7 @@ export async function POST(request) {
 // Add GET endpoint to list templates
 export async function GET() {
   try {
-    const templates = await db.targetTemplate.findMany({
-      orderBy: {
-        createdAt: 'desc',
-      },
-    })
+    const templates = await getTargetTemplates()
 
     return NextResponse.json({ templates })
   } catch (error) {
@@ -207,9 +203,7 @@ export async function DELETE(request) {
     }
 
     // Get template details before deletion
-    const template = await db.targetTemplate.findUnique({
-      where: { id: id },
-    })
+    const template = await getTargetTemplateById(id)
 
     if (!template) {
       return NextResponse.json({ error: 'Template not found' }, { status: 404 })
@@ -247,9 +241,7 @@ export async function DELETE(request) {
     }
 
     // Delete database record
-    await db.targetTemplate.delete({
-      where: { id: id },
-    })
+    await deleteTargetTemplate(id)
 
     return NextResponse.json({ success: true })
   } catch (error) {

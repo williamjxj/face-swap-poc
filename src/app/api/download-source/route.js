@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { getStorageUrl } from '@/utils/storage-helper'
+import { getFaceSourceByFilename } from '@/lib/supabase-db'
 
 export async function GET(request) {
   try {
@@ -11,12 +12,7 @@ export async function GET(request) {
     }
 
     // Check if the face source exists
-    const faceSource = await db.faceSource.findFirst({
-      where: {
-        filename: filename,
-        isActive: true,
-      },
-    })
+    const faceSource = await getFaceSourceByFilename(filename)
 
     if (!faceSource) {
       return NextResponse.json({ error: 'Face source not found' }, { status: 404 })

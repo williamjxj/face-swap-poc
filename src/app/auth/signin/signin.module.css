@@ -60,6 +60,21 @@
   text-align: center;
 }
 
+.demoCredentials {
+  margin-bottom: 1.5rem;
+  padding: 0.75rem 1rem;
+  background-color: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-radius: 0.5rem;
+}
+
+.demoText {
+  font-size: 0.875rem;
+  color: #0369a1;
+  margin: 0;
+  font-weight: 500;
+}
+
 .terms {
   font-size: 0.8125rem;
   color: #64748b;

@@ -8,11 +8,10 @@ export async function POST() {
     const session = await getServerSession(authOptions)
 
     // If we have a user session, update their logout timestamp
+    // TODO: Implement updateUserLogout function in Supabase if needed
     if (session?.user?.email) {
-      await db.user.update({
-        where: { account: session.user.email },
-        data: { lastLogout: new Date() },
-      })
+      // await updateUserLogout(session.user.email)
+      console.log('User logged out:', session.user.email)
     }
 
     const response = NextResponse.json({ success: true })

@@ -166,32 +166,29 @@ export async function DELETE(request, { params }) {
     // Verify if the record is actually gone after deletion attempt
     if (deleteType.startsWith('hard')) {
       try {
-        // Use raw SQL to verify deletion to bypass any caching
-        const checkExists = await db.$queryRaw`
-          SELECT COUNT(*) as count
-          FROM "TargetTemplate"
-          WHERE "id" = ${id}
-        `
+        // Check if record still exists using Supabase
+        const { data: checkExists, error: checkError } = await supabase
+          .from('target_templates')
+          .select('id')
+          .eq('id', id)
+          .single()
 
-        const stillExists = Number(checkExists[0]?.count || 0) > 0
+        const stillExists = checkExists && !checkError
 
         if (stillExists) {
           console.log(`[DELETE] WARNING: Record still exists after deletion attempt!`)
           deleteType += '-failed'
 
-          // Final attempt with most direct method
+          // Final attempt with direct Supabase deletion
           try {
-            await db.$executeRawUnsafe(`DELETE FROM "TargetTemplate" WHERE id = '${id}'`)
-            console.log(`[DELETE] Final forced deletion attempt executed`)
+            const { error: forceError } = await supabase
+              .from('target_templates')
+              .delete()
+              .eq('id', id)
 
-            // Verify again
-            const finalCheck = await db.$queryRaw`
-              SELECT COUNT(*) as count
-              FROM "TargetTemplate"
-              WHERE "id" = ${id}
-            `
-
-            if (Number(finalCheck[0]?.count || 0) === 0) {
+            if (forceError) {
+              console.error(`[DELETE] Force deletion failed:`, forceError)
+            } else {
               console.log(`[DELETE] Final deletion attempt succeeded`)
               deleteType = 'hard-forced'
             }
@@ -246,12 +243,7 @@ export async function PATCH(request, { params }) {
     const userId = await getValidatedUserId()
 
     // Find the template to make sure it exists
-    const template = await db.targetTemplate.findUnique({
-      where: {
-        id,
-        isActive: true,
-      },
-    })
+    const template = await getTargetTemplateById(id)
 
     if (!template) {
       return NextResponse.json({ error: 'Template not found' }, { status: 404 })
@@ -266,14 +258,11 @@ export async function PATCH(request, { params }) {
     const data = await request.json()
 
     // Update the template
-    const updatedTemplate = await db.targetTemplate.update({
-      where: { id },
-      data: {
-        ...data,
-        // Prevent changing these security-sensitive fields via PATCH
-        authorId: undefined,
-        isActive: undefined,
-      },
+    const updatedTemplate = await updateTargetTemplate(id, {
+      ...data,
+      // Prevent changing these security-sensitive fields via PATCH
+      authorId: undefined,
+      isActive: undefined,
     })
 
     // Convert BigInt to string for JSON serialization
