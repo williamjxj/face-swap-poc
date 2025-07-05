@@ -61,7 +61,6 @@ export const uploadFaceSource = async (file, userId) => {
       ...uploadResult,
     }
   } catch (error) {
-    console.error('Face source upload error:', error)
     throw error
   }
 }
@@ -82,7 +81,6 @@ export const uploadTargetTemplate = async (file, userId) => {
       ...uploadResult,
     }
   } catch (error) {
-    console.error('Target template upload error:', error)
     throw error
   }
 }
@@ -101,7 +99,6 @@ export const uploadGeneratedMedia = async (file, userId) => {
       ...uploadResult,
     }
   } catch (error) {
-    console.error('Generated media upload error:', error)
     throw error
   }
 }
@@ -122,7 +119,6 @@ export const uploadThumbnail = async (file, userId) => {
       ...uploadResult,
     }
   } catch (error) {
-    console.error('Thumbnail upload error:', error)
     throw error
   }
 }
@@ -132,7 +128,6 @@ export const deleteStorageFile = async (bucket, path) => {
   try {
     return await deleteFile(bucket, path)
   } catch (error) {
-    console.error('File deletion error:', error)
     throw error
   }
 }

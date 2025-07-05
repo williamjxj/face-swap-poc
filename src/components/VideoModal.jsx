@@ -142,15 +142,10 @@ export default function VideoModal({ video, onClose, onDownload, onDelete }) {
                 )}
                 <button
                   onClick={onDownload}
-                  disabled={!video.isPaid}
-                  className={`flex items-center gap-2 px-3 py-2 ${
-                    video.isPaid
-                      ? 'bg-blue-500 hover:bg-blue-600 cursor-pointer'
-                      : 'bg-gray-500 cursor-not-allowed opacity-50'
-                  } rounded-md`}
+                  className="flex items-center gap-2 px-3 py-2 bg-blue-500 hover:bg-blue-600 cursor-pointer rounded-md"
                 >
                   <Download className="w-4 h-4" />
-                  {video.isPaid ? 'Download' : 'Pay to Download'}
+                  Download
                 </button>
               </div>
             </div>

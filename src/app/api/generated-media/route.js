@@ -13,8 +13,6 @@ export async function GET(request) {
     const limit = limitParam ? parseInt(limitParam, 10) : undefined
 
     // For demo/POC: Show all generated media regardless of user to maximize content visibility
-    console.log('[GENERATED-MEDIA] Showing all media (demo mode - all users)')
-
     let media = await getGeneratedMediaByUser(null) // null = get all media
 
     // Apply filters

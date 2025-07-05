@@ -18,23 +18,66 @@ export async function GET(request) {
       return NextResponse.json({ error: 'Media not found' }, { status: 404 })
     }
 
-    if (!media.isPaid) {
-      return NextResponse.json({ error: 'Media is not paid for' }, { status: 403 })
-    }
+    // For demo/POC: Allow downloads without payment requirement
+    // In production, you would enforce: if (!media.isPaid) { return 403 }
+    // if (!media.isPaid) {
+    //   return NextResponse.json({ error: 'Media is not paid for' }, { status: 403 })
+    // }
 
     // Download from Supabase Storage
-    const [bucket, ...pathParts] = media.filePath.split('/')
-    const path = pathParts.join('/')
+    // The database returns snake_case field names, so use file_path instead of filePath
+    const filePath = media.file_path || media.filePath
+
+    // Check if filePath exists
+    if (!filePath) {
+      return NextResponse.json(
+        {
+          error: 'File path not found in media record',
+          mediaId: media.id,
+          filename,
+        },
+        { status: 400 }
+      )
+    }
+
+    // Handle different file path formats
+    let bucket, path
+
+    if (filePath.includes('/')) {
+      // Format: "bucket/path" or "bucket/subfolder/file"
+      const [bucketPart, ...pathParts] = filePath.split('/')
+      bucket = bucketPart
+      path = pathParts.join('/')
+    } else {
+      // Format: just filename, assume it's in generated-media bucket
+      bucket = 'generated-media'
+      path = filePath
+    }
 
     if (!bucket || !path) {
-      return NextResponse.json({ error: 'Invalid file path' }, { status: 400 })
+      return NextResponse.json(
+        {
+          error: 'Invalid file path',
+          filePath: filePath,
+          bucket,
+          path,
+        },
+        { status: 400 }
+      )
     }
 
     const { data, error } = await supabase.storage.from(bucket).download(path)
 
     if (error) {
-      console.error('Error downloading from Supabase Storage:', error)
-      return NextResponse.json({ error: 'File not found in storage' }, { status: 404 })
+      return NextResponse.json(
+        {
+          error: 'File not found in storage',
+          details: error.message,
+          bucket,
+          path,
+        },
+        { status: 404 }
+      )
     }
 
     // Convert the blob to buffer
@@ -43,12 +86,18 @@ export async function GET(request) {
 
     return new NextResponse(fileBuffer, {
       headers: {
-        'Content-Type': media.mimeType || 'video/mp4',
+        'Content-Type': media.mime_type || media.mimeType || 'video/mp4',
         'Content-Disposition': `attachment; filename="${filename}"`,
       },
     })
   } catch (error) {
-    console.error('Error downloading media:', error)
-    return NextResponse.json({ error: 'Failed to download media' }, { status: 500 })
+    console.error('Download media error:', error)
+    return NextResponse.json(
+      {
+        error: 'Failed to download media',
+        details: error.message,
+      },
+      { status: 500 }
+    )
   }
 }

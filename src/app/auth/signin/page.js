@@ -66,11 +66,6 @@ export default function SignInPage() {
         )}
 
         <div className={styles.footer}>
-          <div className={styles.demoCredentials}>
-            <p className={styles.demoText}>
-              <strong>Test Account:</strong> demo@example.com / 123456
-            </p>
-          </div>
           <p className={styles.terms}>
             By continuing, you agree to our{' '}
             <a href="/terms" className={styles.link}>

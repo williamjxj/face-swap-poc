@@ -42,10 +42,6 @@ export const authOptions = {
         try {
           // Find user in database
           const user = await findUserByEmail(credentials.email)
-          console.log(
-            '[CREDENTIALS] User found:',
-            user ? { id: user.id, email: user.email } : 'null'
-          )
 
           // If user doesn't exist or password doesn't match
           if (!user || !user.password_hash) {
@@ -115,8 +111,6 @@ export const authOptions = {
       try {
         // Initial sign in
         if (account && user) {
-          console.log('[JWT] Initial sign in with account:', account.provider, 'user:', user.email)
-
           // For OAuth providers, get the user from our database
           if (account.provider === 'google' || account.provider === 'azure-ad') {
             const email = user.email || profile?.email || profile?.mail
@@ -126,7 +120,6 @@ export const authOptions = {
                 token.id = dbUser.id
                 token.email = dbUser.email
                 token.name = dbUser.name
-                console.log('[JWT] OAuth user token set:', { id: token.id, email: token.email })
               }
             }
           } else {
@@ -134,19 +127,16 @@ export const authOptions = {
             token.id = user.id
             token.email = user.email
             token.name = user.name
-            console.log('[JWT] Credentials user token set:', { id: token.id, email: token.email })
           }
         }
 
         // Always ensure we have the token data
         if (!token.id && token.email) {
-          console.log('[JWT] Token missing ID, trying to find user by email:', token.email)
           const dbUser = await findUserByEmail(token.email)
           if (dbUser) {
             token.id = dbUser.id
             token.email = dbUser.email
             token.name = dbUser.name
-            console.log('[JWT] Found user and updated token:', { id: token.id, email: token.email })
           }
         }
 
@@ -160,21 +150,13 @@ export const authOptions = {
       try {
         // Handle case where token might be corrupted or empty
         if (!token || Object.keys(token).length === 0) {
-          console.log('[SESSION] Empty or corrupted token, returning null session')
           return null
         }
-
-        console.log('[SESSION] Token data:', { id: token.id, email: token.email, name: token.name })
 
         // Pass user data from token to session
         session.user.id = token.id
         session.user.email = token.email
         session.user.name = token.name
-
-        console.log('[SESSION] Final session user:', {
-          id: session.user.id,
-          email: session.user.email,
-        })
 
         return session
       } catch (error) {
@@ -210,7 +192,6 @@ export const authOptions = {
                 email: email,
                 name: user?.name || profile?.name || email.split('@')[0],
               })
-              console.log(`[AUTH] Created new user for OAuth: ${email}`)
             } catch (createError) {
               console.error('Error creating OAuth user:', createError)
               return false

@@ -13,11 +13,14 @@ import CloseButton from '@/components/CloseButton'
 import VideoPlayerWithLoading from '@/components/VideoPlayerWithLoading'
 import { MdFace } from 'react-icons/md'
 import { PRICING_CONFIG } from '@/config/pricing'
-import { loadStripe } from '@stripe/stripe-js'
 import PaymentModal from '@/components/PaymentModal'
 
-// Initialize Stripe outside the component
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY)
+// Constants
+const FILE_SIZE_LIMITS = {
+  VIDEO: 150 * 1024 * 1024, // 150MB
+  IMAGE: 10 * 1024 * 1024, // 10MB
+  GIF: 50 * 1024 * 1024, // 50MB
+}
 
 export default function FaceFusion() {
   // State declarations
@@ -29,7 +32,6 @@ export default function FaceFusion() {
   const [selectedMediaForPurchase, setSelectedMediaForPurchase] = useState(null)
   const [targetPath, setTargetPath] = useState(null)
   const [sourcePath, setSourcePath] = useState(null)
-  const [selectedTarget, setSelectedTarget] = useState(null)
   const [selectedSource, setSelectedSource] = useState(null)
   const [processing, setProcessing] = useState(false)
   const [progress, setProgress] = useState(0)
@@ -39,11 +41,9 @@ export default function FaceFusion() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [generatedVideos, setGeneratedVideos] = useState([])
   const [imageSources, setImageSources] = useState([])
-  const [videoTargets, setVideoTargets] = useState([])
   const [templates, setTemplates] = useState([])
   const [selectedTemplate, setSelectedTemplate] = useState(null)
   const [selectedFace, setSelectedFace] = useState(null)
-  const [loading, setLoading] = useState(true)
   const [videoUploadLoading, setVideoUploadLoading] = useState(false)
   const [imageUploadLoading, setImageUploadLoading] = useState(false)
   const [gifUploadLoading, setGifUploadLoading] = useState(false)
@@ -94,7 +94,7 @@ export default function FaceFusion() {
             }
           }
         } catch (error) {
-          console.error('Error refreshing videos after payment:', error)
+          // Silently handle refresh errors
         }
       }
 
@@ -122,16 +122,11 @@ export default function FaceFusion() {
           throw new Error('Failed to load templates')
         }
         const data = await response.json()
-        console.log('Loaded templates from server:', data.templates)
-        setVideoTargets(data.templates)
         setTemplates(data.templates)
         // Do not auto-select first template on initial load
         // Template will be selected when user clicks on it
       } catch (error) {
-        console.error('Error loading templates:', error)
         setError('Failed to load templates')
-      } finally {
-        setLoading(false)
       }
     }
 
@@ -155,7 +150,6 @@ export default function FaceFusion() {
           setGeneratedVideos(videos)
         }
       } catch (error) {
-        console.error('Error loading generated videos:', error)
         setError('Failed to load generated videos')
       }
     }
@@ -183,17 +177,12 @@ export default function FaceFusion() {
           setImageSources(sources)
         }
       } catch (error) {
-        console.error('Error loading image sources:', error)
+        setError('Failed to load image sources')
       }
     }
 
     loadImageSources()
   }, [])
-
-  const handleTargetSelect = target => {
-    setSelectedTarget(target)
-    setTargetPath(target.filePath)
-  }
 
   const handleSourceUpload = async e => {
     const file = e.target.files?.[0]
@@ -215,7 +204,6 @@ export default function FaceFusion() {
         }
 
         const data = await response.json()
-        console.log('Upload response:', data)
 
         // Create new image object with proper Supabase storage path
         const newImage = {
@@ -238,7 +226,6 @@ export default function FaceFusion() {
         // Add the new image to the beginning of imageSources
         setImageSources(prev => [newImage, ...prev])
       } catch (error) {
-        console.error('Error uploading file:', error)
         setError('Failed to upload image')
       } finally {
         setProcessing(false)
@@ -255,8 +242,6 @@ export default function FaceFusion() {
   }
 
   const handleSubmit = async () => {
-    console.log('handleSubmit: ', sourcePath, targetPath)
-
     if (!sourcePath || !targetPath) {
       return
     }
@@ -303,7 +288,6 @@ export default function FaceFusion() {
       setResult(generatedVideo)
       setRightSideTab('history') // Switch to history tab after successful generation
     } catch (error) {
-      console.error('Face swap error:', error)
       setError(error.message)
       setProgress(0) // Reset progress on error
     } finally {
@@ -321,13 +305,13 @@ export default function FaceFusion() {
 
   // Handle download of video
   const handleDownload = async video => {
-    if (!video.isPaid) {
-      setError('Please purchase the video to download')
-
-      // Open the video modal for payment
-      setSelectedVideo(video)
-      return
-    }
+    // For demo/POC: Allow downloads without payment requirement
+    // In production, you would check: if (!video.isPaid) { ... }
+    // if (!video.isPaid) {
+    //   setError('Please purchase the video to download')
+    //   setSelectedVideo(video)
+    //   return
+    // }
 
     try {
       const response = await fetch(`/api/download-media?filename=${video.name}`)
@@ -363,10 +347,9 @@ export default function FaceFusion() {
           }),
         })
       } catch (err) {
-        console.error('Error updating download count:', err)
+        // Silently handle download count update errors
       }
     } catch (error) {
-      console.error('Error downloading video:', error)
       setError('Failed to download video')
     }
   }
@@ -382,11 +365,8 @@ export default function FaceFusion() {
   const handleSourceDelete = async (image, e) => {
     e.stopPropagation() // Prevent triggering image selection
     try {
-      console.log('Deleting face source:', image.name)
-
       // Check if this is a file-only source (not in database)
       if (image.fileOnly) {
-        console.log('This is a file-only source, skipping database delete')
         // Just remove from UI without hitting the API
         setImageSources(sources => sources.filter(src => src.name !== image.name))
 
@@ -409,7 +389,6 @@ export default function FaceFusion() {
 
       if (!response.ok) {
         const errorData = await response.json()
-        console.error('Delete face source failed:', errorData)
         throw new Error(errorData.error || 'Failed to delete face source')
       }
 
@@ -421,7 +400,7 @@ export default function FaceFusion() {
         setSourcePath(null)
       }
     } catch (error) {
-      console.error('Error deleting source image:', error)
+      setError('Failed to delete source image')
     }
   }
 
@@ -459,7 +438,6 @@ export default function FaceFusion() {
 
       // Update UI by removing the template from state
       setTemplates(prev => prev.filter(template => template.id !== templateId))
-      setVideoTargets(prev => prev.filter(template => template.id !== templateId))
 
       // Clear selection if this was the selected template
       if (selectedTemplate?.id === templateId) {
@@ -468,198 +446,79 @@ export default function FaceFusion() {
         setSelectedFace(null)
       }
     } catch (error) {
-      console.error('Error deleting template:', error)
       setError('Failed to delete template')
+    }
+  }
+
+  // Generic upload helper to reduce code duplication
+  const handleTemplateUpload = async (file, templateType, setLoadingState, sizeLimit) => {
+    try {
+      setLoadingState(true)
+
+      if (file.size > sizeLimit) {
+        throw new Error(`File size exceeds ${sizeLimit / 1024 / 1024}MB limit`)
+      }
+
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('templateType', templateType)
+
+      const response = await fetch('/api/upload-template', {
+        method: 'POST',
+        body: formData,
+      })
+
+      if (!response.ok) {
+        const errorData = await response.text()
+        throw new Error(`Upload failed: ${errorData}`)
+      }
+
+      const data = await response.json()
+
+      const newTemplate = {
+        id: data.id,
+        filename: data.filename,
+        type: templateType,
+        filePath: data.filePath,
+        thumbnailPath: data.thumbnailPath,
+        duration: data.duration,
+        fileSize: BigInt(data.fileSize),
+        mimeType: data.mimeType,
+      }
+
+      // Update state
+      setTemplates(prev => [newTemplate, ...prev])
+      setSelectedTemplate(newTemplate)
+      setSelectedFace(0)
+      setTargetPath(newTemplate.filePath)
+
+      return newTemplate
+    } catch (error) {
+      setError(error.message || `Failed to upload ${templateType}`)
+      throw error
+    } finally {
+      setLoadingState(false)
     }
   }
 
   const handleTargetUploadWrapper = async e => {
     const file = e.target.files?.[0]
     if (file) {
-      try {
-        // Set loading state
-        setVideoUploadLoading(true)
-
-        // Check file size (500MB limit)
-        if (file.size > 150 * 1024 * 1024) {
-          setError('File size exceeds 150MB limit')
-          setVideoUploadLoading(false)
-          return
-        }
-
-        const formData = new FormData()
-        formData.append('file', file)
-        formData.append('templateType', 'video')
-
-        console.log('Uploading file:', {
-          name: file.name,
-          type: file.type,
-          size: file.size,
-        })
-
-        const response = await fetch('/api/upload-template', {
-          method: 'POST',
-          body: formData,
-        })
-
-        if (!response.ok) {
-          const errorData = await response.text()
-          console.error('Upload failed with status:', response.status, 'Error:', errorData)
-          throw new Error(`Upload failed: ${errorData}`)
-        }
-
-        const data = await response.json()
-        console.log('Upload response:', data)
-
-        // Create a new template object matching the database schema
-        const newTemplate = {
-          id: data.id,
-          filename: data.filename,
-          type: 'video',
-          filePath: data.filePath,
-          thumbnailPath: data.thumbnailPath,
-          duration: data.duration,
-          fileSize: BigInt(data.fileSize), // Convert string back to BigInt
-          mimeType: data.mimeType,
-        }
-
-        console.log('Created template object:', newTemplate)
-
-        // Update both templates and videoTargets
-        setTemplates(prev => [newTemplate, ...prev])
-        setVideoTargets(prev => [newTemplate, ...prev])
-
-        // Select the new template - this will update both the middle preview and the face selection circle
-        setSelectedTemplate(newTemplate)
-        setSelectedFace(0) // Reset face selection
-        setTargetPath(newTemplate.filePath) // Ensure target path is updated
-      } catch (error) {
-        console.error('Error uploading template:', error)
-        setError(error.message || 'Failed to upload template')
-      } finally {
-        // Reset loading state
-        setVideoUploadLoading(false)
-      }
+      await handleTemplateUpload(file, 'video', setVideoUploadLoading, FILE_SIZE_LIMITS.VIDEO)
     }
   }
 
   const handleImageUploadWrapper = async e => {
     const file = e.target.files?.[0]
     if (file) {
-      try {
-        // Set loading state
-        setImageUploadLoading(true)
-
-        // Check file size (10MB limit)
-        if (file.size > 10 * 1024 * 1024) {
-          setError('File size exceeds 10MB limit')
-          setImageUploadLoading(false)
-          return
-        }
-
-        const formData = new FormData()
-        formData.append('file', file)
-        formData.append('templateType', 'image')
-
-        const response = await fetch('/api/upload-template', {
-          method: 'POST',
-          body: formData,
-        })
-
-        if (!response.ok) {
-          const errorData = await response.text()
-          throw new Error(`Upload failed: ${errorData}`)
-        }
-
-        const data = await response.json()
-
-        // Create a new template object
-        const newTemplate = {
-          id: data.id,
-          filename: data.filename,
-          type: 'image',
-          filePath: data.filePath,
-          thumbnailPath: data.thumbnailPath,
-          duration: data.duration,
-          fileSize: BigInt(data.fileSize),
-          mimeType: data.mimeType,
-        }
-
-        // Update both templates and videoTargets
-        setTemplates(prev => [newTemplate, ...prev])
-        setVideoTargets(prev => [newTemplate, ...prev])
-
-        // Select the new template
-        setSelectedTemplate(newTemplate)
-        setSelectedFace(0)
-        setTargetPath(newTemplate.filePath) // Ensure target path is updated
-      } catch (error) {
-        console.error('Error uploading image:', error)
-        setError(error.message || 'Failed to upload image')
-      } finally {
-        // Reset loading state
-        setImageUploadLoading(false)
-      }
+      await handleTemplateUpload(file, 'image', setImageUploadLoading, FILE_SIZE_LIMITS.IMAGE)
     }
   }
 
   const handleGifUploadWrapper = async e => {
     const file = e.target.files?.[0]
     if (file) {
-      try {
-        // Set loading state
-        setGifUploadLoading(true)
-
-        // Check file size (50MB limit)
-        if (file.size > 50 * 1024 * 1024) {
-          setError('File size exceeds 50MB limit')
-          setGifUploadLoading(false)
-          return
-        }
-
-        const formData = new FormData()
-        formData.append('file', file)
-        formData.append('templateType', 'gif')
-
-        const response = await fetch('/api/upload-template', {
-          method: 'POST',
-          body: formData,
-        })
-
-        if (!response.ok) {
-          const errorData = await response.text()
-          throw new Error(`Upload failed: ${errorData}`)
-        }
-
-        const data = await response.json()
-
-        // Create a new template object
-        const newTemplate = {
-          id: data.id,
-          filename: data.filename,
-          type: 'gif',
-          filePath: data.filePath,
-          thumbnailPath: data.thumbnailPath,
-          duration: data.duration,
-          fileSize: BigInt(data.fileSize),
-          mimeType: data.mimeType,
-        }
-
-        // Update both templates and videoTargets
-        setTemplates(prev => [newTemplate, ...prev])
-        setVideoTargets(prev => [newTemplate, ...prev])
-
-        // Select the new template
-        setSelectedTemplate(newTemplate)
-        setSelectedFace(0)
-        setTargetPath(newTemplate.filePath) // Ensure target path is updated
-      } catch (error) {
-        console.error('Error uploading GIF:', error)
-        setError(error.message || 'Failed to upload GIF')
-      } finally {
-        // Reset loading state
-        setGifUploadLoading(false)
-      }
+      await handleTemplateUpload(file, 'gif', setGifUploadLoading, FILE_SIZE_LIMITS.GIF)
     }
   }
 
@@ -708,9 +567,8 @@ export default function FaceFusion() {
             mimeType: data.mimeType,
           }
 
-          // Update both templates and videoTargets
+          // Update templates
           setTemplates(prev => [newTemplate, ...prev])
-          setVideoTargets(prev => [newTemplate, ...prev])
 
           // Select the new template
           setSelectedTemplate(newTemplate)
@@ -718,7 +576,6 @@ export default function FaceFusion() {
           setTargetPath(newTemplate.filePath) // Ensure target path is updated
         }
       } catch (error) {
-        console.error('Error uploading multi-face templates:', error)
         setError(error.message || 'Failed to upload multi-face templates')
       } finally {
         // Reset loading state
@@ -742,13 +599,11 @@ export default function FaceFusion() {
     if (e) e.stopPropagation()
 
     try {
-      console.log('Opening payment modal for:', media.name)
-
       // Open payment modal with selected media
       setSelectedMediaForPurchase(media)
       setShowPaymentModal(true)
     } catch (error) {
-      console.error('Purchase failed:', error)
+      setError('Purchase failed')
     }
   }
 
@@ -776,7 +631,6 @@ export default function FaceFusion() {
         setGeneratedVideos(videos)
       }
     } catch (error) {
-      console.error('Error loading videos:', error)
       setError('Failed to load videos')
     } finally {
       setIsLoading(false)

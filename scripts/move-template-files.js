@@ -22,13 +22,13 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey)
 async function moveTemplateFiles() {
   try {
     console.log('🔍 Finding template files that need to be moved...')
-    
+
     // Get all target_templates that point to guideline-images (these need files moved)
     const { data: templates, error: dbError } = await supabase
       .from('target_templates')
       .select('id, name, file_path, video_url')
       .or('file_path.like.template-videos/%,video_url.like.template-videos/%')
-    
+
     if (dbError) {
       throw new Error(`Database error: ${dbError.message}`)
     }
@@ -71,14 +71,19 @@ async function moveTemplateFiles() {
 
         // Copy file from guideline-images to template-videos
         console.log(`   📤 Copying file to template-videos...`)
-        
+
         const { error: uploadError } = await supabase.storage
           .from('template-videos')
           .upload(fileName, sourceExists, {
-            contentType: template.name.endsWith('.mp4') ? 'video/mp4' : 
-                        template.name.endsWith('.png') ? 'image/png' :
-                        template.name.endsWith('.jpg') || template.name.endsWith('.jpeg') ? 'image/jpeg' :
-                        template.name.endsWith('.gif') ? 'image/gif' : 'application/octet-stream'
+            contentType: template.name.endsWith('.mp4')
+              ? 'video/mp4'
+              : template.name.endsWith('.png')
+                ? 'image/png'
+                : template.name.endsWith('.jpg') || template.name.endsWith('.jpeg')
+                  ? 'image/jpeg'
+                  : template.name.endsWith('.gif')
+                    ? 'image/gif'
+                    : 'application/octet-stream',
           })
 
         if (uploadError) {
@@ -87,7 +92,7 @@ async function moveTemplateFiles() {
 
         // Delete file from guideline-images
         console.log(`   🗑️  Removing file from guideline-images...`)
-        
+
         const { error: deleteError } = await supabase.storage
           .from('guideline-images')
           .remove([fileName])
@@ -98,7 +103,6 @@ async function moveTemplateFiles() {
 
         console.log(`   ✅ Successfully moved file`)
         movedCount++
-
       } catch (error) {
         console.error(`   ❌ Error moving file: ${error.message}`)
         errorCount++
@@ -113,9 +117,10 @@ async function moveTemplateFiles() {
     if (movedCount > 0) {
       console.log(`\n🎉 File migration completed! Template images should now be visible.`)
     } else {
-      console.log(`\n💡 No files needed to be moved. All templates are already in the correct bucket.`)
+      console.log(
+        `\n💡 No files needed to be moved. All templates are already in the correct bucket.`
+      )
     }
-
   } catch (error) {
     console.error('❌ Script failed:', error.message)
     process.exit(1)

@@ -30,7 +30,14 @@ export default function EmailForm() {
         // Login
         const result = await loginWithEmail(email, password)
         if (!result.success) {
-          setError(result.error || 'Invalid email or password 1')
+          // Handle specific NextAuth error codes
+          let errorMessage = 'Invalid email or password'
+          if (result.error === 'CredentialsSignin') {
+            errorMessage = 'Invalid email or password. Please check your credentials.'
+          } else if (result.error) {
+            errorMessage = result.error
+          }
+          setError(errorMessage)
         } else {
           // Redirect on successful login
           router.push('/face-fusion')
@@ -156,6 +163,12 @@ export default function EmailForm() {
           </button>
         </div>
       )}
+
+      <div className={styles.demoCredentials}>
+        <p className={styles.demoText}>
+          <strong>Test Account:</strong> demo@example.com / 123456
+        </p>
+      </div>
     </div>
   )
 }
