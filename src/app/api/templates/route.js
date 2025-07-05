@@ -5,10 +5,8 @@ import { serializeBigInt } from '@/utils/helper'
 // GET all templates
 export async function GET() {
   try {
-    console.log('Fetching all active templates...')
     const templates = await getTargetTemplates(false) // false = exclude guidelines
 
-    console.log(`Found ${templates.length} active templates`)
     // Serialize BigInt fields before returning
     const serializedTemplates = serializeBigInt(templates)
     return NextResponse.json({ templates: serializedTemplates })

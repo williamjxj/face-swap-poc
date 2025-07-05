@@ -268,6 +268,14 @@ export const getTargetTemplates = async (includeGuidelines = true) => {
     let type = template.type
     let mimeType = template.mime_type
 
+    // IMPORTANT: Use description field for categorization (image vs multi-face)
+    // The database stores 'image' or 'multi-face' in the description field
+    if (template.description === 'multi-face') {
+      type = 'multi-face'
+    } else if (template.description === 'image') {
+      type = 'image'
+    }
+
     if (!type || !mimeType) {
       const fileName = template.name || template.file_path || ''
       const extension = fileName.toLowerCase().split('.').pop()
@@ -284,7 +292,10 @@ export const getTargetTemplates = async (includeGuidelines = true) => {
         case 'jpeg':
         case 'png':
         case 'webp':
-          type = 'image'
+          // Only set to 'image' if description doesn't specify multi-face
+          if (template.description !== 'multi-face') {
+            type = 'image'
+          }
           mimeType = `image/${extension === 'jpg' ? 'jpeg' : extension}`
           break
         case 'gif':
@@ -309,6 +320,7 @@ export const getTargetTemplates = async (includeGuidelines = true) => {
       fileSize: template.file_size,
       type: type,
       mimeType: mimeType,
+      description: template.description, // Keep original description field
     }
   })
 }
@@ -332,6 +344,14 @@ export const getTargetTemplateById = async id => {
   let type = template.type
   let mimeType = template.mime_type
 
+  // IMPORTANT: Use description field for categorization (image vs multi-face)
+  // The database stores 'image' or 'multi-face' in the description field
+  if (template.description === 'multi-face') {
+    type = 'multi-face'
+  } else if (template.description === 'image') {
+    type = 'image'
+  }
+
   if (!type || !mimeType) {
     const fileName = template.name || template.file_path || ''
     const extension = fileName.toLowerCase().split('.').pop()
@@ -348,7 +368,10 @@ export const getTargetTemplateById = async id => {
       case 'jpeg':
       case 'png':
       case 'webp':
-        type = 'image'
+        // Only set to 'image' if description doesn't specify multi-face
+        if (template.description !== 'multi-face') {
+          type = 'image'
+        }
         mimeType = `image/${extension === 'jpg' ? 'jpeg' : extension}`
         break
       case 'gif':
@@ -373,6 +396,7 @@ export const getTargetTemplateById = async id => {
     fileSize: template.file_size,
     type: type,
     mimeType: mimeType,
+    description: template.description, // Keep original description field
   }
 }
 
@@ -536,14 +560,15 @@ export const deleteGeneratedMediaById = async id => {
 }
 
 export const getTargetTemplateByName = async name => {
+  // Search by name field (which is mapped to filename in the UI)
   const { data, error } = await supabase
     .from('target_templates')
     .select('*')
-    .or(`name.eq.${name},filename.eq.${name}`)
+    .eq('name', name)
     .eq('is_active', true)
-    .single()
+    .maybeSingle()
 
-  if (error && error.code !== 'PGRST116') throw error
+  if (error && error.code !== 'PGRST116') throw error // PGRST116 is "not found"
   return data
 }
 

@@ -69,14 +69,14 @@ For detailed setup, deployment, and troubleshooting guides, see the [docs/](docs
 
 - **[Setup Guide](docs/PROJECT_SETUP_GUIDE.md)** - Complete project setup
 - **[Deployment Guide](docs/VERCEL_DEPLOYMENT_CHECKLIST.md)** - Vercel deployment
-- **[Authentication](docs/AUTHENTICATION_FLOW.md)** - NextAuth configuration
+- **[Database Schema](docs/database/supabase-schema-analysis.md)** - Database implementation analysis
 - **[Troubleshooting](docs/troubleshooting/)** - Common issues and solutions
 
 ## Tech Stack
 
 - **Framework**: Next.js 15 with React 19
-- **Database**: PostgreSQL with Prisma ORM
-- **Authentication**: NextAuth.js with Google OAuth
+- **Database**: PostgreSQL with Supabase (Direct Integration)
+- **Authentication**: NextAuth.js with JWT strategy
 - **Deployment**: Vercel + Supabase
 - **Styling**: TailwindCSS
 

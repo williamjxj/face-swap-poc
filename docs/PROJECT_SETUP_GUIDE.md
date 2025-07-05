@@ -88,31 +88,23 @@ Options:
 
 ## 📊 Database Management
 
-### Prisma Commands
+### Supabase Database Setup
+
+The application uses direct Supabase integration without Prisma ORM.
 
 ```bash
-# Generate Prisma client
-npm run db:generate
+# Apply database schema (run in Supabase SQL Editor)
+# Use: database-migration.sql
 
-# Push schema changes (development)
-npm run db:push
-
-# Create and apply migrations (production)
-npm run db:migrate
-
-# Open Prisma Studio
-npm run db:studio
+# Verify database connection
+npm run build
 ```
 
-### Migration Scripts
+### Database Schema
 
-```bash
-# Migrate from local to Supabase
-./scripts/migrate-to-supabase.sh
-
-# Verify build and environment
-./scripts/verify-build.sh
-```
+- **Current Schema**: `database-migration.sql` (snake_case naming)
+- **Documentation**: See `docs/database/supabase-schema-analysis.md`
+- **Authentication**: JWT-only strategy (no database sessions)
 
 ## 🔐 Authentication Setup
 

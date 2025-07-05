@@ -54,9 +54,7 @@ export function getStorageUrl(filePath) {
     }
     const { data } = supabase.storage.from(bucket).getPublicUrl(path)
     return data.publicUrl
-  } catch (error) {
-    console.warn('Supabase client not available, using fallback URL construction:', error.message)
-
+  } catch {
     // Fallback: construct URL manually using known Supabase URL format
     const supabaseUrl =
       process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://yunxidsqumhfushjcgyg.supabase.co'

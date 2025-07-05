@@ -7,11 +7,9 @@ Welcome to the Face Swap POC documentation. This directory contains comprehensiv
 ### 🚀 Getting Started
 
 - **[PROJECT_SETUP_GUIDE.md](./PROJECT_SETUP_GUIDE.md)** - Complete project setup and quick start guide
-- **[PRISMA_SUPABASE_INTEGRATION.md](./PRISMA_SUPABASE_INTEGRATION.md)** - Database migration and integration workflow
 
 ### 🔧 Development & Configuration
 
-- **[AUTHENTICATION_FLOW.md](./AUTHENTICATION_FLOW.md)** - Next-Auth v4, Prisma, and Supabase authentication
 - **[DEPLOYMENT_ENVIRONMENT_GUIDE.md](./DEPLOYMENT_ENVIRONMENT_GUIDE.md)** - Environment variables and deployment strategies
 - **[database/](./database/)** - Database-related documentation
 - **[legacy/](./legacy/)** - Archived/legacy documentation
@@ -34,8 +32,8 @@ Welcome to the Face Swap POC documentation. This directory contains comprehensiv
 ### New to the Project?
 
 1. Start with **[PROJECT_SETUP_GUIDE.md](./PROJECT_SETUP_GUIDE.md)**
-2. Set up database with **[PRISMA_SUPABASE_INTEGRATION.md](./PRISMA_SUPABASE_INTEGRATION.md)**
-3. Configure authentication via **[AUTHENTICATION_FLOW.md](./AUTHENTICATION_FLOW.md)**
+2. Review database schema in **[database/supabase-schema-analysis.md](./database/supabase-schema-analysis.md)**
+3. Check deployment guide **[VERCEL_DEPLOYMENT_CHECKLIST.md](./VERCEL_DEPLOYMENT_CHECKLIST.md)**
 
 ### Ready to Deploy?
 

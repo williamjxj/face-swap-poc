@@ -5,13 +5,6 @@ export async function GET() {
   const startTime = Date.now()
 
   try {
-    // Log the actual Supabase URL being used (masked for security)
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-    const maskedUrl = supabaseUrl
-      ? supabaseUrl.replace(/\/\/(.+)\.supabase\.co/, '//***')
-      : 'NOT_SET'
-    console.log('Using Supabase URL:', maskedUrl)
-
     // Test database connection with timeout
     const connectionTest = Promise.race([
       supabase.from('users').select('id').limit(1),

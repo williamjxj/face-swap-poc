@@ -208,7 +208,8 @@ export default function GalleryPage() {
         if (activeTab === 'video') return mediaType === 'video'
         if (activeTab === 'image') return mediaType === 'image'
         if (activeTab === 'gif') return mediaType === 'gif'
-        if (activeTab === 'multi-face') return item.type === 'multi-face'
+        if (activeTab === 'multi-face')
+          return item.type === 'multi-face' || item.description === 'multi-face'
         return false
       })
     }
@@ -421,7 +422,7 @@ export default function GalleryPage() {
           throw new Error('Media filename not available')
         }
 
-        console.log('Attempting to download media:', filename)
+        // console.log('Attempting to download media:', filename)
         const endpoint = `/api/download-media?filename=${encodeURIComponent(filename)}`
         const response = await fetch(endpoint)
 
@@ -461,7 +462,7 @@ export default function GalleryPage() {
           )
         }
 
-        console.log(`Attempting to download ${contentType}:`, filename)
+        // console.log(`Attempting to download ${contentType}:`, filename)
         const endpoint =
           contentType === 'targetTemplates'
             ? `/api/download-template?filename=${encodeURIComponent(filename)}`

@@ -12,7 +12,6 @@ export async function getValidatedUserId() {
     // Get the current session
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
-      console.log('[AUTH] No user ID in session')
       return null
     }
 
@@ -20,14 +19,11 @@ export async function getValidatedUserId() {
     const user = await findUserById(session.user.id)
 
     if (!user) {
-      console.log('[AUTH] User ID from session not found in database:', session.user.id)
-
       // If we have an email, try to find the user by email as fallback
       if (session.user.email) {
         const userByEmail = await findUserByEmail(session.user.email)
 
         if (userByEmail) {
-          console.log('[AUTH] Found user by email instead:', userByEmail.id)
           return userByEmail.id
         }
       }
@@ -44,17 +40,20 @@ export async function getValidatedUserId() {
 
 /**
  * Logs debug information about a session for troubleshooting
+ * Only enabled in development mode
  */
 export async function logSessionDebugInfo() {
-  try {
-    const session = await getServerSession(authOptions)
-    console.log('[SESSION DEBUG] Current session:', {
-      hasSession: !!session,
-      hasUser: !!session?.user,
-      userId: session?.user?.id,
-      userEmail: session?.user?.email,
-    })
-  } catch (error) {
-    console.error('[SESSION DEBUG] Error getting session:', error)
+  if (process.env.NODE_ENV === 'development') {
+    try {
+      const session = await getServerSession(authOptions)
+      console.log('[SESSION DEBUG] Current session:', {
+        hasSession: !!session,
+        hasUser: !!session?.user,
+        userId: session?.user?.id,
+        userEmail: session?.user?.email,
+      })
+    } catch (error) {
+      console.error('[SESSION DEBUG] Error getting session:', error)
+    }
   }
 }

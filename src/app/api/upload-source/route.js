@@ -66,8 +66,6 @@ export async function POST(request) {
       return NextResponse.json({ error: `Upload failed: ${uploadResult.error}` }, { status: 500 })
     }
 
-    console.log('File uploaded successfully to:', filePath)
-
     // Get image dimensions using sharp
     let width = 0
     let height = 0
@@ -75,7 +73,6 @@ export async function POST(request) {
       const metadata = await sharp(buffer).metadata()
       width = metadata.width || 0
       height = metadata.height || 0
-      console.log(`Image dimensions: ${width}x${height}`)
     } catch (error) {
       console.error('Error getting image dimensions:', error)
       // Continue with default dimensions

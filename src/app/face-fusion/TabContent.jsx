@@ -36,25 +36,26 @@ export default function TabContent({
 
   // Filter templates based on selected tab
   const filteredTemplates = templates.filter(template => {
-    // Log the template type for debugging
-    // console.log(`Template ${template.filename}: type=${template.type}, mimeType=${template.mimeType}`);
+    // Log the template details for debugging (uncomment if needed)
+    // console.log(`Template ${template.filename}: type=${template.type}, description=${template.description}, mimeType=${template.mimeType}`)
 
     switch (selectedTab) {
       case 'video':
         return template.type === 'video' || template.mimeType?.startsWith('video/')
       case 'image':
-        // Only show in Image tab if type is explicitly 'image' AND not 'multi-face'
+        // Show in Image tab if type is 'image' AND description is not 'multi-face'
         return (
           template.type === 'image' ||
           (template.mimeType?.startsWith('image/') &&
             template.mimeType !== 'image/gif' &&
-            template.type !== 'multi-face')
+            template.type !== 'multi-face' &&
+            template.description !== 'multi-face')
         )
       case 'gif':
         return template.type === 'gif' || template.mimeType === 'image/gif'
       case 'multi-face':
-        // Show in Multi-face tab if the type is explicitly 'multi-face'
-        return template.type === 'multi-face'
+        // Show in Multi-face tab if type is 'multi-face' OR description is 'multi-face'
+        return template.type === 'multi-face' || template.description === 'multi-face'
       default:
         return false
     }

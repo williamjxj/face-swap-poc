@@ -11,7 +11,6 @@ export async function POST() {
     // TODO: Implement updateUserLogout function in Supabase if needed
     if (session?.user?.email) {
       // await updateUserLogout(session.user.email)
-      console.log('User logged out:', session.user.email)
     }
 
     const response = NextResponse.json({ success: true })
