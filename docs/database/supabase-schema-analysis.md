@@ -7,12 +7,14 @@ This document analyzes the current Supabase database schema implementation for t
 ## Schema Files Comparison
 
 ### 1. `database-migration.sql` (Currently Used)
+
 - **Purpose**: Migration from Prisma PascalCase to Supabase snake_case
 - **NextAuth**: Separate `next_auth` schema with dedicated tables
 - **Structure**: Snake_case naming convention
 - **Status**: ✅ **ACTIVELY USED BY CODEBASE**
 
 ### 2. `supabase_schema.sql` (Deprecated)
+
 - **Purpose**: Alternative schema design
 - **NextAuth**: Integrated into `public` schema
 - **Structure**: Different field names and relationships
@@ -23,6 +25,7 @@ This document analyzes the current Supabase database schema implementation for t
 ### Core Tables
 
 #### 1. Users Table (`public.users`)
+
 ```sql
 CREATE TABLE public.users (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -37,11 +40,13 @@ CREATE TABLE public.users (
 ```
 
 **Code Usage:**
+
 - Authentication via JWT strategy (no database sessions)
 - User management through `src/lib/supabase-db.js`
 - Fields: `email`, `name`, `password_hash`, `last_login`, `last_logout`
 
 #### 2. Target Templates Table (`public.target_templates`)
+
 ```sql
 CREATE TABLE public.target_templates (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -59,11 +64,13 @@ CREATE TABLE public.target_templates (
 ```
 
 **Code Usage:**
+
 - Template categorization via `description` field
 - Fields: `name`, `description`, `video_url`, `thumbnail_url`, `file_path`
 - **Issue**: UI not properly filtering by `description` field
 
 #### 3. Face Sources Table (`public.face_sources`)
+
 ```sql
 CREATE TABLE public.face_sources (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -80,10 +87,12 @@ CREATE TABLE public.face_sources (
 ```
 
 **Code Usage:**
+
 - User-uploaded face images
 - Fields: `author_id`, `original_filename`, `file_path`, `file_size`, `mime_type`
 
 #### 4. Generated Media Table (`public.generated_media`)
+
 ```sql
 CREATE TABLE public.generated_media (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -101,10 +110,12 @@ CREATE TABLE public.generated_media (
 ```
 
 **Code Usage:**
+
 - Face-swapped output media
 - Fields: `output_filename`, `processing_status`, `author_id`, `face_source_id`, `template_id`
 
 #### 5. Guidelines Table (`public.guidelines`)
+
 ```sql
 CREATE TABLE public.guidelines (
   id UUID PRIMARY KEY,
@@ -121,18 +132,21 @@ CREATE TABLE public.guidelines (
 ```
 
 **Code Usage:**
+
 - Static guideline images (8 images)
 - Business rule: `is_allowed = true` if filename starts with 's'
 
 ## Authentication Implementation
 
 ### NextAuth Configuration
+
 - **Strategy**: JWT-only (no database sessions)
 - **Providers**: Google OAuth, Azure AD, Credentials
 - **User Management**: Custom functions in `supabase-db.js`
 - **Schema**: Does NOT use `next_auth` schema from `database-migration.sql`
 
 ### Key Implementation Details
+
 ```javascript
 // src/services/auth.js
 export const authOptions = {
@@ -147,16 +161,18 @@ export const authOptions = {
 ## Data Access Layer
 
 ### Supabase Client Configuration
+
 ```javascript
 // src/lib/supabase.js
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   db: {
-    schema: 'public',  // Uses public schema only
+    schema: 'public', // Uses public schema only
   },
 })
 ```
 
 ### Database Operations
+
 - **File**: `src/lib/supabase-db.js`
 - **Pattern**: Direct Supabase client queries
 - **Naming**: Snake_case database fields converted to camelCase for UI
@@ -164,11 +180,13 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 ## Current Issues
 
 ### 1. Template Categorization Bug
+
 - **Problem**: All templates show in 'Image' tab regardless of `description` field
 - **Expected**: Templates with `description='multi-face'` should show in 'Multiple-face' tab
 - **Root Cause**: UI filtering logic not implemented correctly
 
 ### 2. Schema Documentation Inconsistency
+
 - **Problem**: Multiple SQL files with different structures
 - **Impact**: Developer confusion about actual schema
 - **Solution**: Remove deprecated `supabase_schema.sql`
@@ -183,6 +201,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 ## Storage Integration
 
 ### Supabase Storage Buckets
+
 - **guideline-images**: Static 8 images (read-only)
 - **template-videos**: User-uploaded templates and generated media
 - **Integration**: Direct file upload/download via Supabase Storage API
@@ -190,20 +209,22 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 ## Security Implementation
 
 ### Row Level Security (RLS)
+
 - **Enabled**: All user-related tables have RLS policies
 - **Pattern**: Users can only access their own data
 - **Exception**: Templates and guidelines have public read access
 
 ### Policies Example
+
 ```sql
 -- Users can manage own face sources
-CREATE POLICY "Users can manage own face sources" 
-ON public.face_sources FOR ALL 
+CREATE POLICY "Users can manage own face sources"
+ON public.face_sources FOR ALL
 USING (auth.uid()::text = author_id::text);
 
 -- Public read access to templates
-CREATE POLICY "Public read access to templates" 
-ON public.target_templates FOR SELECT 
+CREATE POLICY "Public read access to templates"
+ON public.target_templates FOR SELECT
 USING (is_active = true);
 ```
 

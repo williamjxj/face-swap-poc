@@ -9,6 +9,7 @@ import bcrypt from 'bcryptjs'
 
 export const authOptions = {
   debug: process.env.NODE_ENV === 'development',
+  secret: process.env.NEXTAUTH_SECRET,
   // Removed Supabase adapter to use pure JWT strategy with our own user management
   providers: [
     GoogleProvider({
@@ -143,14 +144,27 @@ export const authOptions = {
         return token
       } catch (error) {
         console.error('JWT callback error:', error)
-        return token
+        // Return a minimal token to prevent complete auth failure
+        return {
+          ...token,
+          error: 'JWT_CALLBACK_ERROR',
+        }
       }
     },
     async session({ session, token }) {
       try {
         // Handle case where token might be corrupted or empty
         if (!token || Object.keys(token).length === 0) {
-          return null
+          // Return a minimal session structure instead of null
+          return {
+            user: {},
+            expires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24 hours from now
+          }
+        }
+
+        // Ensure session.user exists
+        if (!session.user) {
+          session.user = {}
         }
 
         // Pass user data from token to session
@@ -161,8 +175,11 @@ export const authOptions = {
         return session
       } catch (error) {
         console.error('Session callback error:', error)
-        // Return null to force re-authentication
-        return null
+        // Return a minimal session structure instead of null to prevent JSON parsing errors
+        return {
+          user: {},
+          expires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24 hours from now
+        }
       }
     },
     async signIn({ user, account, profile }) {

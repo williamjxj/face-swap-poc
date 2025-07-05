@@ -9,12 +9,6 @@ export async function DELETE(request) {
     // Check authentication
     const session = await getServerSession(authOptions)
 
-    // Log session for debugging
-    console.log('[DELETE] Session check:', {
-      hasSession: !!session,
-      user: session?.user?.email,
-    })
-
     // Skip auth check in development for easier testing
     if (!session && process.env.NODE_ENV === 'production') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

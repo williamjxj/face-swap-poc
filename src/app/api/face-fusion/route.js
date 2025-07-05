@@ -29,17 +29,11 @@ const ERROR_TYPES = {
 
 export async function POST(request) {
   try {
-    // Log session debug info to help troubleshoot
+    // Log session debug info to help troubleshoot (development only)
     await logSessionDebugInfo()
 
     // Get validated user ID from helper function
     const validUserId = await getValidatedUserId()
-
-    if (validUserId) {
-      console.log('[AUTH] Using validated user ID for face fusion:', validUserId)
-    } else {
-      console.log('[AUTH] No valid user ID found for face fusion')
-    }
 
     let sourceFile, targetFile
     const contentType = request.headers.get('content-type')
@@ -55,7 +49,7 @@ export async function POST(request) {
 
       try {
         // Get source file from Supabase Storage
-        const sourceUrl = await getStorageUrl(source)
+        const sourceUrl = getStorageUrl(source)
         if (!sourceUrl) {
           throw new Error(`Source file not found in storage: ${source}`)
         }
@@ -67,7 +61,7 @@ export async function POST(request) {
         sourceBuffer = Buffer.from(await sourceResponse.arrayBuffer())
 
         // Get target file from Supabase Storage
-        const targetUrl = await getStorageUrl(target)
+        const targetUrl = getStorageUrl(target)
         if (!targetUrl) {
           throw new Error(`Target file not found in storage: ${target}`)
         }
