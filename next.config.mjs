@@ -18,6 +18,9 @@ const nextConfig = {
     },
   },
 
+  // Disable static generation for API routes
+  trailingSlash: false,
+
   // Webpack configuration for path aliases (fallback for non-turbo builds)
   webpack: config => {
     config.resolve.alias = {
