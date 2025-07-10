@@ -42,6 +42,7 @@ export default function FaceFusion() {
   const [generatedVideos, setGeneratedVideos] = useState([])
   const [imageSources, setImageSources] = useState([])
   const [templates, setTemplates] = useState([])
+  const [templatesLoading, setTemplatesLoading] = useState(true)
   const [selectedTemplate, setSelectedTemplate] = useState(null)
   const [selectedFace, setSelectedFace] = useState(null)
   const [videoUploadLoading, setVideoUploadLoading] = useState(false)
@@ -117,6 +118,7 @@ export default function FaceFusion() {
   useEffect(() => {
     const loadTemplates = async () => {
       try {
+        setTemplatesLoading(true)
         const response = await fetch('/api/templates')
         if (!response.ok) {
           throw new Error('Failed to load templates')
@@ -127,6 +129,8 @@ export default function FaceFusion() {
         // Template will be selected when user clicks on it
       } catch (error) {
         setError('Failed to load templates')
+      } finally {
+        setTemplatesLoading(false)
       }
     }
 
@@ -640,18 +644,18 @@ export default function FaceFusion() {
   return (
     <div className="flex gap-1 sm:gap-2 md:gap-3 lg:gap-4 h-[calc(100vh-4rem)]">
       {/* Left side - Tab navigation */}
-      <div className="w-1/4 lg:w-1/4 md:w-1/3 sm:w-2/5 bg-[#1a1d24] rounded-lg flex flex-col">
+      <div className="w-1/4 lg:w-1/4 md:w-1/3 sm:w-2/5 surface-secondary rounded-xl flex flex-col border border-primary shadow-lg">
         {/* Tab Navigation */}
-        <div className="p-2 sm:p-3 md:p-4 border-b border-gray-800">
+        <div className="p-2 sm:p-3 md:p-4 border-b border-primary">
           <div className="flex space-x-1 sm:space-x-2">
             {tabOptions.map(tab => (
               <button
                 key={tab.id}
                 onClick={() => setSelectedTab(tab.id)}
-                className={`px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm ${
+                className={`px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-all duration-300 ${
                   selectedTab === tab.id
-                    ? 'bg-blue-500 text-white'
-                    : 'text-gray-400 hover:bg-[#2a2d34]'
+                    ? 'gradient-primary text-white shadow-lg glow-primary'
+                    : 'text-tertiary hover:surface-tertiary hover:text-secondary'
                 }`}
               >
                 {tab.label}
@@ -677,6 +681,7 @@ export default function FaceFusion() {
             imageUploadLoading={imageUploadLoading}
             gifUploadLoading={gifUploadLoading}
             multiFaceUploadLoading={multiFaceUploadLoading}
+            templatesLoading={templatesLoading}
           />
         </div>
       </div>
@@ -712,12 +717,12 @@ export default function FaceFusion() {
             <h2 className="text-2xl font-semibold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
               AI Face Swap
             </h2>
-            <span className="text-sm text-gray-400">Support video for face swapping</span>
+            <span className="text-sm text-tertiary">Support video for face swapping</span>
           </div>
         </div>
 
         {selectedTemplate ? (
-          <div className="w-[calc(100%-160px)] h-[calc(100vh-240px)] max-h-[480px] bg-[#2a2832] rounded-[20px] border-2 border-dashed border-white/70 relative mt-3 flex items-center justify-center">
+          <div className="w-[calc(100%-160px)] h-[calc(100vh-240px)] max-h-[480px] surface-tertiary rounded-[20px] border-2 border-dashed border-accent/50 relative mt-3 flex items-center justify-center shadow-lg">
             {/* Close button for clearing selection */}
             <div className="absolute top-2 right-2 z-10">
               <CloseButton
@@ -773,32 +778,32 @@ export default function FaceFusion() {
       </div>
 
       {/* Right side - Face Selection and History */}
-      <div className="w-1/4 lg:w-1/4 md:w-1/3 sm:w-2/5 bg-[#1a1d24] rounded-lg flex flex-col">
+      <div className="w-1/4 lg:w-1/4 md:w-1/3 sm:w-2/5 surface-secondary rounded-xl flex flex-col border border-primary shadow-lg">
         {/* Tab Navigation */}
-        <div className="p-2 sm:p-3 md:p-4 border-b border-gray-800">
+        <div className="p-2 sm:p-3 md:p-4 border-b border-primary">
           <div className="flex space-x-1 sm:space-x-2">
             <button
               onClick={() => setRightSideTab('face-swap')}
-              className={`px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm cursor-pointer ${
+              className={`px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm cursor-pointer font-medium transition-all duration-300 ${
                 rightSideTab === 'face-swap'
-                  ? 'bg-blue-500 text-white'
-                  : 'text-gray-400 hover:bg-[#2a2d34]'
+                  ? 'gradient-primary text-white shadow-lg glow-primary'
+                  : 'text-tertiary hover:surface-tertiary hover:text-secondary'
               }`}
             >
               Face Swap
-              <span className="text-gray-400 ml-0">
+              <span className="ml-0">
                 <Info
-                  className="inline-block ml-1 w-4 h-4 text-gray-400 cursor-pointer hover:text-gray-300"
+                  className="inline-block ml-1 w-4 h-4 cursor-pointer hover:text-white transition-colors"
                   onClick={() => setIsModalOpen(true)}
                 />
               </span>
             </button>
             <button
               onClick={() => setRightSideTab('history')}
-              className={`px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm cursor-pointer ${
+              className={`px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm cursor-pointer font-medium transition-all duration-300 ${
                 rightSideTab === 'history'
-                  ? 'bg-blue-500 text-white'
-                  : 'text-gray-400 hover:bg-[#2a2d34]'
+                  ? 'gradient-primary text-white shadow-lg glow-primary'
+                  : 'text-tertiary hover:surface-tertiary hover:text-secondary'
               }`}
             >
               History
@@ -826,10 +831,10 @@ export default function FaceFusion() {
               <button
                 onClick={handleSubmit}
                 disabled={!selectedSource || !selectedTemplate || processing}
-                className={`mt-4 py-3 px-6 rounded-xl w-full font-medium text-base flex items-center justify-center gap-3 shadow-[0_8px_30px_rgb(0,0,0,0.12)] transform transition-all duration-300 ${
+                className={`mt-4 py-3 px-6 rounded-xl w-full font-semibold text-base flex items-center justify-center gap-3 transform transition-all duration-300 ${
                   selectedSource && selectedTemplate && !processing
-                    ? 'bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white cursor-pointer hover:scale-[1.02] hover:shadow-[0_10px_30px_rgba(59,130,246,0.3)] active:scale-[0.98] active:shadow-[0_5px_15px_rgba(59,130,246,0.2)]'
-                    : 'bg-gradient-to-r from-blue-500/40 to-indigo-600/40 text-white/60 cursor-not-allowed'
+                    ? 'btn-primary hover:scale-[1.02] active:scale-[0.98] glow-primary'
+                    : 'surface-tertiary text-muted cursor-not-allowed border border-primary'
                 }`}
               >
                 {processing ? (

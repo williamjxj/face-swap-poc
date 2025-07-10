@@ -4,7 +4,33 @@ const config = {
     './pages/**/*.{js,ts,jsx,tsx,mdx}',
     './components/**/*.{js,ts,jsx,tsx,mdx}',
     './app/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/**/*.{js,ts,jsx,tsx,mdx}',
     '*.{js,ts,jsx,tsx,mdx}',
+  ],
+  safelist: [
+    'surface-primary',
+    'surface-secondary',
+    'surface-tertiary',
+    'surface-elevated',
+    'gradient-primary',
+    'gradient-secondary',
+    'gradient-accent',
+    'text-primary',
+    'text-secondary',
+    'text-tertiary',
+    'text-muted',
+    'border-primary',
+    'border-secondary',
+    'border-accent',
+    'btn-primary',
+    'btn-secondary',
+    'card-elevated',
+    'glow-primary',
+    'glow-accent',
+    'scrollbar-thin',
+    'focus-ring',
+    'animate-shimmer',
+    'animate-pulse',
   ],
   theme: {
     extend: {
@@ -41,6 +67,38 @@ const config = {
         card: {
           DEFAULT: 'hsl(var(--card))',
           foreground: 'hsl(var(--card-foreground))',
+        },
+        // Enhanced color system
+        surface: {
+          primary: 'rgb(var(--surface-primary))',
+          secondary: 'rgb(var(--surface-secondary))',
+          tertiary: 'rgb(var(--surface-tertiary))',
+          elevated: 'rgb(var(--surface-elevated))',
+        },
+        text: {
+          primary: 'rgb(var(--text-primary))',
+          secondary: 'rgb(var(--text-secondary))',
+          tertiary: 'rgb(var(--text-tertiary))',
+          muted: 'rgb(var(--text-muted))',
+        },
+        border: {
+          primary: 'rgb(var(--border-primary))',
+          secondary: 'rgb(var(--border-secondary))',
+          accent: 'rgb(var(--border-accent))',
+        },
+        gradient: {
+          primary: {
+            start: 'rgb(var(--primary-gradient-start))',
+            end: 'rgb(var(--primary-gradient-end))',
+          },
+          secondary: {
+            start: 'rgb(var(--secondary-gradient-start))',
+            end: 'rgb(var(--secondary-gradient-end))',
+          },
+          accent: {
+            start: 'rgb(var(--accent-gradient-start))',
+            end: 'rgb(var(--accent-gradient-end))',
+          },
         },
       },
       borderRadius: {

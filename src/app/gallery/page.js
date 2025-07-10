@@ -3,6 +3,8 @@ import { useState, useEffect, useMemo } from 'react'
 import Image from 'next/image'
 import Loading from '@/components/Loading'
 import VideoPlayerWithLoading from '@/components/VideoPlayerWithLoading'
+import MediaSkeleton from '@/components/MediaSkeleton'
+import VideoItemSkeleton from '@/components/VideoItemSkeleton'
 import { getStorageUrl } from '@/utils/storage-helper'
 import {
   Download,
@@ -55,6 +57,7 @@ export default function GalleryPage() {
   const [showFilters, setShowFilters] = useState(false)
   const [showMobileFilters, setShowMobileFilters] = useState(false)
   const [videoDurations, setVideoDurations] = useState({}) // Store video durations
+  const [videoLoadingStates, setVideoLoadingStates] = useState({}) // Track individual video loading states
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false) // Sidebar toggle state
   const [showCalendar, setShowCalendar] = useState(false) // Calendar dropdown state
   const [selectedDate, setSelectedDate] = useState(null) // Selected custom date
@@ -102,6 +105,31 @@ export default function GalleryPage() {
     { id: 'year', label: 'This Year' },
   ]
 
+  // Helper function to determine media type more reliably
+  const getMediaType = media => {
+    // First check explicit type
+    if (media.type) {
+      return media.type
+    }
+
+    // Then check mimeType
+    if (media.mimeType) {
+      if (media.mimeType.startsWith('video/')) return 'video'
+      if (media.mimeType === 'image/gif') return 'gif'
+      if (media.mimeType.startsWith('image/')) return 'image'
+    }
+
+    // Finally check file extension
+    if (media.filePath) {
+      if (media.filePath.match(/\.(mp4|webm|mov|avi)$/i)) return 'video'
+      if (media.filePath.match(/\.gif$/i)) return 'gif'
+      if (media.filePath.match(/\.(jpg|jpeg|png|webp|svg)$/i)) return 'image'
+    }
+
+    // Default fallback
+    return 'unknown'
+  }
+
   // Fetch media items from the API based on content type
   useEffect(() => {
     const fetchData = async () => {
@@ -112,7 +140,17 @@ export default function GalleryPage() {
           const response = await fetch('/api/generated-media')
           if (!response.ok) throw new Error('Failed to fetch generated media')
           const data = await response.json()
-          setMediaItems(data.files || [])
+          const files = data.files || []
+          setMediaItems(files)
+
+          // Initialize loading states for video items
+          const videoLoadingStates = {}
+          files.forEach(item => {
+            if (getMediaType(item) === 'video') {
+              videoLoadingStates[item.id] = true
+            }
+          })
+          setVideoLoadingStates(videoLoadingStates)
         } else if (contentType === 'targetTemplates') {
           const response = await fetch('/api/templates')
           if (!response.ok) throw new Error('Failed to fetch templates')
@@ -154,39 +192,6 @@ export default function GalleryPage() {
       window.history.replaceState({}, '', newUrl)
     }
   }, [toast])
-
-  // Helper function to determine media type more reliably
-  const getMediaType = media => {
-    // First check explicit type
-    if (media.type) {
-      return media.type
-    }
-
-    // Then check mimeType
-    if (media.mimeType) {
-      if (media.mimeType.startsWith('video/')) return 'video'
-      if (media.mimeType === 'image/gif') return 'gif'
-      if (media.mimeType.startsWith('image/')) return 'image'
-    }
-
-    // Check filename extension as fallback
-    const filename = media.filename || media.filePath || ''
-    if (filename) {
-      if (filename.match(/\.(mp4|webm|mov|avi)$/i)) return 'video'
-      if (filename.match(/\.gif$/i)) return 'gif'
-      if (filename.match(/\.(jpg|jpeg|png|webp|svg)$/i)) return 'image'
-    }
-
-    // Finally check file path
-    if (media.filePath) {
-      if (media.filePath.match(/\.(mp4|webm|mov|avi)$/i)) return 'video'
-      if (media.filePath.match(/\.gif$/i)) return 'gif'
-      if (media.filePath.match(/\.(jpg|jpeg|png|webp|svg)$/i)) return 'image'
-    }
-
-    // Default fallback
-    return 'unknown'
-  }
 
   // Enhanced filtering and sorting with useMemo for performance
   const filteredAndSortedItems = useMemo(() => {
@@ -381,6 +386,14 @@ export default function GalleryPage() {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
   }
 
+  // Handle video loading start
+  const handleVideoLoadStart = itemId => {
+    setVideoLoadingStates(prev => ({
+      ...prev,
+      [itemId]: true,
+    }))
+  }
+
   // Handle video metadata loading
   const handleVideoLoadedMetadata = (videoElement, itemId) => {
     if (videoElement && videoElement.duration) {
@@ -389,6 +402,19 @@ export default function GalleryPage() {
         [itemId]: videoElement.duration,
       }))
     }
+    // Mark video as loaded
+    setVideoLoadingStates(prev => ({
+      ...prev,
+      [itemId]: false,
+    }))
+  }
+
+  // Handle video can play
+  const handleVideoCanPlay = itemId => {
+    setVideoLoadingStates(prev => ({
+      ...prev,
+      [itemId]: false,
+    }))
   }
 
   // Get video duration for display
@@ -976,16 +1002,16 @@ export default function GalleryPage() {
       </div>
 
       {/* Enhanced Main content area */}
-      <div className="flex-1 bg-[#141518] overflow-y-auto pb-16 lg:pb-6">
+      <div className="flex-1 surface-primary overflow-y-auto pb-16 lg:pb-6 scrollbar-thin">
         {loading ? (
           <div className="flex flex-col items-center justify-center h-full">
             <Loading />
-            <p className="text-gray-400 mt-4">Loading your media...</p>
+            <p className="text-secondary mt-4 text-body">Loading your media...</p>
           </div>
         ) : (
           <>
             {/* Enhanced Header with horizontal filters */}
-            <div className="sticky top-0 bg-[#141518] z-10 p-4 md:p-6 border-b border-gray-800">
+            <div className="sticky top-0 surface-primary z-10 p-4 md:p-6 border-b border-primary backdrop-blur-sm bg-opacity-95">
               {/* Title and View Controls Row */}
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
                 <div>
@@ -1320,7 +1346,9 @@ export default function GalleryPage() {
 
             {/* Content */}
             <div className="p-4 md:p-6">
-              {filteredAndSortedItems.length === 0 ? (
+              {loading ? (
+                <MediaSkeleton count={10} viewMode={viewMode} className="animate-shimmer" />
+              ) : filteredAndSortedItems.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-96 text-center">
                   <div className="mb-4">
                     <svg
@@ -1365,12 +1393,19 @@ export default function GalleryPage() {
                   {filteredAndSortedItems.map(item => (
                     <div
                       key={item.id}
-                      className="break-inside-avoid group relative bg-[#1a1d24] rounded-xl overflow-hidden cursor-pointer hover:transform hover:scale-[1.02] transition-all duration-200 shadow-lg hover:shadow-xl"
+                      className="break-inside-avoid group relative card-elevated rounded-xl overflow-hidden cursor-pointer hover:transform hover:scale-[1.02] transition-all duration-200"
                       onClick={() => handleMediaClick(item)}
                     >
                       <div className="relative">
                         {getMediaType(item) === 'video' ? (
                           <>
+                            {/* Show skeleton while video is loading */}
+                            {videoLoadingStates[item.id] && (
+                              <div className="absolute inset-0 z-20">
+                                <VideoItemSkeleton />
+                              </div>
+                            )}
+
                             <div className="absolute inset-0 flex items-center justify-center z-10">
                               <Play className="w-8 h-8 md:w-12 md:h-12 text-white opacity-70 group-hover:opacity-90 transition-opacity" />
                             </div>
@@ -1385,7 +1420,9 @@ export default function GalleryPage() {
                               loop
                               muted
                               playsInline
+                              onLoadStart={() => handleVideoLoadStart(item.id)}
                               onLoadedMetadata={e => handleVideoLoadedMetadata(e.target, item.id)}
+                              onCanPlay={() => handleVideoCanPlay(item.id)}
                               onError={e => {
                                 const video = e.target
                                 const error = video.error
@@ -1508,7 +1545,7 @@ export default function GalleryPage() {
                   {filteredAndSortedItems.map(item => (
                     <div
                       key={item.id}
-                      className="group bg-[#1a1d24] rounded-xl overflow-hidden cursor-pointer hover:bg-[#1f2228] transition-all duration-200 shadow-lg hover:shadow-xl"
+                      className="group card-elevated rounded-xl overflow-hidden cursor-pointer transition-all duration-200"
                       onClick={() => handleMediaClick(item)}
                     >
                       <div className="flex flex-col sm:flex-row">
@@ -1516,6 +1553,13 @@ export default function GalleryPage() {
                         <div className="relative w-full sm:w-48 h-48 sm:h-32 flex-shrink-0">
                           {getMediaType(item) === 'video' ? (
                             <>
+                              {/* Show skeleton while video is loading */}
+                              {videoLoadingStates[item.id] && (
+                                <div className="absolute inset-0 z-20">
+                                  <VideoItemSkeleton aspectRatio="16/9" />
+                                </div>
+                              )}
+
                               <div className="absolute inset-0 flex items-center justify-center z-10">
                                 <Play className="w-8 h-8 text-white opacity-70 group-hover:opacity-90 transition-opacity" />
                               </div>
@@ -1530,7 +1574,9 @@ export default function GalleryPage() {
                                 loop
                                 muted
                                 playsInline
+                                onLoadStart={() => handleVideoLoadStart(item.id)}
                                 onLoadedMetadata={e => handleVideoLoadedMetadata(e.target, item.id)}
+                                onCanPlay={() => handleVideoCanPlay(item.id)}
                               />
                               {/* Video Duration Badge - Always visible on top-left */}
                               <div className="absolute top-2 left-2 bg-black/70 text-white text-xs px-2 py-1 rounded font-medium z-30 pointer-events-none">

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { getStorageUrl } from '@/utils/storage-helper'
 import VideoCarousel from '@/components/VideoCarousel'
 import VideoThumbnail from '@/components/VideoThumbnail'
+import MediaSkeleton from '@/components/MediaSkeleton'
 import { useToast } from '@/contexts/ToastContext'
 
 export default function VideoCarouselPage() {
@@ -175,10 +176,29 @@ export default function VideoCarouselPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0f1419] flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-white text-lg">Loading videos...</p>
+      <div className="min-h-screen surface-primary text-primary">
+        {/* Header */}
+        <div className="surface-secondary border-b border-primary">
+          <div className="max-w-7xl mx-auto px-4 py-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+                  Video Carousel Demo
+                </h1>
+                <p className="text-tertiary mt-2">
+                  Interactive video carousel with navigation and controls
+                </p>
+              </div>
+              <div className="flex items-center space-x-4 text-sm text-tertiary">
+                <span>Loading videos...</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Video Grid Skeleton */}
+        <div className="max-w-7xl mx-auto px-4 py-8">
+          <MediaSkeleton count={10} viewMode="grid" className="animate-shimmer" />
         </div>
       </div>
     )
@@ -186,31 +206,31 @@ export default function VideoCarouselPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-[#0f1419] flex items-center justify-center">
+      <div className="min-h-screen surface-primary flex items-center justify-center">
         <div className="text-center">
           <div className="text-red-500 text-6xl mb-4">⚠️</div>
-          <h1 className="text-white text-2xl mb-2">Error Loading Videos</h1>
-          <p className="text-gray-400">{error}</p>
+          <h1 className="text-primary text-2xl mb-2">Error Loading Videos</h1>
+          <p className="text-tertiary">{error}</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-[#0f1419] text-white">
+    <div className="min-h-screen surface-primary text-primary">
       {/* Header */}
-      <div className="bg-[#1a1d24] border-b border-gray-800">
+      <div className="surface-secondary border-b border-primary">
         <div className="max-w-7xl mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
                 Video Carousel Demo
               </h1>
-              <p className="text-gray-400 mt-2">
+              <p className="text-tertiary mt-2">
                 Interactive video carousel with navigation and controls
               </p>
             </div>
-            <div className="flex items-center space-x-4 text-sm text-gray-400">
+            <div className="flex items-center space-x-4 text-sm text-tertiary">
               <span>{videos.length} videos</span>
               <span>•</span>
               <span>Click any video to open carousel</span>
@@ -223,14 +243,14 @@ export default function VideoCarouselPage() {
       <div className="max-w-7xl mx-auto px-4 py-8">
         {videos.length === 0 ? (
           <div className="text-center py-16">
-            <div className="text-gray-500 text-6xl mb-4">📹</div>
-            <h2 className="text-2xl font-semibold text-gray-300 mb-2">No Videos Found</h2>
-            <p className="text-gray-500">
+            <div className="text-muted text-6xl mb-4">📹</div>
+            <h2 className="text-2xl font-semibold text-secondary mb-2">No Videos Found</h2>
+            <p className="text-muted">
               Generate some videos in the face-fusion page to see them here.
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 auto-rows-max">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 auto-rows-max">
             {videos.map((video, index) => (
               <VideoThumbnail
                 key={video.id}

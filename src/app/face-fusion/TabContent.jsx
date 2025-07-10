@@ -4,6 +4,7 @@ import { formatDuration } from '@/utils/helper'
 import { getStorageUrl } from '@/utils/storage-helper'
 import { useState, useEffect, useRef } from 'react'
 import Loading from '@/components/Loading'
+import TemplateSkeleton from '@/components/TemplateSkeleton'
 
 export default function TabContent({
   selectedTab,
@@ -20,6 +21,7 @@ export default function TabContent({
   imageUploadLoading,
   gifUploadLoading,
   multiFaceUploadLoading,
+  templatesLoading = false,
 }) {
   const [hoveredTemplate, setHoveredTemplate] = useState(null)
   const [deletingTemplateId, setDeletingTemplateId] = useState(null)
@@ -174,81 +176,105 @@ export default function TabContent({
     </div>
   )
 
-  const renderVideoTab = () => (
-    <div className="p-4">
-      <div className="grid grid-cols-3 gap-3">
-        <div className="w-[116px] h-[176px]">
-          <UploadBox
-            type="video"
-            accept="video/mp4,video/wav"
-            onUpload={onTargetUpload}
-            title="Custom Video"
-            description="Video: Max 150MB/3mins"
-            className="w-full h-full"
-            loading={videoUploadLoading}
-          />
-        </div>
-        {filteredTemplates.map(renderTemplateCard)}
-      </div>
-    </div>
-  )
+  const renderVideoTab = () => {
+    if (templatesLoading) {
+      return <TemplateSkeleton count={8} aspectRatio="116/176" showUploadBox={true} />
+    }
 
-  const renderImageTab = () => (
-    <div className="p-4">
-      <div className="grid grid-cols-3 gap-3">
-        <div className="w-[116px] h-[176px]">
-          <UploadBox
-            type="image"
-            accept="image/png,image/jpeg,image/jpg"
-            onUpload={onImageUpload}
-            title="Upload Image"
-            description="PNG, JPEG up to 10MB"
-            className="w-full h-full"
-            loading={imageUploadLoading}
-          />
+    return (
+      <div className="p-4">
+        <div className="grid grid-cols-3 gap-3">
+          <div className="w-[116px] h-[176px]">
+            <UploadBox
+              type="video"
+              accept="video/mp4,video/wav"
+              onUpload={onTargetUpload}
+              title="Custom Video"
+              description="Video: Max 150MB/3mins"
+              className="w-full h-full"
+              loading={videoUploadLoading}
+            />
+          </div>
+          {filteredTemplates.map(renderTemplateCard)}
         </div>
-        {filteredTemplates.map(renderTemplateCard)}
       </div>
-    </div>
-  )
+    )
+  }
 
-  const renderGifTab = () => (
-    <div className="p-4">
-      <div className="grid grid-cols-3 gap-3">
-        <div className="w-[116px] h-[176px]">
-          <UploadBox
-            type="gif"
-            accept="image/gif"
-            onUpload={onGifUpload}
-            title="Upload GIF"
-            description="GIF up to 50MB"
-            className="w-full h-full"
-            loading={gifUploadLoading}
-          />
-        </div>
-        {filteredTemplates.map(renderTemplateCard)}
-      </div>
-    </div>
-  )
+  const renderImageTab = () => {
+    if (templatesLoading) {
+      return <TemplateSkeleton count={8} aspectRatio="116/176" showUploadBox={true} />
+    }
 
-  const renderMultiFaceTab = () => (
-    <div className="p-4">
-      <div className="grid grid-cols-3 gap-3">
-        <div className="w-[116px] h-[176px]">
-          <UploadBox
-            type="multi-face"
-            accept="image/png,image/jpeg,image/jpg"
-            onUpload={onMultiFaceUpload}
-            title="Multi-face Upload"
-            description="Upload multiple faces (PNG, JPEG)"
-            className="w-full h-full"
-            loading={multiFaceUploadLoading}
-          />
+    return (
+      <div className="p-4">
+        <div className="grid grid-cols-3 gap-3">
+          <div className="w-[116px] h-[176px]">
+            <UploadBox
+              type="image"
+              accept="image/png,image/jpeg,image/jpg"
+              onUpload={onImageUpload}
+              title="Upload Image"
+              description="PNG, JPEG up to 10MB"
+              className="w-full h-full"
+              loading={imageUploadLoading}
+            />
+          </div>
+          {filteredTemplates.map(renderTemplateCard)}
         </div>
-        {filteredTemplates.map(renderTemplateCard)}
       </div>
-    </div>
-  )
+    )
+  }
+
+  const renderGifTab = () => {
+    if (templatesLoading) {
+      return <TemplateSkeleton count={8} aspectRatio="116/176" showUploadBox={true} />
+    }
+
+    return (
+      <div className="p-4">
+        <div className="grid grid-cols-3 gap-3">
+          <div className="w-[116px] h-[176px]">
+            <UploadBox
+              type="gif"
+              accept="image/gif"
+              onUpload={onGifUpload}
+              title="Upload GIF"
+              description="GIF up to 50MB"
+              className="w-full h-full"
+              loading={gifUploadLoading}
+            />
+          </div>
+          {filteredTemplates.map(renderTemplateCard)}
+        </div>
+      </div>
+    )
+  }
+
+  const renderMultiFaceTab = () => {
+    if (templatesLoading) {
+      return <TemplateSkeleton count={8} aspectRatio="116/176" showUploadBox={true} />
+    }
+
+    return (
+      <div className="p-4">
+        <div className="grid grid-cols-3 gap-3">
+          <div className="w-[116px] h-[176px]">
+            <UploadBox
+              type="multi-face"
+              accept="image/png,image/jpeg,image/jpg"
+              onUpload={onMultiFaceUpload}
+              title="Multi-face Upload"
+              description="Upload multiple faces (PNG, JPEG)"
+              className="w-full h-full"
+              loading={multiFaceUploadLoading}
+            />
+          </div>
+          {filteredTemplates.map(renderTemplateCard)}
+        </div>
+      </div>
+    )
+  }
 
   switch (selectedTab) {
     case 'video':

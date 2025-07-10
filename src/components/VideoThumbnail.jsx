@@ -171,10 +171,10 @@ const VideoThumbnail = ({
   }
 
   return (
-    <div className="group bg-[#1a1d24] rounded-xl overflow-hidden cursor-pointer hover:bg-[#1f2228] transition-all duration-200 shadow-lg hover:shadow-xl w-[60%] mx-auto">
+    <div className="group card-elevated rounded-xl overflow-hidden cursor-pointer w-full">
       <div
         ref={containerRef}
-        className="relative bg-gray-900 min-h-[200px]"
+        className="relative surface-primary min-h-[200px]"
         style={{ aspectRatio: `${aspectRatio}` }}
       >
         {/* Hidden video element for thumbnail generation */}
@@ -235,8 +235,8 @@ const VideoThumbnail = ({
             )}
 
             {/* YouTube-style play button overlay */}
-            <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-              <div className="bg-gradient-to-r from-blue-400 to-purple-500 hover:from-blue-500 hover:to-purple-600 rounded-full p-4 transform hover:scale-110 transition-all duration-200 shadow-lg">
+            <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+              <div className="gradient-primary rounded-full p-4 transform hover:scale-110 transition-all duration-300 shadow-lg glow-primary">
                 <Play className="w-8 h-8 text-white fill-white" />
               </div>
             </div>
