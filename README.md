@@ -1,109 +1,59 @@
-# Face Swap POC
+# FaceFusion: AI-Powered Face Swapping Platform
 
-A Next.js application for AI-powered face swapping with Supabase database and Vercel deployment.
+**Live Demo:** [https://face-fusion-agent.vercel.app/](https://face-fusion-agent.vercel.app/)
 
-## Quick Start
+FaceFusion is a production-ready, AI-powered face-swapping application. It provides a seamless and intuitive user experience, allowing users to create high-quality, entertaining content. This isn't just a template; it's a fully-functional, production-ready application that you can deploy and start monetizing immediately.
 
-Choose your preferred development setup:
+## Why Partner with FaceFusion?
 
-### 🚀 Cloud Development (Recommended)
+FaceFusion offers a unique opportunity for businesses looking to enter the rapidly growing AI-powered content creation market. Our platform is built with monetization in mind, providing a solid foundation for a profitable business venture.
 
-```bash
-# 1. Clone and install
-git clone <your-repo>
-cd face-swap-poc
-npm install
+*   **Turnkey Solution:** Deploy and start monetizing from day one.
+*   **High-Demand Market:** Tap into the viral trend of face-swapping and AI-generated content.
+*   **Scalable Infrastructure:** Built on a modern, scalable technology stack to support a growing user base.
+*   **Secure and Reliable:** Leverages industry-standard authentication and payment processing to ensure user data is safe.
 
-# 2. Setup environment
-cp .env.example .env
-# Fill in your Supabase and OAuth credentials
+## Key Features
 
-# 3. Setup database
-npm run db:push
+FaceFusion is packed with features designed to engage users and drive revenue.
 
-# 4. Start development
-npm run dev
-```
+*   **AI-Powered Face Swapping:** High-quality, realistic face swapping with a simple and intuitive interface.
+*   **User-Friendly Workflow:** Users can easily upload source faces and target videos or images to create their own unique content.
+*   **Secure User Authentication:** Supports both Google OAuth and email/password login, ensuring a secure and easy-to-use authentication system.
+*   **Monetization Ready:** Integrated with Stripe for seamless payment processing, allowing you to offer premium features and subscription plans.
+*   **Content Management:** A gallery feature allows users to view, manage, and download their generated content.
+*   **Responsive Design:** A polished and professional user interface that looks great on any device.
 
-### 🔧 Local Development
+### Application Screenshots
 
-```bash
-# 1. Start local Supabase
-npm run setup:local
+Here's a glimpse of the FaceFusion user interface:
 
-# 2. Start development
-npm run dev:local
-```
+**1. The FaceFusion Studio**
 
-## Environment Setup
+![gallery-1](/public/screenshots/gallery-1.png)
 
-### Required Environment Variables
+**2. The User's Gallery**
 
-```bash
-# Database (Supabase)
-DATABASE_URL="postgresql://postgres:[password]@db.[ref].supabase.co:5432/postgres"
-NEXT_PUBLIC_SUPABASE_URL="https://[ref].supabase.co"
-NEXT_PUBLIC_SUPABASE_ANON_KEY="[anon-key]"
+![gallery-2](/public/screenshots/gallery-2.png)
 
-# Authentication
-NEXTAUTH_URL="http://localhost:3000"  # or your production URL
-NEXTAUTH_SECRET="[generate-with-openssl-rand-base64-32]"
-GOOGLE_CLIENT_ID="[google-oauth-client-id]"
-GOOGLE_CLIENT_SECRET="[google-oauth-client-secret]"
-```
+**3. The Payment and Subscription Modal**
 
-## Production Deployment
+![gallery-3](/public/screenshots/gallery-3.png)
 
-### Vercel Deployment
+## Monetization
 
-1. **Connect GitHub repository to Vercel**
-2. **Set environment variables in Vercel dashboard**
-3. **Update OAuth redirect URIs for production domain**
-4. **Deploy**
+FaceFusion is built with a flexible monetization model in mind. The integrated Stripe payment system allows you to:
 
-See [docs/VERCEL_DEPLOYMENT_CHECKLIST.md](docs/VERCEL_DEPLOYMENT_CHECKLIST.md) for detailed instructions.
+*   **Offer tiered subscription plans** with varying levels of access and features.
+*   **Sell credit packs** for one-time purchases.
+*   **Implement a pay-per-use model** for content generation.
 
-## Documentation
+## Technology Stack
 
-For detailed setup, deployment, and troubleshooting guides, see the [docs/](docs/) directory:
+FaceFusion is built on a modern and robust technology stack, ensuring a high-quality and scalable application.
 
-- **[Setup Guide](docs/PROJECT_SETUP_GUIDE.md)** - Complete project setup
-- **[Deployment Guide](docs/VERCEL_DEPLOYMENT_CHECKLIST.md)** - Vercel deployment
-- **[Database Schema](docs/database/supabase-schema-analysis.md)** - Database implementation analysis
-- **[Troubleshooting](docs/troubleshooting/)** - Common issues and solutions
-
-## Tech Stack
-
-- **Framework**: Next.js 15 with React 19
-- **Database**: PostgreSQL with Supabase (Direct Integration)
-- **Authentication**: NextAuth.js with JWT strategy
-- **Deployment**: Vercel + Supabase
-- **Styling**: TailwindCSS
-
-## Features
-
-- **Face Swapping**: AI-powered face swapping using external APIs
-- **Authentication**: Google OAuth and credential-based login
-- **Media Management**: Upload, process, and download face-swapped content
-- **Payment Integration**: Stripe integration for premium features
-- **Real-time Processing**: Progress tracking for face swap operations
-
-## Available Scripts
-
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run start` - Start production server
-- `npm run db:push` - Push database schema
-- `npm run db:studio` - Open Prisma Studio
-
-## Troubleshooting
-
-For common issues and deployment problems, see:
-
-- [Common Issues](docs/troubleshooting/common-issues.md)
-- [Deployment Issues](docs/troubleshooting/deployment-issues.md)
-- [Vercel Deployment Guide](docs/VERCEL_DEPLOYMENT_CHECKLIST.md)
-
----
-
-**Last Updated**: January 2025
+*   **Framework:** Next.js
+*   **Database:** Supabase (PostgreSQL)
+*   **Authentication:** NextAuth.js
+*   **Payments:** Stripe
+*   **Deployment:** Vercel
